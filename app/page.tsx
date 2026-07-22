@@ -1,58 +1,483 @@
-export default function Home() {
+"use client";
+
+import { useEffect } from "react";
+
+const features = [
+  {
+    title: "Historical pricing",
+    description:
+      "Track verified sales history, price movement, and long-term market direction across sealed TCG products.",
+    metric: "12M+",
+    label: "market observations",
+    icon: "chart",
+  },
+  {
+    title: "Deal intelligence",
+    description:
+      "Compare any listing against market value, recent sales, liquidity, and confidence before you buy.",
+    metric: "92",
+    label: "sample deal score",
+    icon: "spark",
+  },
+  {
+    title: "Liquidity insights",
+    description:
+      "Understand how quickly products move, how deep demand is, and how reliable the current price really is.",
+    metric: "High",
+    label: "sample liquidity",
+    icon: "pulse",
+  },
+];
+
+const steps = [
+  {
+    number: "01",
+    title: "Search any product",
+    description:
+      "Find English Pokémon booster boxes, elite trainer boxes, premium collections, and more.",
+  },
+  {
+    number: "02",
+    title: "Read the market",
+    description:
+      "Review recent sales, trend direction, volatility, liquidity, and confidence in one place.",
+  },
+  {
+    number: "03",
+    title: "Make the decision",
+    description:
+      "Use the deal score and market context to decide whether to buy, hold, sell, or wait.",
+  },
+];
+
+const faqs = [
+  {
+    question: "What is TCGMVP?",
+    answer:
+      "TCGMVP is a trading card market intelligence platform built to help collectors and investors understand pricing, liquidity, trends, and deal quality.",
+  },
+  {
+    question: "Which products will be supported first?",
+    answer:
+      "The initial focus is English Pokémon sealed products, beginning with booster boxes and other high-interest sealed items.",
+  },
+  {
+    question: "When will the beta launch?",
+    answer:
+      "The product is currently in development. Beta users will be invited in stages as core market data and deal analysis features become available.",
+  },
+];
+
+function Icon({ type }: { type: string }) {
+  if (type === "chart") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
+      </svg>
+    );
+  }
+
+  if (type === "spark") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m12 3 1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3Z" />
+        <path d="m18.5 15 .9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1Z" />
+      </svg>
+    );
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
-      <div className="mx-auto max-w-4xl text-center">
-        <p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-sky-400">
-          Trading Card Market Intelligence
-        </p>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 12h4l2-5 4 10 2-5h6" />
+    </svg>
+  );
+}
 
-        <h1 className="text-5xl font-bold tracking-tight sm:text-7xl">
-          TCGMVP
-        </h1>
+export default function Home() {
+  useEffect(() => {
+    const elements = document.querySelectorAll("[data-reveal]");
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-          Historical pricing, market trends, liquidity insights, and deal
-          analysis for trading card collectors.
-        </p>
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.14 }
+    );
 
-        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <a
-            href="mailto:tcgmvpplaceholder@gmail.com?subject=TCGMVP Beta Interest"
-            className="rounded-lg bg-white px-6 py-3 font-semibold text-slate-950 transition hover:bg-slate-200"
-          >
-            Join the Beta
+    elements.forEach((element) => observer.observe(element));
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <main className="site-shell">
+      <div className="ambient ambient-one" />
+      <div className="ambient ambient-two" />
+
+      <header className="nav-wrap">
+        <nav className="nav container">
+          <a className="brand" href="#top" aria-label="TCGMVP home">
+            <span className="brand-mark">M</span>
+            <span>TCGMVP</span>
           </a>
 
-          <span className="text-sm text-slate-400">Coming soon</span>
+          <div className="nav-links">
+            <a href="#platform">Platform</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#about">About</a>
+            <a href="#faq">FAQ</a>
+          </div>
+
+          <a
+            className="button button-small button-primary"
+            href="mailto:tcgmvpplaceholder@gmail.com?subject=TCGMVP Beta Interest"
+          >
+            Join beta
+            <span>↗</span>
+          </a>
+        </nav>
+      </header>
+
+      <section id="top" className="hero container">
+        <div className="hero-copy reveal" data-reveal>
+          <div className="eyebrow">
+            <span className="eyebrow-dot" />
+            Built for serious collectors and investors
+          </div>
+
+          <h1>
+            The market intelligence layer for{" "}
+            <span className="gradient-text">trading cards.</span>
+          </h1>
+
+          <p className="hero-lead">
+            Historical pricing, liquidity, trend analysis, and deal intelligence
+            in one premium platform built for smarter TCG decisions.
+          </p>
+
+          <div className="hero-actions">
+            <a
+              className="button button-primary"
+              href="mailto:tcgmvpplaceholder@gmail.com?subject=TCGMVP Beta Interest"
+            >
+              Join the beta
+              <span>↗</span>
+            </a>
+            <a className="button button-secondary" href="#platform">
+              Explore the platform
+            </a>
+          </div>
+
+          <div className="hero-proof">
+            <div>
+              <strong>English Pokémon</strong>
+              <span>Initial market focus</span>
+            </div>
+            <div>
+              <strong>Data-first</strong>
+              <span>Built around market evidence</span>
+            </div>
+            <div>
+              <strong>Collector-led</strong>
+              <span>Designed from real buying workflows</span>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-16 grid gap-4 text-left sm:grid-cols-3">
-          <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-            <h2 className="font-semibold">Historical Pricing</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              Review trusted sales history and long-term pricing trends.
-            </p>
-          </section>
+        <div className="hero-visual reveal delay-1" data-reveal>
+          <div className="dashboard-glow" />
+          <div className="dashboard-window">
+            <div className="window-topbar">
+              <div className="window-dots">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="window-search">Search sealed products...</div>
+              <div className="window-avatar">YN</div>
+            </div>
 
-          <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-            <h2 className="font-semibold">Deal Analysis</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              Evaluate listings against market value before purchasing.
-            </p>
-          </section>
+            <div className="dashboard-body">
+              <aside className="dashboard-sidebar">
+                <div className="side-logo">M</div>
+                <div className="side-item active" />
+                <div className="side-item" />
+                <div className="side-item" />
+                <div className="side-item" />
+              </aside>
 
-          <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-            <h2 className="font-semibold">Market Insights</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              Understand liquidity, momentum, and confidence in the market.
-            </p>
-          </section>
+              <div className="dashboard-main">
+                <div className="product-heading">
+                  <div>
+                    <span className="mini-label">Pokémon · Sword & Shield</span>
+                    <h2>Evolving Skies Booster Box</h2>
+                  </div>
+                  <span className="status-pill">Live market</span>
+                </div>
+
+                <div className="metric-grid">
+                  <div className="metric-card">
+                    <span>Market value</span>
+                    <strong>$2,487</strong>
+                    <small className="positive">+7.2% in 30 days</small>
+                  </div>
+                  <div className="metric-card">
+                    <span>Deal score</span>
+                    <strong>92/100</strong>
+                    <small>Strong buy range</small>
+                  </div>
+                  <div className="metric-card">
+                    <span>Liquidity</span>
+                    <strong>High</strong>
+                    <small>Consistent buyer demand</small>
+                  </div>
+                </div>
+
+                <div className="chart-card">
+                  <div className="chart-heading">
+                    <div>
+                      <span>Market trend</span>
+                      <strong>12-month performance</strong>
+                    </div>
+                    <div className="chart-tabs">
+                      <span>1M</span>
+                      <span>3M</span>
+                      <span className="active">1Y</span>
+                    </div>
+                  </div>
+
+                  <div className="chart-area">
+                    <div className="chart-grid-lines" />
+                    <svg viewBox="0 0 560 210" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="lineFill" x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.35" />
+                          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        className="chart-fill"
+                        d="M0 184 C55 169 72 151 112 158 C151 165 171 121 214 127 C260 134 271 91 318 97 C362 104 375 73 421 82 C470 91 494 47 560 32 L560 210 L0 210 Z"
+                      />
+                      <path
+                        className="chart-line"
+                        d="M0 184 C55 169 72 151 112 158 C151 165 171 121 214 127 C260 134 271 91 318 97 C362 104 375 73 421 82 C470 91 494 47 560 32"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="dashboard-footer-row">
+                  <div>
+                    <span>Recent verified sale</span>
+                    <strong>$2,525</strong>
+                  </div>
+                  <div>
+                    <span>30-day volume</span>
+                    <strong>38 sales</strong>
+                  </div>
+                  <div>
+                    <span>Confidence</span>
+                    <strong>97%</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="floating-card floating-card-left">
+            <span>Deal detected</span>
+            <strong>8.4% below market</strong>
+          </div>
+
+          <div className="floating-card floating-card-right">
+            <span>Momentum</span>
+            <strong className="positive">Bullish ↗</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="proof-strip">
+        <div className="container proof-strip-inner">
+          <span>Designed for</span>
+          <strong>Collectors</strong>
+          <strong>Investors</strong>
+          <strong>Card shops</strong>
+          <strong>Market researchers</strong>
+        </div>
+      </section>
+
+      <section id="platform" className="section container">
+        <div className="section-heading reveal" data-reveal>
+          <div>
+            <span className="section-kicker">The platform</span>
+            <h2>Read the market before you make the move.</h2>
+          </div>
+          <p>
+            TCGMVP brings the market context scattered across listings, sold
+            data, spreadsheets, and collector communities into one clear
+            decision system.
+          </p>
         </div>
 
-        <footer className="mt-16 text-sm text-slate-500">
-          © 2026 TCGMVP
-        </footer>
-      </div>
+        <div className="feature-grid">
+          {features.map((feature, index) => (
+            <article
+              className={`feature-card reveal delay-${index}`}
+              data-reveal
+              key={feature.title}
+            >
+              <div className="feature-icon">
+                <Icon type={feature.icon} />
+              </div>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+              <div className="feature-metric">
+                <strong>{feature.metric}</strong>
+                <span>{feature.label}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="how-it-works" className="section process-section">
+        <div className="container">
+          <div className="section-heading narrow reveal" data-reveal>
+            <div>
+              <span className="section-kicker">How it works</span>
+              <h2>From listing to decision in seconds.</h2>
+            </div>
+          </div>
+
+          <div className="process-grid">
+            {steps.map((step, index) => (
+              <article
+                className={`process-card reveal delay-${index}`}
+                data-reveal
+                key={step.number}
+              >
+                <span className="process-number">{step.number}</span>
+                <div className="process-line" />
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="about" className="section container">
+        <div className="insight-panel reveal" data-reveal>
+          <div className="insight-copy">
+            <span className="section-kicker">Built differently</span>
+            <h2>Not another price guide.</h2>
+            <p>
+              A market price alone does not tell you whether a product is
+              liquid, overpriced, volatile, manipulated, or moving with
+              conviction. TCGMVP is being built to explain the market behind
+              the number.
+            </p>
+
+            <div className="check-list">
+              <span>Verified sales context</span>
+              <span>Liquidity and demand signals</span>
+              <span>Trend and volatility analysis</span>
+              <span>Transparent confidence scoring</span>
+            </div>
+          </div>
+
+          <div className="signal-stack">
+            <div className="signal-card">
+              <span>Price confidence</span>
+              <strong>97%</strong>
+              <div className="progress">
+                <span style={{ width: "97%" }} />
+              </div>
+            </div>
+            <div className="signal-card">
+              <span>Buyer demand</span>
+              <strong>High</strong>
+              <div className="bars">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i className="muted" />
+              </div>
+            </div>
+            <div className="signal-card">
+              <span>Market direction</span>
+              <strong className="positive">Upward</strong>
+              <small>Momentum strengthening</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="section container">
+        <div className="faq-layout">
+          <div className="faq-intro reveal" data-reveal>
+            <span className="section-kicker">FAQ</span>
+            <h2>Questions before the beta?</h2>
+            <p>
+              TCGMVP is currently being built in public stages. Here is what the
+              first version is designed to deliver.
+            </p>
+          </div>
+
+          <div className="faq-list">
+            {faqs.map((faq, index) => (
+              <details
+                className={`faq-item reveal delay-${index}`}
+                data-reveal
+                key={faq.question}
+              >
+                <summary>
+                  {faq.question}
+                  <span>+</span>
+                </summary>
+                <p>{faq.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="cta-section container reveal" data-reveal>
+        <div className="cta-inner">
+          <div className="cta-glow" />
+          <span className="section-kicker">Early access</span>
+          <h2>Become a smarter collector.</h2>
+          <p>
+            Join the TCGMVP beta and help shape the market intelligence platform
+            built for the next generation of collectors.
+          </p>
+          <a
+            className="button button-primary"
+            href="mailto:tcgmvpplaceholder@gmail.com?subject=TCGMVP Beta Interest"
+          >
+            Request beta access
+            <span>↗</span>
+          </a>
+        </div>
+      </section>
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div className="brand">
+            <span className="brand-mark">M</span>
+            <span>TCGMVP</span>
+          </div>
+          <p>Trading card market intelligence.</p>
+          <span>© 2026 TCGMVP</span>
+        </div>
+      </footer>
     </main>
   );
 }
