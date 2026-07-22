@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const features = [
   {
@@ -94,6 +94,22 @@ function Icon({ type }: { type: string }) {
 }
 
 export default function Home() {
+  const shellRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const shell = shellRef.current;
+      if (!shell) return;
+
+      shell.style.setProperty("--pointer-x", `${event.clientX}px`);
+      shell.style.setProperty("--pointer-y", `${event.clientY}px`);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+
+    return () => window.removeEventListener("pointermove", handlePointerMove);
+  }, []);
+
   useEffect(() => {
     const elements = document.querySelectorAll("[data-reveal]");
 
@@ -115,7 +131,13 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="site-shell">
+    <main ref={shellRef} className="site-shell">
+      <div className="mesh-background" aria-hidden="true">
+        <span className="mesh-orb mesh-orb-one" />
+        <span className="mesh-orb mesh-orb-two" />
+        <span className="mesh-orb mesh-orb-three" />
+      </div>
+      <div className="cursor-light" aria-hidden="true" />
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
@@ -192,6 +214,7 @@ export default function Home() {
         <div className="hero-visual reveal delay-1" data-reveal>
           <div className="dashboard-glow" />
           <div className="dashboard-window">
+            <div className="scan-line" aria-hidden="true" />
             <div className="window-topbar">
               <div className="window-dots">
                 <span />
@@ -312,6 +335,21 @@ export default function Home() {
         </div>
       </section>
 
+
+      <section className="market-ticker" aria-label="Sample market movement">
+        <div className="ticker-track">
+          {[...Array(2)].map((_, group) => (
+            <div className="ticker-group" key={group}>
+              <span><strong>Evolving Skies</strong><b className="positive">+7.2%</b></span>
+              <span><strong>Chilling Reign</strong><b className="positive">+3.8%</b></span>
+              <span><strong>Fusion Strike</strong><b className="positive">+5.1%</b></span>
+              <span><strong>Lost Origin</strong><b className="negative">-1.4%</b></span>
+              <span><strong>Silver Tempest</strong><b className="positive">+2.6%</b></span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section id="platform" className="section container">
         <div className="section-heading reveal" data-reveal>
           <div>
@@ -343,6 +381,76 @@ export default function Home() {
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+
+      <section className="section product-showcase-section">
+        <div className="container">
+          <div className="section-heading reveal" data-reveal>
+            <div>
+              <span className="section-kicker">Market watch</span>
+              <h2>See the products moving the market.</h2>
+            </div>
+            <p>
+              Product pages combine current value, historical movement, demand,
+              sale velocity, and deal quality into one focused view.
+            </p>
+          </div>
+
+          <div className="product-showcase">
+            {[
+              {
+                name: "Evolving Skies",
+                type: "Booster Box",
+                value: "$2,487",
+                move: "+7.2%",
+                score: "92",
+                tone: "sky",
+              },
+              {
+                name: "Chilling Reign",
+                type: "Booster Box",
+                value: "$468",
+                move: "+3.8%",
+                score: "86",
+                tone: "ice",
+              },
+              {
+                name: "151",
+                type: "Ultra-Premium Collection",
+                value: "$392",
+                move: "+5.6%",
+                score: "89",
+                tone: "violet",
+              },
+            ].map((product, index) => (
+              <article
+                className={`product-card product-${product.tone} reveal delay-${index}`}
+                data-reveal
+                key={product.name}
+              >
+                <div className="product-art">
+                  <div className="product-box">
+                    <span className="product-brand">TCGMVP</span>
+                    <strong>{product.name}</strong>
+                    <small>{product.type}</small>
+                  </div>
+                </div>
+                <div className="product-card-body">
+                  <div>
+                    <span className="mini-label">{product.type}</span>
+                    <h3>{product.name}</h3>
+                  </div>
+                  <div className="product-stat-row">
+                    <div><span>Market</span><strong>{product.value}</strong></div>
+                    <div><span>30 days</span><strong className="positive">{product.move}</strong></div>
+                    <div><span>Score</span><strong>{product.score}</strong></div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
