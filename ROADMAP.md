@@ -18,8 +18,8 @@ Build the premier market intelligence platform for Pokémon sealed products, hel
 
 # Phase 2 – Product Experience
 
-- [ ] Dynamic product pages
-- [ ] Real product images
+- [x] Dynamic product pages
+- [x] Real product images
 - [ ] Historical price charts
 - [ ] Recent sales
 - [ ] Current listings
