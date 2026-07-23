@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import PriceChart from "@/components/PriceChart";
 import { supabase } from "@/lib/supabase";
 
 type ProductPageProps = {
@@ -38,12 +39,19 @@ export default async function ProductDetailPage({
       product_market_summary (
         current_market_price,
         change_30d_percent
+      ),
+      product_price_history (
+        price,
+        recorded_at
       )
     `)
     .eq("slug", slug)
     .eq("active", true)
     .single();
-
+    
+if (error) {
+  console.error("PRODUCT DETAIL ERROR:", error);
+}
   if (error || !product) {
     notFound();
   }
@@ -79,7 +87,18 @@ export default async function ProductDetailPage({
     marketData?.change_30d_percent === undefined
       ? null
       : Number(marketData.change_30d_percent);
-
+  const priceHistory = Array.isArray(product.product_price_history)
+    ? product.product_price_history
+        .map((item) => ({
+          price: Number(item.price),
+          recorded_at: item.recorded_at,
+        }))
+        .sort(
+          (a, b) =>
+            new Date(a.recorded_at).getTime() -
+            new Date(b.recorded_at).getTime()
+        )
+    : [];
   return (
     <main className="site-shell products-page">
       <div className="ambient ambient-one" />
@@ -180,6 +199,25 @@ export default async function ProductDetailPage({
           <strong className="positive">Tracked</strong>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section className="product-chart-section">
+  <div className="container">
+    <div className="product-chart-panel">
+      <div className="product-chart-heading">
+        <div>
+          <span className="section-kicker">Price history</span>
+          <h2>Market performance</h2>
+        </div>
+
+        <span className="chart-range-label">
+          Historical
+        </span>
+      </div>
+
+      <PriceChart data={priceHistory} />
     </div>
   </div>
 </section>
