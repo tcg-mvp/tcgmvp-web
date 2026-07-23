@@ -1,4 +1,5 @@
 "use client";
+import { useMemo, useState } from "react";
 
 import {
   CartesianGrid,
@@ -18,9 +19,54 @@ type PriceHistoryItem = {
 type PriceChartProps = {
   data: PriceHistoryItem[];
 };
+type RangeOption = "1M" | "3M" | "6M" | "1Y" | "ALL";
 
 export default function PriceChart({ data }: PriceChartProps) {
-  const formattedData = data.map((item) => ({
+  const [selectedRange, setSelectedRange] =
+    useState<RangeOption>("1Y");
+  const filteredData = useMemo(() => {
+    if (data.length === 0) {
+      return [];
+    }
+
+    const sortedData = [...data].sort(
+      (a, b) =>
+        new Date(a.recorded_at).getTime() -
+        new Date(b.recorded_at).getTime()
+    );
+
+    if (selectedRange === "ALL") {
+      return sortedData;
+    }
+
+    const latestDate = new Date(
+      sortedData[sortedData.length - 1].recorded_at
+    );
+
+    const cutoffDate = new Date(latestDate);
+
+    if (selectedRange === "1M") {
+      cutoffDate.setMonth(cutoffDate.getMonth() - 1);
+    }
+
+    if (selectedRange === "3M") {
+      cutoffDate.setMonth(cutoffDate.getMonth() - 3);
+    }
+
+    if (selectedRange === "6M") {
+      cutoffDate.setMonth(cutoffDate.getMonth() - 6);
+    }
+
+    if (selectedRange === "1Y") {
+      cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
+    }
+
+    return sortedData.filter(
+      (item) => new Date(item.recorded_at) >= cutoffDate
+    );
+  }, [data, selectedRange]);
+
+  const formattedData = filteredData.map((item) => ({
     price: Number(item.price),
     date: new Date(item.recorded_at).toLocaleDateString("en-US", {
       month: "short",
@@ -38,6 +84,25 @@ export default function PriceChart({ data }: PriceChartProps) {
 
   return (
     <div className="price-chart-wrapper">
+      <div className="price-chart-ranges">
+            {(["1M", "3M", "6M", "1Y", "ALL"] as RangeOption[]).map(
+              (range) => (
+                <button
+                  key={range}
+                  type="button"
+                  className={
+                    selectedRange === range
+                      ? "price-chart-range active"
+                      : "price-chart-range"
+                  }
+                  onClick={() => setSelectedRange(range)}
+                >
+                  {range}
+                </button>
+              )
+            )}
+          </div>
+
       <ResponsiveContainer width="100%" height={360}>
         <LineChart
           data={formattedData}

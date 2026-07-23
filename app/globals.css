@@ -1831,3 +1831,51 @@ a {
     flex-direction: column;
   }
 }
+.price-chart-ranges {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.price-chart-range {
+  min-width: 48px;
+  padding: 8px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 999px;
+  color: #64748b;
+  background: rgba(15, 23, 42, 0.48);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.price-chart-range:hover {
+  color: #dbeafe;
+  border-color: rgba(96, 165, 250, 0.35);
+  transform: translateY(-1px);
+}
+
+.price-chart-range.active {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(37, 99, 235, 0.18);
+}
+
+@media (max-width: 700px) {
+  .price-chart-ranges {
+    justify-content: flex-start;
+  }
+
+  .price-chart-range {
+    min-width: 44px;
+    padding: 7px 10px;
+  }
+}

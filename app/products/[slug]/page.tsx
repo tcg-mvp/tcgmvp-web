@@ -48,10 +48,7 @@ export default async function ProductDetailPage({
     .eq("slug", slug)
     .eq("active", true)
     .single();
-    
-if (error) {
-  console.error("PRODUCT DETAIL ERROR:", error);
-}
+
   if (error || !product) {
     notFound();
   }
@@ -212,9 +209,6 @@ if (error) {
           <h2>Market performance</h2>
         </div>
 
-        <span className="chart-range-label">
-          Historical
-        </span>
       </div>
 
       <PriceChart data={priceHistory} />
