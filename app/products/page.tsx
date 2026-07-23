@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import Image from "next/image";
 import ProductCard from "@/components/ProductCard";
 import { supabase } from "@/lib/supabase";
 type PriceHistoryEntry = {
@@ -122,7 +122,14 @@ export default async function ProductsPage() {
         <header className="nav-wrap">
           <nav className="nav container">
             <Link className="brand" href="/">
-              <span className="brand-mark">M</span>
+              <Image
+                src="/tcgmvp-mark.png"
+                alt="TCGMVP"
+                width={38}
+                height={38}
+                className="brand-logo"
+                priority
+              />
               <span>TCGMVP</span>
             </Link>
 

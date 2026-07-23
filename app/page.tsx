@@ -3,6 +3,7 @@ import ProductCard from "@/components/ProductCard";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 const features = [
   {
@@ -300,7 +301,14 @@ export default function Home() {
       <header className="nav-wrap">
         <nav className="nav container">
           <a className="brand" href="#top" aria-label="TCGMVP home">
-            <span className="brand-mark">M</span>
+            <Image
+              src="/tcgmvp-mark.png"
+              alt=""
+              width={38}
+              height={38}
+              className="brand-logo"
+              priority
+            />
             <span>TCGMVP</span>
           </a>
 
@@ -753,7 +761,13 @@ export default function Home() {
       <footer className="footer">
         <div className="container footer-inner">
           <div className="brand">
-            <span className="brand-mark">M</span>
+            <Image
+              src="/tcgmvp-mark.png"
+              alt=""
+              width={38}
+              height={38}
+              className="brand-logo"
+            />
             <span>TCGMVP</span>
           </div>
           <p>Trading card market intelligence.</p>
