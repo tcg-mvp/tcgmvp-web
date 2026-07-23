@@ -134,10 +134,17 @@ export default async function ProductDetailPage({
 
       <header className="nav-wrap">
         <nav className="nav container">
-          <Link className="brand" href="/">
-            <span className="brand-mark">M</span>
-            <span>TCGMVP</span>
-          </Link>
+      <Link className="brand" href="/">
+        <Image
+          src="/tcgmvp-mark.png"
+          alt="TCGMVP"
+          width={48}
+          height={48}
+          className="brand-logo"
+          priority
+        />
+        <span>TCGMVP</span>
+      </Link>
 
           <div className="nav-links">
             <Link href="/">Home</Link>

@@ -125,8 +125,8 @@ export default async function ProductsPage() {
               <Image
                 src="/tcgmvp-mark.png"
                 alt="TCGMVP"
-                width={38}
-                height={38}
+                width={48}
+                height={48}
                 className="brand-logo"
                 priority
               />
@@ -188,10 +188,17 @@ export default async function ProductsPage() {
 
       <header className="nav-wrap">
         <nav className="nav container">
-          <Link className="brand" href="/">
-            <span className="brand-mark">M</span>
-            <span>TCGMVP</span>
-          </Link>
+      <Link href="/" className="brand">
+        <Image
+          src="/tcgmvp-mark.png"
+          alt="TCGMVP"
+          width={48}
+          height={48}
+          className="brand-logo"
+          priority
+        />
+        <span>TCGMVP</span>
+      </Link>
 
           <div className="nav-links">
             <Link href="/">Home</Link>

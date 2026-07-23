@@ -304,8 +304,8 @@ export default function Home() {
             <Image
               src="/tcgmvp-mark.png"
               alt=""
-              width={38}
-              height={38}
+              width={48}
+              height={48}
               className="brand-logo"
               priority
             />
@@ -764,8 +764,8 @@ export default function Home() {
             <Image
               src="/tcgmvp-mark.png"
               alt=""
-              width={38}
-              height={38}
+              width={48}
+              height={48}
               className="brand-logo"
             />
             <span>TCGMVP</span>
