@@ -2,7 +2,55 @@ import Link from "next/link";
 
 import ProductCard from "@/components/ProductCard";
 import { supabase } from "@/lib/supabase";
+type PriceHistoryEntry = {
+  price: number | string;
+  recorded_at: string;
+};
 
+function calculateMarketData(priceHistory: PriceHistoryEntry[]) {
+  if (!priceHistory || priceHistory.length === 0) {
+    return {
+      marketPrice: null,
+      change30d: null,
+    };
+  }
+
+  const sortedHistory = [...priceHistory].sort(
+    (a, b) =>
+      new Date(a.recorded_at).getTime() -
+      new Date(b.recorded_at).getTime()
+  );
+
+  const latestEntry = sortedHistory[sortedHistory.length - 1];
+  const latestPrice = Number(latestEntry.price);
+  const latestDate = new Date(latestEntry.recorded_at);
+
+  const targetDate = new Date(latestDate);
+  targetDate.setDate(targetDate.getDate() - 30);
+
+  const olderEntries = sortedHistory.filter(
+    (entry) => new Date(entry.recorded_at) <= targetDate
+  );
+
+  const thirtyDayEntry =
+    olderEntries.length > 0
+      ? olderEntries[olderEntries.length - 1]
+      : null;
+
+  const thirtyDayPrice = thirtyDayEntry
+    ? Number(thirtyDayEntry.price)
+    : null;
+
+  const change30d =
+    thirtyDayPrice !== null && thirtyDayPrice > 0
+      ? ((latestPrice - thirtyDayPrice) / thirtyDayPrice) * 100
+      : null;
+
+  return {
+    marketPrice: latestPrice,
+    change30d,
+  };
+}
 export default async function ProductsPage() {
   const { data: products, error } = await supabase
     .from("products")
@@ -23,9 +71,9 @@ export default async function ProductsPage() {
       product_types (
         name
       ),
-      product_market_summary (
-        current_market_price,
-        change_30d_percent
+      product_price_history (
+        price,
+        recorded_at
       )
     `)
     .eq("active", true)
@@ -196,18 +244,9 @@ export default async function ProductsPage() {
           {[0, 1].map((group) => (
             <div className="ticker-group" key={group}>
               {products.map((product) => {
-                const marketData = Array.isArray(
-                  product.product_market_summary
-                )
-                  ? product.product_market_summary[0]
-                  : product.product_market_summary;
-
-                const change =
-                  marketData?.change_30d_percent === null ||
-                  marketData?.change_30d_percent === undefined
-                    ? null
-                    : Number(marketData.change_30d_percent);
-
+                const { change30d } = calculateMarketData(
+                  product.product_price_history ?? []
+                );
                 return (
                   <span key={`${group}-${product.id}`}>
                     <strong>
@@ -216,14 +255,14 @@ export default async function ProductsPage() {
 
                     <b
                       className={
-                        change !== null && change < 0
+                        change30d !== null && change30d < 0
                           ? "negative"
                           : "positive"
                       }
                     >
-                      {change === null
+                      {change30d === null
                         ? "N/A"
-                        : `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`}
+                        : `${change30d >= 0 ? "+" : ""}${change30d.toFixed(2)}%`}
                     </b>
                   </span>
                 );
@@ -265,11 +304,9 @@ export default async function ProductsPage() {
                 ? product.product_types[0]
                 : product.product_types;
 
-              const marketData = Array.isArray(
-                product.product_market_summary
-              )
-                ? product.product_market_summary[0]
-                : product.product_market_summary;
+              const { marketPrice, change30d } = calculateMarketData(
+                product.product_price_history ?? []
+              );
               return (
                 <ProductCard
                   key={product.id}
@@ -279,18 +316,8 @@ export default async function ProductsPage() {
                   productType={productTypeData?.name ?? "Sealed Product"}
                   language={languageData?.name ?? "Unknown"}
                   series={seriesData?.name ?? "Unknown Series"}
-                  marketPrice={
-                    marketData?.current_market_price === null ||
-                    marketData?.current_market_price === undefined
-                      ? null
-                      : Number(marketData.current_market_price)
-                  }
-                  change30d={
-                    marketData?.change_30d_percent === null ||
-                    marketData?.change_30d_percent === undefined
-                      ? null
-                      : Number(marketData.change_30d_percent)
-                  }
+                  marketPrice={marketPrice}
+                  change30d={change30d}
                 />
               );
             })}

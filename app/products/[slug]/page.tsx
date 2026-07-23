@@ -10,7 +10,55 @@ type ProductPageProps = {
     slug: string;
   }>;
 };
+type PriceHistoryEntry = {
+  price: number | string;
+  recorded_at: string;
+};
 
+function calculateMarketData(priceHistory: PriceHistoryEntry[]) {
+  if (!priceHistory || priceHistory.length === 0) {
+    return {
+      marketPrice: null,
+      change30d: null,
+    };
+  }
+
+  const sortedHistory = [...priceHistory].sort(
+    (a, b) =>
+      new Date(a.recorded_at).getTime() -
+      new Date(b.recorded_at).getTime()
+  );
+
+  const latestEntry = sortedHistory[sortedHistory.length - 1];
+  const latestPrice = Number(latestEntry.price);
+  const latestDate = new Date(latestEntry.recorded_at);
+
+  const targetDate = new Date(latestDate);
+  targetDate.setDate(targetDate.getDate() - 30);
+
+  const olderEntries = sortedHistory.filter(
+    (entry) => new Date(entry.recorded_at) <= targetDate
+  );
+
+  const thirtyDayEntry =
+    olderEntries.length > 0
+      ? olderEntries[olderEntries.length - 1]
+      : null;
+
+  const thirtyDayPrice = thirtyDayEntry
+    ? Number(thirtyDayEntry.price)
+    : null;
+
+  const change30d =
+    thirtyDayPrice !== null && thirtyDayPrice > 0
+      ? ((latestPrice - thirtyDayPrice) / thirtyDayPrice) * 100
+      : null;
+
+  return {
+    marketPrice: latestPrice,
+    change30d,
+  };
+}
 export default async function ProductDetailPage({
   params,
 }: ProductPageProps) {
@@ -35,10 +83,6 @@ export default async function ProductDetailPage({
       ),
       product_types (
         name
-      ),
-      product_market_summary (
-        current_market_price,
-        change_30d_percent
       ),
       product_price_history (
         price,
@@ -69,21 +113,6 @@ export default async function ProductDetailPage({
     ? product.product_types[0]
     : product.product_types;
 
-  const marketData = Array.isArray(product.product_market_summary)
-    ? product.product_market_summary[0]
-    : product.product_market_summary;
-
-  const marketPrice =
-    marketData?.current_market_price === null ||
-    marketData?.current_market_price === undefined
-      ? null
-      : Number(marketData.current_market_price);
-
-  const change30d =
-    marketData?.change_30d_percent === null ||
-    marketData?.change_30d_percent === undefined
-      ? null
-      : Number(marketData.change_30d_percent);
   const priceHistory = Array.isArray(product.product_price_history)
     ? product.product_price_history
         .map((item) => ({
@@ -96,6 +125,8 @@ export default async function ProductDetailPage({
             new Date(b.recorded_at).getTime()
         )
     : [];
+  const { marketPrice, change30d } =
+    calculateMarketData(priceHistory);
   return (
     <main className="site-shell products-page">
       <div className="ambient ambient-one" />

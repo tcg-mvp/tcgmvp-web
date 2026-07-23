@@ -69,7 +69,55 @@ const faqs = [
       "The product is currently in development. Beta users will be invited in stages as core market data and deal analysis features become available.",
   },
 ];
+type PriceHistoryEntry = {
+  price: number | string;
+  recorded_at: string;
+};
 
+function calculateMarketData(priceHistory: PriceHistoryEntry[]) {
+  if (!priceHistory || priceHistory.length === 0) {
+    return {
+      marketPrice: null,
+      change30d: null,
+    };
+  }
+
+  const sortedHistory = [...priceHistory].sort(
+    (a, b) =>
+      new Date(a.recorded_at).getTime() -
+      new Date(b.recorded_at).getTime()
+  );
+
+  const latestEntry = sortedHistory[sortedHistory.length - 1];
+  const latestPrice = Number(latestEntry.price);
+  const latestDate = new Date(latestEntry.recorded_at);
+
+  const targetDate = new Date(latestDate);
+  targetDate.setDate(targetDate.getDate() - 30);
+
+  const olderEntries = sortedHistory.filter(
+    (entry) => new Date(entry.recorded_at) <= targetDate
+  );
+
+  const thirtyDayEntry =
+    olderEntries.length > 0
+      ? olderEntries[olderEntries.length - 1]
+      : null;
+
+  const thirtyDayPrice = thirtyDayEntry
+    ? Number(thirtyDayEntry.price)
+    : null;
+
+  const change30d =
+    thirtyDayPrice !== null && thirtyDayPrice > 0
+      ? ((latestPrice - thirtyDayPrice) / thirtyDayPrice) * 100
+      : null;
+
+  return {
+    marketPrice: latestPrice,
+    change30d,
+  };
+}
 type FeaturedProduct = {
   id: number;
   name: string;
@@ -115,16 +163,7 @@ type FeaturedProduct = {
         name: string;
       }[]
     | null;
-  product_market_summary:
-    | {
-        current_market_price: number | string | null;
-        change_30d_percent: number | string | null;
-      }
-    | {
-        current_market_price: number | string | null;
-        change_30d_percent: number | string | null;
-      }[]
-    | null;
+  product_price_history: PriceHistoryEntry[] | null;
 };
 function Icon({ type }: { type: string }) {
   if (type === "chart") {
@@ -210,9 +249,9 @@ export default function Home() {
           product_types (
             name
           ),
-          product_market_summary (
-            current_market_price,
-            change_30d_percent
+          product_price_history (
+            price,
+            recorded_at
           )
         `)
         .eq("active", true)
@@ -234,6 +273,19 @@ export default function Home() {
 
     loadFeaturedProducts();
   }, []);
+      const evolvingSkies = featuredProducts.find(
+      (product) =>
+        product.slug === "evolving-skies-booster-box-english"
+    );
+
+    const evolvingSkiesMarketData = evolvingSkies
+      ? calculateMarketData(
+          evolvingSkies.product_price_history ?? []
+        )
+      : {
+          marketPrice: null,
+          change30d: null,
+        };
   return (
     <main ref={shellRef} className="site-shell">
       <div className="mesh-background" aria-hidden="true">
@@ -354,6 +406,7 @@ export default function Home() {
                     <strong>$2,487</strong>
                     <small className="positive">+7.2% in 30 days</small>
                   </div>
+                  
                   <div className="metric-card">
                     <span>Deal score</span>
                     <strong>92/100</strong>
@@ -441,15 +494,37 @@ export default function Home() {
       </section>
 
 
-      <section className="market-ticker" aria-label="Sample market movement">
+      <section className="market-ticker" aria-label="Current market movement">
         <div className="ticker-track">
-          {[...Array(2)].map((_, group) => (
+          {[0, 1].map((group) => (
             <div className="ticker-group" key={group}>
-              <span><strong>Evolving Skies</strong><b className="positive">+7.2%</b></span>
-              <span><strong>Chilling Reign</strong><b className="positive">+3.8%</b></span>
-              <span><strong>Fusion Strike</strong><b className="positive">+5.1%</b></span>
-              <span><strong>Lost Origin</strong><b className="negative">-1.4%</b></span>
-              <span><strong>Silver Tempest</strong><b className="positive">+2.6%</b></span>
+              {featuredProducts.map((product) => {
+                const { change30d } = calculateMarketData(
+                  product.product_price_history ?? []
+                );
+
+                return (
+                  <span key={`${group}-${product.id}`}>
+                    <strong>
+                      {product.name.replace(" Booster Box", "")}
+                    </strong>
+
+                    <b
+                      className={
+                        change30d !== null && change30d < 0
+                          ? "negative"
+                          : "positive"
+                      }
+                    >
+                      {change30d === null
+                        ? "N/A"
+                        : `${change30d >= 0 ? "+" : ""}${change30d.toFixed(
+                            2
+                          )}%`}
+                    </b>
+                  </span>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -530,21 +605,9 @@ export default function Home() {
                   ? product.product_types[0]
                   : product.product_types;
 
-                const marketData = Array.isArray(product.product_market_summary)
-                  ? product.product_market_summary[0]
-                  : product.product_market_summary;
-
-                const marketPrice =
-                  marketData?.current_market_price === null ||
-                  marketData?.current_market_price === undefined
-                    ? null
-                    : Number(marketData.current_market_price);
-
-                const change30d =
-                  marketData?.change_30d_percent === null ||
-                  marketData?.change_30d_percent === undefined
-                    ? null
-                    : Number(marketData.change_30d_percent);
+                const { marketPrice, change30d } = calculateMarketData(
+                  product.product_price_history ?? []
+                );
 
                 return (
                   <ProductCard
