@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 const features = [
@@ -149,11 +150,12 @@ export default function Home() {
           </a>
 
           <div className="nav-links">
-            <a href="#platform">Platform</a>
-            <a href="#how-it-works">How it works</a>
-            <a href="#about">About</a>
-            <a href="#faq">FAQ</a>
-          </div>
+          <Link href="/products">Market</Link>
+          <a href="#platform">Platform</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#about">About</a>
+          <a href="#faq">FAQ</a>
+        </div>
 
           <a
             className="button button-small button-primary"
@@ -190,9 +192,9 @@ export default function Home() {
               Join the beta
               <span>↗</span>
             </a>
-            <a className="button button-secondary" href="#platform">
-              Explore the platform
-            </a>
+            <Link className="button button-secondary" href="/products">
+              Explore the market
+            </Link>
           </div>
 
           <div className="hero-proof">

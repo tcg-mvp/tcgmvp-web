@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import ProductCard from "@/components/ProductCard";
 import { supabase } from "@/lib/supabase";
 
@@ -28,13 +30,13 @@ export default async function ProductsPage() {
     .eq("active", true)
     .order("name", { ascending: true });
 
-if (error) {
-  console.log("Supabase products error:", {
-    message: error.message,
-    code: error.code,
-    details: error.details,
-    hint: error.hint,
-  });
+  if (error) {
+    console.log("Supabase products error:", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
 
     return (
       <main className="min-h-screen bg-[#07111f] px-6 py-24 text-white">
@@ -56,48 +58,202 @@ if (error) {
               null,
               2
             )}
-</pre>
+          </pre>
         </div>
       </main>
     );
   }
 
-  return (
-    <main className="min-h-screen bg-[#07111f] px-6 py-24 text-white">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">
-            TCGMVP Market
-          </p>
+  if (!products || products.length === 0) {
+    return (
+      <main className="site-shell products-page">
+        <div className="ambient ambient-one" />
+        <div className="ambient ambient-two" />
 
-          <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
-            Sealed Products
+        <header className="nav-wrap">
+          <nav className="nav container">
+            <Link className="brand" href="/">
+              <span className="brand-mark">M</span>
+              <span>TCGMVP</span>
+            </Link>
+
+            <div className="nav-links">
+              <Link href="/">Home</Link>
+              <Link href="/products">Market</Link>
+              <span>Portfolio</span>
+              <span>Watchlist</span>
+            </div>
+
+            <Link className="button button-small button-primary" href="/">
+              Back home
+              <span>↗</span>
+            </Link>
+          </nav>
+        </header>
+
+        <section className="products-hero container">
+          <div className="products-hero-copy">
+            <div className="eyebrow">
+              <span className="eyebrow-dot" />
+              Live Pokémon market tracking
+            </div>
+
+            <h1>
+              Explore the sealed{" "}
+              <span className="gradient-text">product market.</span>
+            </h1>
+
+            <p>
+              Compare market values and performance across tracked Pokémon
+              sealed products.
+            </p>
+          </div>
+        </section>
+
+        <section className="section">
+          <div className="container">
+            <div className="empty-market-state">
+              <h2>No products found</h2>
+              <p>
+                Your database connected successfully, but no active products
+                were returned.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="site-shell products-page">
+      <div className="ambient ambient-one" />
+      <div className="ambient ambient-two" />
+
+      <header className="nav-wrap">
+        <nav className="nav container">
+          <Link className="brand" href="/">
+            <span className="brand-mark">M</span>
+            <span>TCGMVP</span>
+          </Link>
+
+          <div className="nav-links">
+            <Link href="/">Home</Link>
+            <Link href="/products">Market</Link>
+            <span>Portfolio</span>
+            <span>Watchlist</span>
+          </div>
+
+          <Link className="button button-small button-primary" href="/">
+            Back home
+            <span>↗</span>
+          </Link>
+        </nav>
+      </header>
+
+      <section className="products-hero container">
+        <div className="products-hero-copy">
+          <div className="eyebrow">
+            <span className="eyebrow-dot" />
+            Live Pokémon market tracking
+          </div>
+
+          <h1>
+            Explore the sealed{" "}
+            <span className="gradient-text">product market.</span>
           </h1>
 
-          <p className="mt-4 max-w-2xl text-white/60">
-            Explore tracked Pokémon sealed products and their latest market
-            performance.
+          <p>
+            Compare values, market movement, liquidity, and historical
+            performance across tracked English Pokémon sealed products.
           </p>
         </div>
 
-        {!products || products.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-10">
-            <h2 className="text-xl font-semibold">No products found</h2>
+        <div className="products-market-summary">
+          <div>
+            <span>Tracked products</span>
+            <strong>{products.length}</strong>
+          </div>
 
-            <p className="mt-2 text-white/60">
-              Your database connected successfully, but no active products were
-              returned.
+          <div>
+            <span>Primary market</span>
+            <strong>English Pokémon</strong>
+          </div>
+
+          <div>
+            <span>Data status</span>
+            <strong className="positive">Live</strong>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="market-ticker"
+        aria-label="Current market movement"
+      >
+        <div className="ticker-track">
+          {[0, 1].map((group) => (
+            <div className="ticker-group" key={group}>
+              {products.map((product) => {
+                const marketData = Array.isArray(
+                  product.product_market_summary
+                )
+                  ? product.product_market_summary[0]
+                  : product.product_market_summary;
+
+                const change =
+                  marketData?.change_30d_percent === null ||
+                  marketData?.change_30d_percent === undefined
+                    ? null
+                    : Number(marketData.change_30d_percent);
+
+                return (
+                  <span key={`${group}-${product.id}`}>
+                    <strong>
+                      {product.name.replace(" Booster Box", "")}
+                    </strong>
+
+                    <b
+                      className={
+                        change !== null && change < 0
+                          ? "negative"
+                          : "positive"
+                      }
+                    >
+                      {change === null
+                        ? "N/A"
+                        : `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`}
+                    </b>
+                  </span>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section product-showcase-section">
+        <div className="container">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">Market watch</span>
+              <h2>Tracked sealed products.</h2>
+            </div>
+
+            <p>
+              Select a product to view its market value, recent movement,
+              transactions, listings, and long-term performance.
             </p>
           </div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+          <div className="product-showcase">
             {products.map((product) => {
               const setData = Array.isArray(product.sets)
                 ? product.sets[0]
                 : product.sets;
 
               const seriesData = Array.isArray(setData?.series)
-                ? setData?.series[0]
+                ? setData.series[0]
                 : setData?.series;
 
               const languageData = Array.isArray(product.languages)
@@ -138,8 +294,8 @@ if (error) {
               );
             })}
           </div>
-        )}
-      </div>
+        </div>
+      </section>
     </main>
   );
 }

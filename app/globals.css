@@ -1516,3 +1516,89 @@ a {
     animation: none;
   }
 }
+/* =========================================================
+   PRODUCTS PAGE
+========================================================= */
+
+.products-page {
+  padding-bottom: 100px;
+}
+
+.products-hero {
+  position: relative;
+  z-index: 2;
+  padding-top: 90px;
+  padding-bottom: 72px;
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  align-items: end;
+  gap: 70px;
+}
+
+.products-hero-copy h1 {
+  max-width: 760px;
+  margin: 24px 0 0;
+  font-size: clamp(3.2rem, 6vw, 5.6rem);
+  line-height: .95;
+  letter-spacing: -.06em;
+}
+
+.products-hero-copy p {
+  margin-top: 24px;
+  max-width: 640px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.products-market-summary {
+  border: 1px solid rgba(96,165,250,.2);
+  border-radius: 20px;
+  background: rgba(12,22,40,.82);
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+.products-market-summary div {
+  padding: 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid rgba(148,163,184,.08);
+}
+
+.products-market-summary div:last-child{
+  border-bottom:none;
+}
+
+.products-market-summary span{
+  color:#64748b;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.products-market-summary strong{
+  font-size:.95rem;
+  color:white;
+}
+
+.empty-market-state{
+  padding:80px;
+  text-align:center;
+  border-radius:24px;
+  border:1px solid rgba(148,163,184,.12);
+  background:rgba(15,23,42,.7);
+}
+
+@media(max-width:900px){
+
+.products-hero{
+grid-template-columns:1fr;
+gap:40px;
+}
+
+.products-market-summary{
+max-width:600px;
+}
+
+}
