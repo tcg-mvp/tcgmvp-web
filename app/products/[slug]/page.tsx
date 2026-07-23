@@ -168,7 +168,6 @@ export default async function ProductDetailPage({
           <div className="empty-market-state">
             <span className="section-kicker">Product overview</span>
 
-            <h2>{product.name}</h2>
 
             <p>
                  {setData?.overview ??
