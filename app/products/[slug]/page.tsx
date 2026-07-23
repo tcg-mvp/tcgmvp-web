@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -20,6 +21,7 @@ export default async function ProductDetailPage({
       id,
       name,
       slug,
+      image_url,
       sets (
         name,
         overview,
@@ -107,75 +109,93 @@ export default async function ProductDetailPage({
         </nav>
       </header>
 
-      <section className="products-hero container">
-        <div className="products-hero-copy">
-          <div className="eyebrow">
-            <span className="eyebrow-dot" />
-            Live product intelligence
-          </div>
+<section className="product-detail-hero">
+  <div className="container product-detail-hero-grid">
+    <div className="product-detail-image-area">
+      {product.image_url ? (
+        <Image
+          src={product.image_url}
+          alt={`${product.name} product image`}
+          width={600}
+          height={600}
+          priority
+          className="product-detail-image"
+        />
+      ) : (
+        <div className="product-detail-image-placeholder">
+          Product image unavailable
+        </div>
+      )}
+    </div>
 
-          <h1>
-            {product.name.replace(" Booster Box", "")}{" "}
-            <span className="gradient-text">
-              {productTypeData?.name ?? "Sealed Product"}
-            </span>
-          </h1>
+    <div className="product-detail-information">
+      <div className="eyebrow">
+        <span className="eyebrow-dot" />
+        Live product intelligence
+      </div>
 
-          <p>
-            {seriesData?.name ?? "Unknown Series"} ·{" "}
-            {languageData?.name ?? "Unknown Language"}
-          </p>
+      <h1>
+        {product.name.replace(" Booster Box", "")}{" "}
+        <span className="gradient-text">
+          {productTypeData?.name ?? "Sealed Product"}
+        </span>
+      </h1>
+
+      <p className="product-detail-meta">
+        {seriesData?.name ?? "Unknown Series"} ·{" "}
+        {languageData?.name ?? "Unknown Language"}
+      </p>
+
+      <div className="products-market-summary product-market-panel">
+        <div>
+          <span>Market price</span>
+          <strong>
+            {marketPrice === null
+              ? "N/A"
+              : marketPrice.toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                  maximumFractionDigits: 0,
+                })}
+          </strong>
         </div>
 
-        <div className="products-market-summary">
-          <div>
-            <span>Market price</span>
-            <strong>
-              {marketPrice === null
-                ? "N/A"
-                : marketPrice.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    maximumFractionDigits: 0,
-                  })}
-            </strong>
-          </div>
-
-          <div>
-            <span>30-day movement</span>
-            <strong
-              className={
-                change30d !== null && change30d < 0
-                  ? "negative"
-                  : "positive"
-              }
-            >
-              {change30d === null
-                ? "N/A"
-                : `${change30d >= 0 ? "+" : ""}${change30d.toFixed(2)}%`}
-            </strong>
-          </div>
-
-          <div>
-            <span>Status</span>
-            <strong className="positive">Tracked</strong>
-          </div>
+        <div>
+          <span>30-day movement</span>
+          <strong
+            className={
+              change30d !== null && change30d < 0
+                ? "negative"
+                : "positive"
+            }
+          >
+            {change30d === null
+              ? "N/A"
+              : `${change30d >= 0 ? "+" : ""}${change30d.toFixed(2)}%`}
+          </strong>
         </div>
-      </section>
 
-      <section className="section">
-        <div className="container">
-          <div className="empty-market-state">
-            <span className="section-kicker">Product overview</span>
-
-
-            <p>
-                 {setData?.overview ??
-                    "Product overview is not available yet."}
-            </p>
-          </div>
+        <div>
+          <span>Status</span>
+          <strong className="positive">Tracked</strong>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section className="product-overview-section">
+  <div className="container">
+    <div className="product-overview-panel">
+      <span className="section-kicker">Product overview</span>
+
+      <p>
+        {setData?.overview ??
+          "Product overview is not available yet."}
+      </p>
+    </div>
+  </div>
+</section>
     </main>
   );
 }

@@ -10,6 +10,7 @@ export default async function ProductsPage() {
       id,
       name,
       slug,
+      image_url,
       sets (
         name,
         series (
@@ -269,12 +270,12 @@ export default async function ProductsPage() {
               )
                 ? product.product_market_summary[0]
                 : product.product_market_summary;
-
               return (
                 <ProductCard
                   key={product.id}
                   name={product.name}
                   slug={product.slug}
+                  image_url={product.image_url}
                   productType={productTypeData?.name ?? "Sealed Product"}
                   language={languageData?.name ?? "Unknown"}
                   series={seriesData?.name ?? "Unknown Series"}
