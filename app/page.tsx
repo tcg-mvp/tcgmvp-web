@@ -1,7 +1,8 @@
 "use client";
-
+import ProductCard from "@/components/ProductCard";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const features = [
   {
@@ -69,6 +70,62 @@ const faqs = [
   },
 ];
 
+type FeaturedProduct = {
+  id: number;
+  name: string;
+  slug: string;
+  image_url: string | null;
+  sets:
+    | {
+        name: string;
+        series:
+          | {
+              name: string;
+            }
+          | {
+              name: string;
+            }[]
+          | null;
+      }
+    | {
+        name: string;
+        series:
+          | {
+              name: string;
+            }
+          | {
+              name: string;
+            }[]
+          | null;
+      }[]
+    | null;
+  languages:
+    | {
+        name: string;
+      }
+    | {
+        name: string;
+      }[]
+    | null;
+  product_types:
+    | {
+        name: string;
+      }
+    | {
+        name: string;
+      }[]
+    | null;
+  product_market_summary:
+    | {
+        current_market_price: number | string | null;
+        change_30d_percent: number | string | null;
+      }
+    | {
+        current_market_price: number | string | null;
+        change_30d_percent: number | string | null;
+      }[]
+    | null;
+};
 function Icon({ type }: { type: string }) {
   if (type === "chart") {
     return (
@@ -96,7 +153,8 @@ function Icon({ type }: { type: string }) {
 
 export default function Home() {
   const shellRef = useRef<HTMLElement>(null);
-
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [featuredProductsLoading, setFeaturedProductsLoading] = useState(true);
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
       const shell = shellRef.current;
@@ -131,6 +189,51 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    async function loadFeaturedProducts() {
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          id,
+          name,
+          slug,
+          image_url,
+          sets (
+            name,
+            series (
+              name
+            )
+          ),
+          languages (
+            name
+          ),
+          product_types (
+            name
+          ),
+          product_market_summary (
+            current_market_price,
+            change_30d_percent
+          )
+        `)
+        .eq("active", true)
+        .in("slug", [
+          "evolving-skies-booster-box-english",
+          "chilling-reign-booster-box-english",
+          "team-up-booster-box-english"
+        ]);
+
+      if (error) {
+        console.error("Featured products error:", error);
+        setFeaturedProductsLoading(false);
+        return;
+      }
+
+      setFeaturedProducts((data ?? []) as FeaturedProduct[]);
+      setFeaturedProductsLoading(false);
+    }
+
+    loadFeaturedProducts();
+  }, []);
   return (
     <main ref={shellRef} className="site-shell">
       <div className="mesh-background" aria-hidden="true">
@@ -400,58 +503,64 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="product-showcase">
-            {[
-              {
-                name: "Evolving Skies",
-                type: "Booster Box",
-                value: "$2,487",
-                move: "+7.2%",
-                score: "92",
-                tone: "sky",
-              },
-              {
-                name: "Chilling Reign",
-                type: "Booster Box",
-                value: "$468",
-                move: "+3.8%",
-                score: "86",
-                tone: "ice",
-              },
-              {
-                name: "151",
-                type: "Ultra-Premium Collection",
-                value: "$392",
-                move: "+5.6%",
-                score: "89",
-                tone: "violet",
-              },
-            ].map((product, index) => (
-              <article
-                className={`product-card product-${product.tone} reveal delay-${index}`}
-                data-reveal
-                key={product.name}
-              >
-                <div className="product-art">
-                  <div className="product-box">
-                    <span className="product-brand">TCGMVP</span>
-                    <strong>{product.name}</strong>
-                    <small>{product.type}</small>
-                  </div>
-                </div>
-                <div className="product-card-body">
-                  <div>
-                    <span className="mini-label">{product.type}</span>
-                    <h3>{product.name}</h3>
-                  </div>
-                  <div className="product-stat-row">
-                    <div><span>Market</span><strong>{product.value}</strong></div>
-                    <div><span>30 days</span><strong className="positive">{product.move}</strong></div>
-                    <div><span>Score</span><strong>{product.score}</strong></div>
-                  </div>
-                </div>
-              </article>
-            ))}
+         <div className="product-showcase">
+            {featuredProductsLoading ? (
+              <div className="featured-products-loading">
+                Loading featured products...
+              </div>
+            ) : featuredProducts.length === 0 ? (
+              <div className="featured-products-loading">
+                Featured products are not available yet.
+              </div>
+            ) : (
+              featuredProducts.map((product) => {
+                const setData = Array.isArray(product.sets)
+                  ? product.sets[0]
+                  : product.sets;
+
+                const seriesData = Array.isArray(setData?.series)
+                  ? setData.series[0]
+                  : setData?.series;
+
+                const languageData = Array.isArray(product.languages)
+                  ? product.languages[0]
+                  : product.languages;
+
+                const productTypeData = Array.isArray(product.product_types)
+                  ? product.product_types[0]
+                  : product.product_types;
+
+                const marketData = Array.isArray(product.product_market_summary)
+                  ? product.product_market_summary[0]
+                  : product.product_market_summary;
+
+                const marketPrice =
+                  marketData?.current_market_price === null ||
+                  marketData?.current_market_price === undefined
+                    ? null
+                    : Number(marketData.current_market_price);
+
+                const change30d =
+                  marketData?.change_30d_percent === null ||
+                  marketData?.change_30d_percent === undefined
+                    ? null
+                    : Number(marketData.change_30d_percent);
+
+                return (
+                  <ProductCard
+                    key={product.id}
+                    name={product.name}
+                    slug={product.slug}
+                    image_url={product.image_url}
+                    productType={productTypeData?.name ?? "Sealed Product"}
+                    language={languageData?.name ?? "Unknown"}
+                    series={seriesData?.name ?? "Unknown Series"}
+                    marketPrice={marketPrice}
+                    change30d={change30d}
+                  />
+                );
+              })
+            )}
           </div>
         </div>
       </section>
