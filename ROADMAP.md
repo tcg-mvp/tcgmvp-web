@@ -20,16 +20,16 @@ Build the premier market intelligence platform for Pokémon sealed products, hel
 
 - [x] Dynamic product pages
 - [x] Real product images
-- [ ] Historical price charts
-- [ ] Recent sales
-- [ ] Current listings
+- [x] Historical price charts
+- [x] Recent sales
+- [x] Current listings
 - [ ] Product search
 
 ---
 
 # Phase 3 – Market Intelligence
 
-- [ ] Deal Score
+- [x] Deal Score
 - [ ] Liquidity Score
 - [ ] Confidence Score
 - [ ] Volatility Analysis

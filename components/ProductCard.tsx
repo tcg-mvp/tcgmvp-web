@@ -30,7 +30,6 @@ export default function ProductCard({
     : name.toLowerCase().includes("chilling")
       ? "ice"
       : "violet";
-console.log(name, image_url);
   return (
     <Link
       href={`/products/${slug}`}

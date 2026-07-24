@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import PriceChart from "@/components/PriceChart";
+import ProductTabs from "@/components/product/ProductTabs";
 import { supabase } from "@/lib/supabase";
 
 type ProductPageProps = {
@@ -10,11 +10,38 @@ type ProductPageProps = {
     slug: string;
   }>;
 };
+
 type PriceHistoryEntry = {
   price: number | string;
   recorded_at: string;
 };
 
+type MarketSale = {
+  id: number;
+  marketplace: string;
+  title: string;
+  sale_price: number | string;
+  shipping_price: number | string;
+  total_price: number | string | null;
+  sale_type: string | null;
+  sold_at: string;
+  listing_url: string | null;
+  is_verified: boolean;
+};
+type MarketListing = {
+  id: number;
+  marketplace: string;
+  title: string;
+  listing_price: number | string;
+  shipping_price: number | string;
+  total_price: number | string | null;
+  listing_type: string | null;
+  seller_name: string | null;
+  seller_feedback: number | string | null;
+  listing_url: string | null;
+  listed_at: string | null;
+  last_seen: string | null;
+};
 function calculateMarketData(priceHistory: PriceHistoryEntry[]) {
   if (!priceHistory || priceHistory.length === 0) {
     return {
@@ -59,6 +86,7 @@ function calculateMarketData(priceHistory: PriceHistoryEntry[]) {
     change30d,
   };
 }
+
 export default async function ProductDetailPage({
   params,
 }: ProductPageProps) {
@@ -97,6 +125,59 @@ export default async function ProductDetailPage({
     notFound();
   }
 
+  const { data: salesData, error: salesError } = await supabase
+    .from("market_sales")
+    .select(`
+      id,
+      marketplace,
+      title,
+      sale_price,
+      shipping_price,
+      total_price,
+      sale_type,
+      sold_at,
+      listing_url,
+      is_verified
+    `)
+    .eq("product_id", product.id)
+    .order("sold_at", { ascending: false })
+    .limit(10);
+
+  if (salesError) {
+    console.error("Unable to load market sales:", salesError.message);
+  }
+
+  const marketSales = (salesData ?? []) as MarketSale[];
+  const { data: listingsData, error: listingsError } = await supabase
+  .from("market_listings")
+  .select(`
+    id,
+    marketplace,
+    title,
+    listing_price,
+    shipping_price,
+    total_price,
+    listing_type,
+    seller_name,
+    seller_feedback,
+    listing_url,
+    listed_at,
+    last_seen
+  `)
+  .eq("product_id", product.id)
+  .order("total_price", { ascending: true })
+  .limit(10);
+
+if (listingsError) {
+  console.error(
+    "Unable to load market listings:",
+    listingsError.message
+  );
+}
+
+const marketListings =
+  (listingsData ?? []) as MarketListing[];
+
   const setData = Array.isArray(product.sets)
     ? product.sets[0]
     : product.sets;
@@ -125,8 +206,10 @@ export default async function ProductDetailPage({
             new Date(b.recorded_at).getTime()
         )
     : [];
+
   const { marketPrice, change30d } =
     calculateMarketData(priceHistory);
+
   return (
     <main className="site-shell products-page">
       <div className="ambient ambient-one" />
@@ -134,17 +217,17 @@ export default async function ProductDetailPage({
 
       <header className="nav-wrap">
         <nav className="nav container">
-      <Link className="brand" href="/">
-        <Image
-          src="/tcgmvp-mark.png"
-          alt="TCGMVP"
-          width={48}
-          height={48}
-          className="brand-logo"
-          priority
-        />
-        <span>TCGMVP</span>
-      </Link>
+          <Link className="brand" href="/">
+            <Image
+              src="/tcgmvp-mark.png"
+              alt="TCGMVP"
+              width={48}
+              height={48}
+              className="brand-logo"
+              priority
+            />
+            <span>TCGMVP</span>
+          </Link>
 
           <div className="nav-links">
             <Link href="/">Home</Link>
@@ -163,109 +246,100 @@ export default async function ProductDetailPage({
         </nav>
       </header>
 
-<section className="product-detail-hero">
-  <div className="container product-detail-hero-grid">
-    <div className="product-detail-image-area">
-      {product.image_url ? (
-        <Image
-          src={product.image_url}
-          alt={`${product.name} product image`}
-          width={600}
-          height={600}
-          priority
-          className="product-detail-image"
-        />
-      ) : (
-        <div className="product-detail-image-placeholder">
-          Product image unavailable
+      <section className="product-detail-hero">
+        <div className="container product-detail-hero-grid">
+          <div className="product-detail-image-area">
+            {product.image_url ? (
+              <Image
+                src={product.image_url}
+                alt={`${product.name} product image`}
+                width={600}
+                height={600}
+                priority
+                className="product-detail-image"
+              />
+            ) : (
+              <div className="product-detail-image-placeholder">
+                Product image unavailable
+              </div>
+            )}
+          </div>
+
+          <div className="product-detail-information">
+            <div className="eyebrow">
+              <span className="eyebrow-dot" />
+              Live product intelligence
+            </div>
+
+            <h1>
+              {product.name.replace(" Booster Box", "")}{" "}
+              <span className="gradient-text">
+                {productTypeData?.name ?? "Sealed Product"}
+              </span>
+            </h1>
+
+            <p className="product-detail-meta">
+              {seriesData?.name ?? "Unknown Series"} ·{" "}
+              {languageData?.name ?? "Unknown Language"}
+            </p>
+
+            <div className="products-market-summary product-market-panel">
+              <div>
+                <span>Market price</span>
+                <strong>
+                  {marketPrice === null
+                    ? "N/A"
+                    : marketPrice.toLocaleString("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                        maximumFractionDigits: 0,
+                      })}
+                </strong>
+              </div>
+
+              <div>
+                <span>30-day movement</span>
+                <strong
+                  className={
+                    change30d !== null && change30d < 0
+                      ? "negative"
+                      : "positive"
+                  }
+                >
+                  {change30d === null
+                    ? "N/A"
+                    : `${change30d >= 0 ? "+" : ""}${change30d.toFixed(2)}%`}
+                </strong>
+              </div>
+
+              <div>
+                <span>Status</span>
+                <strong className="positive">Tracked</strong>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
+      </section>
 
-    <div className="product-detail-information">
-      <div className="eyebrow">
-        <span className="eyebrow-dot" />
-        Live product intelligence
-      </div>
+      <section className="product-overview-section">
+        <div className="container">
+          <div className="product-overview-panel">
+            <span className="section-kicker">
+              Product overview
+            </span>
 
-      <h1>
-        {product.name.replace(" Booster Box", "")}{" "}
-        <span className="gradient-text">
-          {productTypeData?.name ?? "Sealed Product"}
-        </span>
-      </h1>
-
-      <p className="product-detail-meta">
-        {seriesData?.name ?? "Unknown Series"} ·{" "}
-        {languageData?.name ?? "Unknown Language"}
-      </p>
-
-      <div className="products-market-summary product-market-panel">
-        <div>
-          <span>Market price</span>
-          <strong>
-            {marketPrice === null
-              ? "N/A"
-              : marketPrice.toLocaleString("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                  maximumFractionDigits: 0,
-                })}
-          </strong>
+            <p>
+              {setData?.overview ??
+                "Product overview is not available yet."}
+            </p>
+          </div>
         </div>
-
-        <div>
-          <span>30-day movement</span>
-          <strong
-            className={
-              change30d !== null && change30d < 0
-                ? "negative"
-                : "positive"
-            }
-          >
-            {change30d === null
-              ? "N/A"
-              : `${change30d >= 0 ? "+" : ""}${change30d.toFixed(2)}%`}
-          </strong>
-        </div>
-
-        <div>
-          <span>Status</span>
-          <strong className="positive">Tracked</strong>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section className="product-chart-section">
-  <div className="container">
-    <div className="product-chart-panel">
-      <div className="product-chart-heading">
-        <div>
-          <span className="section-kicker">Price history</span>
-          <h2>Market performance</h2>
-        </div>
-
-      </div>
-
-      <PriceChart data={priceHistory} />
-    </div>
-  </div>
-</section>
-
-<section className="product-overview-section">
-  <div className="container">
-    <div className="product-overview-panel">
-      <span className="section-kicker">Product overview</span>
-
-      <p>
-        {setData?.overview ??
-          "Product overview is not available yet."}
-      </p>
-    </div>
-  </div>
-</section>
+      </section>
+      <ProductTabs
+  priceHistory={priceHistory}
+  sales={marketSales}
+  listings={marketListings}
+/>
     </main>
   );
 }
