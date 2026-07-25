@@ -1,4 +1,8 @@
 import DealScore from "./DealScore";
+import FairValue from "./FairValue";
+import MarketHealth from "./MarketHealth";
+import { calculateFairValue } from "@/lib/analytics/fairValue";
+
 type Sale = {
   sale_price: number | string;
 };
@@ -21,24 +25,7 @@ function formatCurrency(value: number | null) {
     maximumFractionDigits: 0,
   });
 }
-function calculateMedian(values: number[]): number | null {
-  if (values.length === 0) {
-    return null;
-  }
 
-  const sortedValues = [...values].sort((a, b) => a - b);
-  const middleIndex = Math.floor(sortedValues.length / 2);
-
-  if (sortedValues.length % 2 === 0) {
-    return (
-      (sortedValues[middleIndex - 1] +
-        sortedValues[middleIndex]) /
-      2
-    );
-  }
-
-  return sortedValues[middleIndex];
-}
 export default function MarketSnapshot({
   sales,
   listings,
@@ -67,69 +54,85 @@ export default function MarketSnapshot({
       ? listingPrices.reduce((total, price) => total + price, 0) /
         listingPrices.length
       : null;
-  const fairMarketValue = calculateMedian(salePrices);
 
+  const fairValueResult = calculateFairValue({
+    sales: salePrices,
+  });
+
+  const fairMarketValue = fairValueResult.fairValue;
   const recentSalesCount = salePrices.length;
-
-  const activeListingsCount = listingPrices.length;   
+  const activeListingsCount = listingPrices.length;
 
   return (
-      <>
-    <DealScore
-      fairMarketValue={fairMarketValue}
-      listingPrice={lowestListing}
-      recentSalesCount={recentSalesCount}
-      activeListingsCount={activeListingsCount}
-    />
-    <section className="market-snapshot">
-      <div className="snapshot-heading">
-        <div>
-          <span className="section-kicker">Market intelligence</span>
-          <h2>Market snapshot</h2>
-          <p>
-            A quick view of recent sales, active supply, and current asking
-            prices.
-          </p>
+    <>
+      <section className="market-snapshot">
+        <div className="snapshot-heading">
+          <div>
+            <span className="section-kicker">Market intelligence</span>
+
+            <h2>Market snapshot</h2>
+
+            <p>
+              A quick view of recent sales, active supply, and current asking
+              prices.
+            </p>
+          </div>
+
+          <div className="snapshot-heading-stat">
+            <strong>{recentSalesCount + activeListingsCount}</strong>
+            <span>DATA POINTS</span>
+          </div>
         </div>
 
-        <div className="snapshot-heading-stat">
-          <strong>{sales.length + listings.length}</strong>
-          <span>DATA POINTS</span>
-        </div>
-      </div>
+        <div className="snapshot-grid">
+          <div className="snapshot-card">
+            <span>Latest Sale</span>
+            <strong>{formatCurrency(latestSale)}</strong>
+          </div>
 
-      <div className="snapshot-grid">
-        <div className="snapshot-card">
-          <span>Latest Sale</span>
-          <strong>{formatCurrency(latestSale)}</strong>
-        </div>
+          <div className="snapshot-card">
+            <span>Average Sale</span>
+            <strong>{formatCurrency(averageSale)}</strong>
+          </div>
 
-        <div className="snapshot-card">
-          <span>Average Sale</span>
-          <strong>{formatCurrency(averageSale)}</strong>
-        </div>
+          <div className="snapshot-card">
+            <span>Lowest Listing</span>
+            <strong>{formatCurrency(lowestListing)}</strong>
+          </div>
 
-        <div className="snapshot-card">
-          <span>Lowest Listing</span>
-          <strong>{formatCurrency(lowestListing)}</strong>
-        </div>
+          <div className="snapshot-card">
+            <span>Average Listing</span>
+            <strong>{formatCurrency(averageListing)}</strong>
+          </div>
 
-        <div className="snapshot-card">
-          <span>Average Listing</span>
-          <strong>{formatCurrency(averageListing)}</strong>
-        </div>
+          <div className="snapshot-card">
+            <span>Sales Tracked</span>
+            <strong>{recentSalesCount}</strong>
+          </div>
 
-        <div className="snapshot-card">
-          <span>Sales Tracked</span>
-          <strong>{sales.length}</strong>
+          <div className="snapshot-card">
+            <span>Active Listings</span>
+            <strong>{activeListingsCount}</strong>
+          </div>
         </div>
+      </section>
 
-        <div className="snapshot-card">
-          <span>Active Listings</span>
-          <strong>{listings.length}</strong>
-        </div>
-      </div>
-    </section>
+      <FairValue
+        sales={salePrices}
+        listingPrice={lowestListing}
+      />
+
+      <MarketHealth
+        sales={salePrices}
+        listings={listingPrices}
+      />
+
+      <DealScore
+        fairMarketValue={fairMarketValue}
+        listingPrice={lowestListing}
+        recentSalesCount={recentSalesCount}
+        activeListingsCount={activeListingsCount}
+      />
     </>
   );
 }
