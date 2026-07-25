@@ -9,50 +9,73 @@ Build the premier market intelligence platform for Pokémon sealed products, hel
 
 - [x] Landing page
 - [x] Products page
+- [x] Dynamic product pages
 - [x] Supabase integration
 - [x] GitHub repository
 - [x] Automatic Vercel deployment
 - [x] Dynamic product cards
-
----
-
-# Phase 2 – Product Experience
-
-- [x] Dynamic product pages
 - [x] Real product images
-- [x] Historical price charts
-- [x] Recent sales
-- [x] Current listings
-- [ ] Product search
 
 ---
 
-# Phase 3 – Market Intelligence
+# Phase 2 – Market Intelligence ✅
 
+- [x] Market Snapshot
+- [x] Fair Value
+- [x] Market Health
 - [x] Deal Score
-- [ ] Liquidity Score
-- [ ] Confidence Score
-- [ ] Volatility Analysis
-- [ ] Investment Rating
-- [ ] Market Health
+- [x] Investment Grade
 
 ---
 
-# Phase 4 – User Features
+# Phase 3 – Data & Analytics
+
+- [ ] Analytics architecture refactor
+- [ ] Historical price charts
+- [ ] Historical market data storage
+- [ ] Live market data ingestion
+- [ ] eBay integration
+- [ ] TCGplayer integration
+- [ ] Marketplace normalization
+- [ ] Advanced Fair Value methodology
+
+---
+
+# Phase 4 – Product Discovery
+
+- [ ] Product search
+- [ ] Advanced filters
+- [ ] Rankings
+- [ ] Trending products
+- [ ] Top opportunities
+- [ ] Undervalued products
+
+---
+
+# Phase 5 – User Features
 
 - [ ] User accounts
 - [ ] Portfolio tracking
+- [ ] Collection analytics
 - [ ] Watchlists
 - [ ] Price alerts
-- [ ] Collection analytics
+- [ ] Dashboard
+
+---
+
+# Phase 6 – AI Intelligence
+
+- [ ] AI investment insights
+- [ ] AI product summaries
+- [ ] Buy / Hold / Sell recommendations
+- [ ] Market trend forecasting
 
 ---
 
 # Future Ideas
 
-- [ ] AI-powered investment insights
-- [ ] Portfolio value tracking
 - [ ] Mobile app
-- [ ] API
-- [ ] Marketplace integration
+- [ ] Public API
 - [ ] Multi-language support
+- [ ] Discord integration
+- [ ] Browser extension
