@@ -15,6 +15,118 @@ function formatCurrency(value: number) {
   });
 }
 
+function getScoreClass(score: number) {
+  if (score >= 85) return "deal-score--excellent";
+  if (score >= 70) return "deal-score--good";
+  if (score >= 55) return "deal-score--fair";
+  if (score >= 40) return "deal-score--weak";
+
+  return "deal-score--poor";
+}
+
+function getConfidenceClass(confidenceLabel: string) {
+  const normalizedLabel = confidenceLabel.toLowerCase();
+
+  if (normalizedLabel.includes("high")) {
+    return "confidence-badge--high";
+  }
+
+  if (normalizedLabel.includes("medium")) {
+    return "confidence-badge--medium";
+  }
+
+  return "confidence-badge--low";
+}
+
+function getPricePositionText(discountPercent: number) {
+  if (discountPercent > 0.5) {
+    return `${discountPercent.toFixed(1)}% below fair value`;
+  }
+
+  if (discountPercent < -0.5) {
+    return `${Math.abs(discountPercent).toFixed(1)}% above fair value`;
+  }
+
+  return "Near fair value";
+}
+
+function getScoreReasons({
+  discountPercent,
+  recentSalesCount,
+  activeListingsCount,
+}: {
+  discountPercent: number;
+  recentSalesCount: number;
+  activeListingsCount: number;
+}) {
+  const reasons: {
+    type: "positive" | "neutral" | "warning";
+    text: string;
+  }[] = [];
+
+  if (discountPercent >= 5) {
+    reasons.push({
+      type: "positive",
+      text: `The lowest listing is ${discountPercent.toFixed(
+        1,
+      )}% below fair value.`,
+    });
+  } else if (discountPercent > 0.5) {
+    reasons.push({
+      type: "neutral",
+      text: `The lowest listing is slightly below fair value.`,
+    });
+  } else if (discountPercent < -0.5) {
+    reasons.push({
+      type: "warning",
+      text: `The lowest listing is ${Math.abs(discountPercent).toFixed(
+        1,
+      )}% above fair value.`,
+    });
+  } else {
+    reasons.push({
+      type: "neutral",
+      text: "The lowest listing is currently near fair value.",
+    });
+  }
+
+  if (recentSalesCount >= 10) {
+    reasons.push({
+      type: "positive",
+      text: `${recentSalesCount} recent sales provide strong pricing confidence.`,
+    });
+  } else if (recentSalesCount >= 5) {
+    reasons.push({
+      type: "neutral",
+      text: `${recentSalesCount} recent sales provide moderate pricing confidence.`,
+    });
+  } else {
+    reasons.push({
+      type: "warning",
+      text: `Only ${recentSalesCount} recent sales are available, reducing confidence.`,
+    });
+  }
+
+  if (activeListingsCount >= 8) {
+    reasons.push({
+      type: "positive",
+      text: `${activeListingsCount} active listings indicate healthy market availability.`,
+    });
+  } else if (activeListingsCount >= 3) {
+    reasons.push({
+      type: "neutral",
+      text: `${activeListingsCount} active listings indicate moderate market availability.`,
+    });
+  } else {
+    reasons.push({
+      type: "warning",
+      text: `Only ${activeListingsCount} active listings are available.`,
+    });
+  }
+
+  return reasons;
+}
+
 export default function DealScore({
   fairMarketValue,
   listingPrice,
@@ -47,15 +159,40 @@ export default function DealScore({
     return null;
   }
 
-  const differenceText =
-    result.discountPercent >= 0
-      ? `${result.discountPercent.toFixed(1)}% below fair value`
-      : `${Math.abs(result.discountPercent).toFixed(1)}% above fair value`;
+  const scoreClass = getScoreClass(result.score);
+
+  const confidenceClass = getConfidenceClass(result.confidenceLabel);
+
+  const differenceText = getPricePositionText(result.discountPercent);
+
+  const scoreReasons = getScoreReasons({
+    discountPercent: result.discountPercent,
+    recentSalesCount,
+    activeListingsCount,
+  });
+
+  const breakdownItems = [
+    {
+      label: "Price Advantage",
+      rawScore: result.priceScore,
+      weight: 60,
+    },
+    {
+      label: "Market Confidence",
+      rawScore: result.confidenceScore,
+      weight: 20,
+    },
+    {
+      label: "Liquidity",
+      rawScore: result.liquidityScore,
+      weight: 20,
+    },
+  ];
 
   return (
-    <section className="deal-score">
+    <section className={`deal-score ${scoreClass}`}>
       <div className="deal-score-heading">
-        <div>
+        <div className="deal-score-introduction">
           <span className="section-kicker">TCGMVP Analytics</span>
 
           <h2>Deal Score</h2>
@@ -67,55 +204,109 @@ export default function DealScore({
         </div>
 
         <div className="deal-score-result">
-          <strong>{result.score}</strong>
-          <span>/ 100</span>
+          <div className="deal-score-number">
+            <strong>{result.score}</strong>
+            <span>/ 100</span>
+          </div>
+
           <b>{result.label}</b>
+
+          <div className={`confidence-badge ${confidenceClass}`}>
+            {result.confidenceLabel} Confidence
+          </div>
+
+          <small>
+            Based on {recentSalesCount} recent{" "}
+            {recentSalesCount === 1 ? "sale" : "sales"}
+          </small>
         </div>
       </div>
 
-      <div className="deal-score-progress">
+      <div
+        className="deal-score-progress"
+        role="progressbar"
+        aria-label="Deal Score"
+        aria-valuenow={result.score}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <span style={{ width: `${result.score}%` }} />
       </div>
 
       <div className="deal-score-summary">
         <div>
-          <span>Fair market value</span>
+          <span>Fair Market Value</span>
           <strong>{formatCurrency(fairMarketValue)}</strong>
         </div>
 
         <div>
-          <span>Lowest listing</span>
+          <span>Lowest Listing</span>
           <strong>{formatCurrency(listingPrice)}</strong>
         </div>
 
         <div>
-          <span>Price position</span>
+          <span>Price Position</span>
           <strong>{differenceText}</strong>
         </div>
 
         <div>
-          <span>Confidence</span>
-          <strong>{result.confidenceLabel}</strong>
+          <span>Market Data</span>
+          <strong>
+            {recentSalesCount} sales · {activeListingsCount} listings
+          </strong>
         </div>
       </div>
 
-      <div className="deal-score-breakdown">
-        <div>
-          <span>Price Advantage</span>
-          <strong>{result.priceScore}</strong>
-          <small>60% of score</small>
+      <div className="deal-score-explanation">
+        <div className="deal-score-section-heading">
+          <span>Score Analysis</span>
+          <h3>Why this score?</h3>
         </div>
 
-        <div>
-          <span>Market Confidence</span>
-          <strong>{result.confidenceScore}</strong>
-          <small>20% of score</small>
+        <div className="deal-score-reasons">
+          {scoreReasons.map((reason) => (
+            <div
+              className={`deal-score-reason deal-score-reason--${reason.type}`}
+              key={reason.text}
+            >
+              <span aria-hidden="true" />
+              <p>{reason.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="deal-score-breakdown-section">
+        <div className="deal-score-section-heading">
+          <span>Calculation</span>
+          <h3>Score Breakdown</h3>
         </div>
 
-        <div>
-          <span>Liquidity</span>
-          <strong>{result.liquidityScore}</strong>
-          <small>20% of score</small>
+        <div className="deal-score-breakdown">
+          {breakdownItems.map((item) => {
+            const weightedPoints = (item.rawScore * item.weight) / 100;
+
+            return (
+              <div className="deal-score-breakdown-card" key={item.label}>
+                <div className="deal-score-breakdown-header">
+                  <span>{item.label}</span>
+
+                  <strong>
+                    {weightedPoints.toFixed(1)}
+                    <small> / {item.weight}</small>
+                  </strong>
+                </div>
+
+                <div className="deal-score-breakdown-progress">
+                  <span style={{ width: `${item.rawScore}%` }} />
+                </div>
+
+                <small>
+                  {item.rawScore}/100 component score · {item.weight}% weighting
+                </small>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
