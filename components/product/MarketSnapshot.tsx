@@ -1,7 +1,11 @@
 import DealScore from "./DealScore";
 import FairValue from "./FairValue";
 import MarketHealth from "./MarketHealth";
+import InvestmentGrade from "./InvestmentGrade";
+
 import { calculateFairValue } from "@/lib/analytics/fairValue";
+import { calculateMarketHealth } from "@/lib/analytics/marketHealth";
+import { calculateDealScore } from "@/lib/analytics/dealScore";
 
 type Sale = {
   sale_price: number | string;
@@ -38,48 +42,76 @@ export default function MarketSnapshot({
     .map((listing) => Number(listing.listing_price))
     .filter((price) => Number.isFinite(price) && price > 0);
 
-  const latestSale = salePrices.length > 0 ? salePrices[0] : null;
+  const latestSale =
+    salePrices.length > 0 ? salePrices[0] : null;
 
   const averageSale =
     salePrices.length > 0
-      ? salePrices.reduce((total, price) => total + price, 0) /
-        salePrices.length
+      ? salePrices.reduce(
+          (total, price) => total + price,
+          0,
+        ) / salePrices.length
       : null;
 
   const lowestListing =
-    listingPrices.length > 0 ? Math.min(...listingPrices) : null;
+    listingPrices.length > 0
+      ? Math.min(...listingPrices)
+      : null;
 
   const averageListing =
     listingPrices.length > 0
-      ? listingPrices.reduce((total, price) => total + price, 0) /
-        listingPrices.length
+      ? listingPrices.reduce(
+          (total, price) => total + price,
+          0,
+        ) / listingPrices.length
       : null;
+
+  const recentSalesCount = salePrices.length;
+  const activeListingsCount = listingPrices.length;
 
   const fairValueResult = calculateFairValue({
     sales: salePrices,
   });
 
   const fairMarketValue = fairValueResult.fairValue;
-  const recentSalesCount = salePrices.length;
-  const activeListingsCount = listingPrices.length;
+
+  const marketHealthResult = calculateMarketHealth({
+    sales: salePrices,
+    listings: listingPrices,
+  });
+
+  const dealScoreResult =
+    fairMarketValue !== null && lowestListing !== null
+      ? calculateDealScore({
+          fairMarketValue,
+          listingPrice: lowestListing,
+          recentSalesCount,
+          activeListingsCount,
+        })
+      : null;
 
   return (
     <>
       <section className="market-snapshot">
         <div className="snapshot-heading">
           <div>
-            <span className="section-kicker">Market intelligence</span>
+            <span className="section-kicker">
+              Market intelligence
+            </span>
 
             <h2>Market snapshot</h2>
 
             <p>
-              A quick view of recent sales, active supply, and current asking
-              prices.
+              A quick view of recent sales, active supply,
+              and current asking prices.
             </p>
           </div>
 
           <div className="snapshot-heading-stat">
-            <strong>{recentSalesCount + activeListingsCount}</strong>
+            <strong>
+              {recentSalesCount + activeListingsCount}
+            </strong>
+
             <span>DATA POINTS</span>
           </div>
         </div>
@@ -133,6 +165,20 @@ export default function MarketSnapshot({
         recentSalesCount={recentSalesCount}
         activeListingsCount={activeListingsCount}
       />
+
+    {dealScoreResult && (
+      <InvestmentGrade
+        marketHealthScore={marketHealthResult.score}
+        liquidityScore={marketHealthResult.liquidityScore}
+        supplyBalanceScore={
+          marketHealthResult.supplyBalanceScore
+        }
+        priceStabilityScore={
+          marketHealthResult.priceStabilityScore
+        }
+        dealScore={dealScoreResult.score}
+      />
+    )}
     </>
   );
 }

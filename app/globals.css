@@ -3423,3 +3423,286 @@ a {
     padding: 1rem;
   }
 }
+.investment-grade {
+  padding: 2.25rem 2rem 2.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.investment-grade-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.investment-grade-heading h2 {
+  margin: 0.5rem 0 0.75rem;
+  color: #f8fafc;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+.investment-grade-heading p {
+  max-width: 680px;
+  margin: 0;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.investment-grade-result {
+  display: flex;
+  min-width: 220px;
+  align-items: flex-end;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.investment-grade-result > span {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.investment-grade-result > strong {
+  margin-top: 0.25rem;
+  font-size: 4rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.investment-grade-result > small {
+  margin-top: 0.55rem;
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.investment-grade-label {
+  margin-top: 0.8rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.investment-grade--excellent {
+  color: #86efac;
+}
+
+.investment-grade-label.investment-grade--excellent {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.investment-grade--strong {
+  color: #7dd3fc;
+}
+
+.investment-grade-label.investment-grade--strong {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.investment-grade--mixed {
+  color: #fde047;
+}
+
+.investment-grade-label.investment-grade--mixed {
+  border-color: rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.1);
+}
+
+.investment-grade--weak {
+  color: #fca5a5;
+}
+
+.investment-grade-label.investment-grade--weak {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.investment-grade-progress {
+  width: 100%;
+  height: 8px;
+  margin-top: 1.75rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.investment-grade-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+.investment-grade-progress-fill.investment-grade--excellent {
+  background: #22c55e;
+}
+
+.investment-grade-progress-fill.investment-grade--strong {
+  background: #38bdf8;
+}
+
+.investment-grade-progress-fill.investment-grade--mixed {
+  background: #eab308;
+}
+
+.investment-grade-progress-fill.investment-grade--weak {
+  background: #ef4444;
+}
+
+.investment-grade-summary {
+  display: flex;
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.investment-grade-summary span,
+.investment-grade-methodology span {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.investment-grade-summary strong {
+  max-width: 900px;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.investment-grade-grid {
+  display: grid;
+  margin-top: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.investment-grade-card {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.investment-grade-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.investment-grade-card-heading > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.investment-grade-card-heading span {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.investment-grade-card-heading strong {
+  color: #f8fafc;
+  font-size: 1rem;
+}
+
+.investment-grade-card-score {
+  color: #f8fafc;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.investment-grade-card-score small {
+  margin-left: 0.2rem;
+  color: #64748b;
+  font-size: 0.65rem;
+}
+
+.investment-grade-card-progress {
+  width: 100%;
+  height: 6px;
+  margin-top: 1rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.investment-grade-card-progress > div {
+  height: 100%;
+  border-radius: inherit;
+  background: #38bdf8;
+  transition: width 0.4s ease;
+}
+
+.investment-grade-risk-progress > div {
+  background: #f97316;
+}
+
+.investment-grade-card p {
+  margin: 0.85rem 0 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.investment-grade-methodology {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.investment-grade-methodology p {
+  max-width: 850px;
+  margin: 0.45rem 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 850px) {
+  .investment-grade-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .investment-grade-result {
+    align-items: flex-start;
+  }
+
+  .investment-grade-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .investment-grade {
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  .investment-grade-result > strong {
+    font-size: 3.25rem;
+  }
+
+  .investment-grade-summary,
+  .investment-grade-card {
+    padding: 1rem;
+  }
+}
