@@ -1,14 +1,10 @@
-import {
-  calculateInvestmentGrade,
-  type InvestmentGrade as InvestmentGradeValue,
+import type {
+  InvestmentGrade as InvestmentGradeValue,
+  InvestmentGradeResult,
 } from "@/lib/analytics/investmentGrade";
 
 type InvestmentGradeProps = {
-  marketHealthScore: number;
-  liquidityScore: number;
-  supplyBalanceScore: number;
-  priceStabilityScore: number;
-  dealScore: number;
+  result: InvestmentGradeResult;
 };
 
 function getGradeClass(grade: InvestmentGradeValue) {
@@ -77,20 +73,8 @@ function getInvestmentSummary(
 }
 
 export default function InvestmentGrade({
-  marketHealthScore,
-  liquidityScore,
-  supplyBalanceScore,
-  priceStabilityScore,
-  dealScore,
+  result,
 }: InvestmentGradeProps) {
-  const result = calculateInvestmentGrade({
-    marketHealthScore,
-    liquidityScore,
-    supplyBalanceScore,
-    priceStabilityScore,
-    dealScore,
-  });
-
   const gradeClass = getGradeClass(result.grade);
 
   const investmentSummary = getInvestmentSummary(
@@ -104,7 +88,9 @@ export default function InvestmentGrade({
     <section className="investment-grade">
       <div className="investment-grade-heading">
         <div>
-          <span className="section-kicker">TCGMVP Investment Analysis</span>
+          <span className="section-kicker">
+            TCGMVP Investment Analysis
+          </span>
 
           <h2>Investment Grade</h2>
 
@@ -145,6 +131,7 @@ export default function InvestmentGrade({
           <div className="investment-grade-card-heading">
             <div>
               <span>Market Quality</span>
+
               <strong>
                 {getComponentLabel(result.marketQualityScore)}
               </strong>
@@ -174,6 +161,7 @@ export default function InvestmentGrade({
           <div className="investment-grade-card-heading">
             <div>
               <span>Current Opportunity</span>
+
               <strong>
                 {getComponentLabel(result.opportunityScore)}
               </strong>
@@ -203,6 +191,7 @@ export default function InvestmentGrade({
           <div className="investment-grade-card-heading">
             <div>
               <span>Market Risk</span>
+
               <strong>{getRiskLabel(result.riskScore)}</strong>
             </div>
 
@@ -232,8 +221,8 @@ export default function InvestmentGrade({
 
         <p>
           Investment Grade combines Market Quality at 70% and Current
-          Opportunity at 30%. The model intentionally favors the strength of
-          the underlying market over a temporary discount.
+          Opportunity at 30%. The model intentionally favors the strength
+          of the underlying market over a temporary discount.
         </p>
       </div>
     </section>

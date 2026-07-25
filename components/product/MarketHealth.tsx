@@ -1,8 +1,7 @@
-import { calculateMarketHealth } from "@/lib/analytics/marketHealth";
+import type { MarketHealthResult } from "@/lib/analytics/marketHealth";
 
 type MarketHealthProps = {
-  sales: number[];
-  listings: number[];
+  result: MarketHealthResult;
 };
 
 function getScoreClass(score: number) {
@@ -63,15 +62,10 @@ function getMarketSummary(
 }
 
 export default function MarketHealth({
-  sales,
-  listings,
+  result,
 }: MarketHealthProps) {
-  const result = calculateMarketHealth({
-    sales,
-    listings,
-  });
-
   const scoreClass = getScoreClass(result.score);
+
   const statusClass = getStatusClass(result.score);
 
   const marketSummary = getMarketSummary(
@@ -100,7 +94,7 @@ export default function MarketHealth({
 
           <div className="market-health-score-row">
             <strong className={scoreClass}>{result.score}</strong>
-            <small>/ 100</small>
+            <small>/100</small>
           </div>
 
           <div className={`market-health-status ${statusClass}`}>
@@ -118,7 +112,6 @@ export default function MarketHealth({
 
       <div className="market-health-summary">
         <span>Market Assessment</span>
-
         <strong>{marketSummary}</strong>
       </div>
 
@@ -127,9 +120,7 @@ export default function MarketHealth({
           <div className="market-health-card-heading">
             <div>
               <span>Liquidity</span>
-              <strong>
-                {getComponentLabel(result.liquidityScore)}
-              </strong>
+              <strong>{getComponentLabel(result.liquidityScore)}</strong>
             </div>
 
             <div className="market-health-card-score">

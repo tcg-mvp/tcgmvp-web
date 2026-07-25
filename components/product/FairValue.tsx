@@ -1,7 +1,10 @@
-import { calculateFairValue } from "@/lib/analytics/fairValue";
-
 type FairValueProps = {
-  sales: number[];
+  fairValue: number | null;
+  medianSale: number | null;
+  averageSale: number | null;
+  lowestSale: number | null;
+  highestSale: number | null;
+  salesCount: number;
   listingPrice: number | null;
 };
 
@@ -69,12 +72,15 @@ function getPricePosition(
 }
 
 export default function FairValue({
-  sales,
+  fairValue,
+  medianSale,
+  averageSale,
+  lowestSale,
+  highestSale,
+  salesCount,
   listingPrice,
 }: FairValueProps) {
-  const result = calculateFairValue({ sales });
-
-  if (result.fairValue === null) {
+  if (fairValue === null) {
     return (
       <section className="fair-value">
         <div className="fair-value-empty">
@@ -88,12 +94,12 @@ export default function FairValue({
     );
   }
 
-  const confidenceLabel = getConfidenceLabel(result.salesCount);
+  const confidenceLabel = getConfidenceLabel(salesCount);
 
-  const confidenceClass = getConfidenceClass(result.salesCount);
+  const confidenceClass = getConfidenceClass(salesCount);
 
   const pricePosition = getPricePosition(
-    result.fairValue,
+    fairValue,
     listingPrice,
   );
 
@@ -114,7 +120,7 @@ export default function FairValue({
         <div className="fair-value-result">
           <span>Estimated Fair Value</span>
 
-          <strong>{formatCurrency(result.fairValue)}</strong>
+          <strong>{formatCurrency(fairValue)}</strong>
 
           <div
             className={`fair-value-confidence ${confidenceClass}`}
@@ -123,8 +129,8 @@ export default function FairValue({
           </div>
 
           <small>
-            Based on {result.salesCount} recent{" "}
-            {result.salesCount === 1 ? "sale" : "sales"}
+            Based on {salesCount} recent{" "}
+            {salesCount === 1 ? "sale" : "sales"}
           </small>
         </div>
       </div>
@@ -133,8 +139,8 @@ export default function FairValue({
         <div>
           <span>Median Sale</span>
           <strong>
-            {result.medianSale !== null
-              ? formatCurrency(result.medianSale)
+            {medianSale !== null
+              ? formatCurrency(medianSale)
               : "Unavailable"}
           </strong>
         </div>
@@ -142,8 +148,8 @@ export default function FairValue({
         <div>
           <span>Average Sale</span>
           <strong>
-            {result.averageSale !== null
-              ? formatCurrency(result.averageSale)
+            {averageSale !== null
+              ? formatCurrency(averageSale)
               : "Unavailable"}
           </strong>
         </div>
@@ -151,11 +157,11 @@ export default function FairValue({
         <div>
           <span>Recent Sale Range</span>
           <strong>
-            {result.lowestSale !== null &&
-            result.highestSale !== null
+            {lowestSale !== null &&
+            highestSale !== null
               ? `${formatCurrency(
-                  result.lowestSale,
-                )} – ${formatCurrency(result.highestSale)}`
+                  lowestSale,
+                )} – ${formatCurrency(highestSale)}`
               : "Unavailable"}
           </strong>
         </div>

@@ -6,6 +6,7 @@ import InvestmentGrade from "./InvestmentGrade";
 import { calculateFairValue } from "@/lib/analytics/fairValue";
 import { calculateMarketHealth } from "@/lib/analytics/marketHealth";
 import { calculateDealScore } from "@/lib/analytics/dealScore";
+import { calculateInvestmentGrade } from "@/lib/analytics/investmentGrade";
 
 type Sale = {
   sale_price: number | string;
@@ -89,7 +90,18 @@ export default function MarketSnapshot({
           activeListingsCount,
         })
       : null;
-
+  const investmentGradeResult =
+    dealScoreResult !== null
+      ? calculateInvestmentGrade({
+          marketHealthScore: marketHealthResult.score,
+          liquidityScore: marketHealthResult.liquidityScore,
+          supplyBalanceScore:
+            marketHealthResult.supplyBalanceScore,
+          priceStabilityScore:
+            marketHealthResult.priceStabilityScore,
+          dealScore: dealScoreResult.score,
+        })
+      : null;
   return (
     <>
       <section className="market-snapshot">
@@ -150,35 +162,32 @@ export default function MarketSnapshot({
       </section>
 
       <FairValue
-        sales={salePrices}
+        fairValue={fairValueResult.fairValue}
+        medianSale={fairValueResult.medianSale}
+        averageSale={fairValueResult.averageSale}
+        lowestSale={fairValueResult.lowestSale}
+        highestSale={fairValueResult.highestSale}
+        salesCount={fairValueResult.salesCount}
         listingPrice={lowestListing}
       />
 
-      <MarketHealth
-        sales={salePrices}
-        listings={listingPrices}
-      />
+      <MarketHealth result={marketHealthResult} />
 
-      <DealScore
-        fairMarketValue={fairMarketValue}
-        listingPrice={lowestListing}
-        recentSalesCount={recentSalesCount}
-        activeListingsCount={activeListingsCount}
-      />
+      {dealScoreResult && (
+        <DealScore
+          result={dealScoreResult}
+          fairMarketValue={fairValueResult.fairValue}
+          listingPrice={lowestListing}
+          recentSalesCount={salePrices.length}
+          activeListingsCount={listingPrices.length}
+        />
+      )}
 
-    {dealScoreResult && (
-      <InvestmentGrade
-        marketHealthScore={marketHealthResult.score}
-        liquidityScore={marketHealthResult.liquidityScore}
-        supplyBalanceScore={
-          marketHealthResult.supplyBalanceScore
-        }
-        priceStabilityScore={
-          marketHealthResult.priceStabilityScore
-        }
-        dealScore={dealScoreResult.score}
-      />
-    )}
+      {investmentGradeResult && (
+        <InvestmentGrade
+          result={investmentGradeResult}
+        />
+      )}
     </>
   );
 }

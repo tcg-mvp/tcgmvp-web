@@ -1,6 +1,7 @@
-import { calculateDealScore } from "@/lib/analytics/dealScore";
+import type { DealScoreResult } from "@/lib/analytics/dealScore";
 
 type DealScoreProps = {
+  result: DealScoreResult | null;
   fairMarketValue: number | null;
   listingPrice: number | null;
   recentSalesCount: number;
@@ -74,14 +75,14 @@ function getScoreReasons({
   } else if (discountPercent > 0.5) {
     reasons.push({
       type: "neutral",
-      text: `The lowest listing is slightly below fair value.`,
+      text: "The lowest listing is slightly below fair value.",
     });
   } else if (discountPercent < -0.5) {
     reasons.push({
       type: "warning",
-      text: `The lowest listing is ${Math.abs(discountPercent).toFixed(
-        1,
-      )}% above fair value.`,
+      text: `The lowest listing is ${Math.abs(
+        discountPercent,
+      ).toFixed(1)}% above fair value.`,
     });
   } else {
     reasons.push({
@@ -128,12 +129,17 @@ function getScoreReasons({
 }
 
 export default function DealScore({
+  result,
   fairMarketValue,
   listingPrice,
   recentSalesCount,
   activeListingsCount,
 }: DealScoreProps) {
-  if (fairMarketValue === null || listingPrice === null) {
+  if (
+    !result ||
+    fairMarketValue === null ||
+    listingPrice === null
+  ) {
     return (
       <section className="deal-score">
         <div className="deal-score-empty">
@@ -148,22 +154,15 @@ export default function DealScore({
     );
   }
 
-  const result = calculateDealScore({
-    fairMarketValue,
-    listingPrice,
-    recentSalesCount,
-    activeListingsCount,
-  });
-
-  if (!result) {
-    return null;
-  }
-
   const scoreClass = getScoreClass(result.score);
 
-  const confidenceClass = getConfidenceClass(result.confidenceLabel);
+  const confidenceClass = getConfidenceClass(
+    result.confidenceLabel,
+  );
 
-  const differenceText = getPricePositionText(result.discountPercent);
+  const differenceText = getPricePositionText(
+    result.discountPercent,
+  );
 
   const scoreReasons = getScoreReasons({
     discountPercent: result.discountPercent,
@@ -266,8 +265,8 @@ export default function DealScore({
         <div className="deal-score-reasons">
           {scoreReasons.map((reason) => (
             <div
-              className={`deal-score-reason deal-score-reason--${reason.type}`}
               key={reason.text}
+              className={`deal-score-reason deal-score-reason--${reason.type}`}
             >
               <span aria-hidden="true" />
               <p>{reason.text}</p>
@@ -284,10 +283,14 @@ export default function DealScore({
 
         <div className="deal-score-breakdown">
           {breakdownItems.map((item) => {
-            const weightedPoints = (item.rawScore * item.weight) / 100;
+            const weightedPoints =
+              (item.rawScore * item.weight) / 100;
 
             return (
-              <div className="deal-score-breakdown-card" key={item.label}>
+              <div
+                key={item.label}
+                className="deal-score-breakdown-card"
+              >
                 <div className="deal-score-breakdown-header">
                   <span>{item.label}</span>
 
@@ -298,11 +301,16 @@ export default function DealScore({
                 </div>
 
                 <div className="deal-score-breakdown-progress">
-                  <span style={{ width: `${item.rawScore}%` }} />
+                  <span
+                    style={{
+                      width: `${item.rawScore}%`,
+                    }}
+                  />
                 </div>
 
                 <small>
-                  {item.rawScore}/100 component score · {item.weight}% weighting
+                  {item.rawScore}/100 component score ·{" "}
+                  {item.weight}% weighting
                 </small>
               </div>
             );

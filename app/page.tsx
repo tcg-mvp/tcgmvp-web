@@ -274,19 +274,7 @@ export default function Home() {
 
     loadFeaturedProducts();
   }, []);
-      const evolvingSkies = featuredProducts.find(
-      (product) =>
-        product.slug === "evolving-skies-booster-box-english"
-    );
 
-    const evolvingSkiesMarketData = evolvingSkies
-      ? calculateMarketData(
-          evolvingSkies.product_price_history ?? []
-        )
-      : {
-          marketPrice: null,
-          change30d: null,
-        };
   return (
     <main ref={shellRef} className="site-shell">
       <div className="mesh-background" aria-hidden="true">
