@@ -1,0 +1,634 @@
+import type {
+  TrendAnalysisResult,
+} from "@/lib/analytics/trendAnalysis";
+
+import type {
+  RiskAnalysisResult,
+  RiskLevel,
+} from "@/lib/analytics/riskAnalysis";
+
+import type {
+  FairValueResult,
+} from "@/lib/analytics/fairValue";
+
+import type {
+  MarketHealthResult,
+} from "@/lib/analytics/marketHealth";
+
+import type {
+  InvestmentGradeResult,
+} from "@/lib/analytics/investmentGrade";
+
+export type MarketRatingLabel =
+  | "Exceptional"
+  | "Strong"
+  | "Favorable"
+  | "Neutral"
+  | "Weak"
+  | "Very Weak";
+
+export type MarketRatingConfidence =
+  | "High"
+  | "Medium"
+  | "Low"
+  | "Insufficient";
+
+export type MarketRatingInput = {
+  currentPrice: number | null;
+  trendAnalysis: TrendAnalysisResult;
+  riskAnalysis: RiskAnalysisResult;
+  fairValue: FairValueResult;
+  marketHealth: MarketHealthResult;
+  investmentGrade: InvestmentGradeResult;
+};
+
+export type MarketRatingResult = {
+  ratingScore: number;
+  rating: MarketRatingLabel;
+  stars: number;
+
+  confidenceScore: number;
+  confidence: MarketRatingConfidence;
+
+  trendScore: number;
+  riskAdjustedScore: number;
+  investmentGradeScore: number;
+  valuationScore: number;
+  marketHealthScore: number;
+
+  valuationDifferencePercent: number | null;
+
+  summary: string;
+  strengths: string[];
+  concerns: string[];
+};
+
+function clamp(
+  value: number,
+  minimum = 0,
+  maximum = 100,
+): number {
+  return Math.min(Math.max(value, minimum), maximum);
+}
+
+function roundScore(value: number): number {
+  return Math.round(clamp(value));
+}
+
+function getRatingLabel(
+  score: number,
+): MarketRatingLabel {
+  if (score >= 90) return "Exceptional";
+  if (score >= 80) return "Strong";
+  if (score >= 68) return "Favorable";
+  if (score >= 52) return "Neutral";
+  if (score >= 35) return "Weak";
+
+  return "Very Weak";
+}
+
+function getStarRating(score: number): number {
+  if (score >= 90) return 5;
+  if (score >= 80) return 4;
+  if (score >= 68) return 3.5;
+  if (score >= 52) return 3;
+  if (score >= 35) return 2;
+
+  return 1;
+}
+
+function getConfidenceLabel(
+  score: number,
+): MarketRatingConfidence {
+  if (score >= 80) return "High";
+  if (score >= 60) return "Medium";
+  if (score >= 35) return "Low";
+
+  return "Insufficient";
+}
+
+function getTrendConfidenceScore(
+  confidence: TrendAnalysisResult["confidence"],
+): number {
+  switch (confidence) {
+    case "High":
+      return 95;
+
+    case "Medium":
+      return 75;
+
+    case "Low":
+      return 45;
+
+    case "Insufficient":
+      return 15;
+  }
+}
+
+function getDataReliabilityScore(
+  dataRisk: RiskLevel,
+): number {
+  switch (dataRisk) {
+    case "Very Low":
+      return 95;
+
+    case "Low":
+      return 80;
+
+    case "Moderate":
+      return 60;
+
+    case "High":
+      return 35;
+
+    case "Very High":
+      return 15;
+  }
+}
+
+function getSampleSizeScore(
+  salesCount: number,
+): number {
+  if (salesCount >= 30) return 100;
+  if (salesCount >= 20) return 90;
+  if (salesCount >= 10) return 75;
+  if (salesCount >= 5) return 55;
+  if (salesCount >= 3) return 40;
+  if (salesCount >= 1) return 25;
+
+  return 0;
+}
+
+function calculateStandardDeviation(
+  values: number[],
+): number {
+  if (values.length === 0) {
+    return 0;
+  }
+
+  const average =
+    values.reduce(
+      (total, value) => total + value,
+      0,
+    ) / values.length;
+
+  const variance =
+    values.reduce((total, value) => {
+      return total + Math.pow(value - average, 2);
+    }, 0) / values.length;
+
+  return Math.sqrt(variance);
+}
+
+function calculateAgreementScore(
+  componentScores: number[],
+): number {
+  const standardDeviation =
+    calculateStandardDeviation(componentScores);
+
+  /*
+   * When the engines strongly disagree, confidence should
+   * decline even if the final weighted score remains high.
+   */
+  return roundScore(
+    100 - standardDeviation * 2,
+  );
+}
+
+function calculateValuationScore(
+  currentPrice: number | null,
+  fairValue: number | null,
+): {
+  score: number;
+  differencePercent: number | null;
+} {
+  if (
+    currentPrice === null ||
+    currentPrice <= 0 ||
+    fairValue === null ||
+    fairValue <= 0
+  ) {
+    return {
+      score: 50,
+      differencePercent: null,
+    };
+  }
+
+  const differencePercent =
+    ((fairValue - currentPrice) / fairValue) * 100;
+
+  /*
+   * A positive difference means the product is trading
+   * below estimated fair value.
+   *
+   * A negative difference means it is trading above
+   * estimated fair value.
+   */
+
+  let score: number;
+
+  if (differencePercent >= 20) {
+    score = 95;
+  } else if (differencePercent >= 10) {
+    score = 85;
+  } else if (differencePercent >= 3) {
+    score = 72;
+  } else if (differencePercent > -3) {
+    score = 60;
+  } else if (differencePercent > -10) {
+    score = 45;
+  } else if (differencePercent > -20) {
+    score = 30;
+  } else {
+    score = 15;
+  }
+
+  return {
+    score,
+    differencePercent,
+  };
+}
+
+function buildStrengths({
+  trendAnalysis,
+  riskAnalysis,
+  fairValue,
+  marketHealth,
+  investmentGrade,
+  valuationDifferencePercent,
+}: {
+  trendAnalysis: TrendAnalysisResult;
+  riskAnalysis: RiskAnalysisResult;
+  fairValue: FairValueResult;
+  marketHealth: MarketHealthResult;
+  investmentGrade: InvestmentGradeResult;
+  valuationDifferencePercent: number | null;
+}): string[] {
+  const strengths: string[] = [];
+
+  if (
+    trendAnalysis.trend === "Very Bullish" ||
+    trendAnalysis.trend === "Bullish"
+  ) {
+    strengths.push(
+      `${trendAnalysis.trend} market trend with ${trendAnalysis.momentum.toLowerCase()} momentum.`,
+    );
+  }
+
+  if (
+    riskAnalysis.overallRisk === "Very Low" ||
+    riskAnalysis.overallRisk === "Low"
+  ) {
+    strengths.push(
+      `${riskAnalysis.overallRisk} overall market risk.`,
+    );
+  }
+
+  if (
+    investmentGrade.grade === "A+" ||
+    investmentGrade.grade === "A" ||
+    investmentGrade.grade === "A-" ||
+    investmentGrade.grade === "B+"
+  ) {
+    strengths.push(
+      `${investmentGrade.grade} investment grade reflects strong market quality and opportunity.`,
+    );
+  }
+
+  if (
+    marketHealth.label === "Strong" ||
+    marketHealth.label === "Healthy"
+  ) {
+    strengths.push(
+      `${marketHealth.label} underlying market conditions.`,
+    );
+  }
+
+  if (
+    valuationDifferencePercent !== null &&
+    valuationDifferencePercent >= 3
+  ) {
+    strengths.push(
+      `The current price is ${valuationDifferencePercent.toFixed(
+        1,
+      )}% below estimated fair value.`,
+    );
+  } else if (
+    valuationDifferencePercent !== null &&
+    valuationDifferencePercent > -3
+  ) {
+    strengths.push(
+      "The current price is trading near estimated fair value.",
+    );
+  }
+
+  if (
+    fairValue.salesCount >= 20 &&
+    strengths.length < 4
+  ) {
+    strengths.push(
+      `${fairValue.salesCount} tracked sales support the valuation estimate.`,
+    );
+  }
+
+  return strengths.slice(0, 4);
+}
+
+function buildConcerns({
+  trendAnalysis,
+  riskAnalysis,
+  fairValue,
+  marketHealth,
+  investmentGrade,
+  valuationDifferencePercent,
+}: {
+  trendAnalysis: TrendAnalysisResult;
+  riskAnalysis: RiskAnalysisResult;
+  fairValue: FairValueResult;
+  marketHealth: MarketHealthResult;
+  investmentGrade: InvestmentGradeResult;
+  valuationDifferencePercent: number | null;
+}): string[] {
+  const concerns: string[] = [];
+
+  if (
+    trendAnalysis.trend === "Bearish" ||
+    trendAnalysis.trend === "Very Bearish"
+  ) {
+    concerns.push(
+      `${trendAnalysis.trend} market trend with ${trendAnalysis.momentum.toLowerCase()} momentum.`,
+    );
+  }
+
+  if (
+    riskAnalysis.overallRisk === "High" ||
+    riskAnalysis.overallRisk === "Very High"
+  ) {
+    concerns.push(
+      `${riskAnalysis.overallRisk} overall market risk.`,
+    );
+  } else if (
+    riskAnalysis.overallRisk === "Moderate"
+  ) {
+    concerns.push(
+      "Moderate risk may limit the strength of the overall rating.",
+    );
+  }
+
+  if (
+    valuationDifferencePercent !== null &&
+    valuationDifferencePercent <= -10
+  ) {
+    concerns.push(
+      `The current price is ${Math.abs(
+        valuationDifferencePercent,
+      ).toFixed(1)}% above estimated fair value.`,
+    );
+  } else if (
+    valuationDifferencePercent !== null &&
+    valuationDifferencePercent <= -3
+  ) {
+    concerns.push(
+      "The current price is moderately above estimated fair value.",
+    );
+  }
+
+  if (marketHealth.label === "Weak") {
+    concerns.push(
+      "Weak underlying market health reduces rating quality.",
+    );
+  } else if (marketHealth.label === "Mixed") {
+    concerns.push(
+      "Underlying market conditions remain mixed.",
+    );
+  }
+
+  if (
+    investmentGrade.grade === "C-" ||
+    investmentGrade.grade === "D"
+  ) {
+    concerns.push(
+      `${investmentGrade.grade} investment grade indicates elevated speculation or weak market quality.`,
+    );
+  }
+
+  if (fairValue.salesCount === 0) {
+    concerns.push(
+      "No tracked sales are available to support the fair-value estimate.",
+    );
+  } else if (fairValue.salesCount < 5) {
+    concerns.push(
+      `Only ${fairValue.salesCount} tracked ${
+        fairValue.salesCount === 1 ? "sale is" : "sales are"
+      } available to support the valuation.`,
+    );
+  }
+
+  return concerns.slice(0, 4);
+}
+
+function buildSummary(
+  rating: MarketRatingLabel,
+  confidence: MarketRatingConfidence,
+  trendAnalysis: TrendAnalysisResult,
+  riskAnalysis: RiskAnalysisResult,
+): string {
+  const ratingSummary: Record<
+    MarketRatingLabel,
+    string
+  > = {
+    Exceptional:
+      "The product demonstrates exceptional overall market characteristics.",
+    Strong:
+      "The product demonstrates strong overall market characteristics.",
+    Favorable:
+      "The product presents generally favorable market characteristics.",
+    Neutral:
+      "The product presents a balanced market profile without a decisive advantage.",
+    Weak:
+      "The product currently presents below-average market characteristics.",
+    "Very Weak":
+      "The product currently presents materially weak market characteristics.",
+  };
+
+  const confidenceText =
+    confidence === "High"
+      ? "The assessment is supported by high-confidence market data."
+      : confidence === "Medium"
+        ? "The assessment is supported by a moderate amount of market data."
+        : confidence === "Low"
+          ? "The assessment should be interpreted cautiously because the supporting data is limited."
+          : "There is not enough dependable market data to treat this rating as conclusive.";
+
+  return `${ratingSummary[rating]} The current trend is ${trendAnalysis.trend.toLowerCase()}, while overall risk is ${riskAnalysis.overallRisk.toLowerCase()}. ${confidenceText}`;
+}
+
+export function calculateMarketRating({
+  currentPrice,
+  trendAnalysis,
+  riskAnalysis,
+  fairValue,
+  marketHealth,
+  investmentGrade,
+}: MarketRatingInput): MarketRatingResult {
+  const trendScore = roundScore(
+    trendAnalysis.strength,
+  );
+
+  /*
+   * Risk scores increase as risk becomes worse.
+   * The score must therefore be inverted before being
+   * added to the Market Rating.
+   */
+  const riskAdjustedScore = roundScore(
+    100 - riskAnalysis.riskScore,
+  );
+
+  const investmentGradeScore = roundScore(
+    investmentGrade.score,
+  );
+
+  const marketHealthScore = roundScore(
+    marketHealth.score,
+  );
+
+  const valuation =
+    calculateValuationScore(
+      currentPrice,
+      fairValue.fairValue,
+    );
+
+  const valuationScore = roundScore(
+    valuation.score,
+  );
+
+  /*
+   * Market Rating weights:
+   *
+   * Trend Analysis:        25%
+   * Risk Analysis:         25%
+   * Investment Grade:      25%
+   * Fair Value:            15%
+   * Market Health:         10%
+   *
+   * Investment Grade and Market Health are partially
+   * related, so Market Health receives the lowest weight
+   * to avoid excessive double counting.
+   */
+
+  const rawRatingScore =
+    trendScore * 0.25 +
+    riskAdjustedScore * 0.25 +
+    investmentGradeScore * 0.25 +
+    valuationScore * 0.15 +
+    marketHealthScore * 0.1;
+
+  const ratingScore = roundScore(
+    rawRatingScore,
+  );
+
+  const rating = getRatingLabel(
+    ratingScore,
+  );
+
+  const stars = getStarRating(
+    ratingScore,
+  );
+
+  /*
+   * Confidence measures the reliability of the rating,
+   * not whether the rating itself is positive.
+   */
+
+  const trendConfidenceScore =
+    getTrendConfidenceScore(
+      trendAnalysis.confidence,
+    );
+
+  const dataReliabilityScore =
+    getDataReliabilityScore(
+      riskAnalysis.dataRisk,
+    );
+
+  const availableSalesCount = Math.min(
+    trendAnalysis.salesTracked,
+    fairValue.salesCount,
+    marketHealth.salesCount,
+  );
+
+  const sampleSizeScore =
+    getSampleSizeScore(
+      availableSalesCount,
+    );
+
+  const agreementScore =
+    calculateAgreementScore([
+      trendScore,
+      riskAdjustedScore,
+      investmentGradeScore,
+      valuationScore,
+      marketHealthScore,
+    ]);
+
+  const rawConfidenceScore =
+    trendConfidenceScore * 0.35 +
+    dataReliabilityScore * 0.3 +
+    sampleSizeScore * 0.25 +
+    agreementScore * 0.1;
+
+  const confidenceScore = roundScore(
+    rawConfidenceScore,
+  );
+
+  const confidence = getConfidenceLabel(
+    confidenceScore,
+  );
+
+  const strengths = buildStrengths({
+    trendAnalysis,
+    riskAnalysis,
+    fairValue,
+    marketHealth,
+    investmentGrade,
+    valuationDifferencePercent:
+      valuation.differencePercent,
+  });
+
+  const concerns = buildConcerns({
+    trendAnalysis,
+    riskAnalysis,
+    fairValue,
+    marketHealth,
+    investmentGrade,
+    valuationDifferencePercent:
+      valuation.differencePercent,
+  });
+
+  return {
+    ratingScore,
+    rating,
+    stars,
+
+    confidenceScore,
+    confidence,
+
+    trendScore,
+    riskAdjustedScore,
+    investmentGradeScore,
+    valuationScore,
+    marketHealthScore,
+
+    valuationDifferencePercent:
+      valuation.differencePercent,
+
+    summary: buildSummary(
+      rating,
+      confidence,
+      trendAnalysis,
+      riskAnalysis,
+    ),
+
+    strengths,
+    concerns,
+  };
+}

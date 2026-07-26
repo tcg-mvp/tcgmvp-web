@@ -1,12 +1,31 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  calculateFairValue,
+} from "@/lib/analytics/fairValue";
+
+import {
+  calculateMarketHealth,
+} from "@/lib/analytics/marketHealth";
+
+import {
+  calculateDealScore,
+} from "@/lib/analytics/dealScore";
+
+import {
+  calculateInvestmentGrade,
+} from "@/lib/analytics/investmentGrade";
 import MarketStatistics from "@/components/product/MarketStatistics";
 import { calculateMarketStatistics } from "@/lib/analytics/marketStatistics";
 import TrendAnalysis from "@/components/product/TrendAnalysis";
 import { calculateTrendAnalysis } from "@/lib/analytics/trendAnalysis";
 import RiskAnalysis from "@/components/product/RiskAnalysis";
 import { calculateRiskAnalysis } from "@/lib/analytics/riskAnalysis";
+import MarketRating from "@/components/product/MarketRating";
+import {
+  calculateMarketRating,
+} from "@/lib/analytics/marketRating";
 import ProductTabs from "@/components/product/ProductTabs";
 import { supabase } from "@/lib/supabase";
 import {
@@ -138,6 +157,26 @@ if (listingsError) {
 const marketListings =
   (listingsData ?? []) as MarketListing[];
 
+  const salePrices = marketSales
+  .map((sale) =>
+    Number(
+      sale.total_price ??
+      Number(sale.sale_price) +
+      Number(sale.shipping_price)
+    )
+  )
+  .filter((price) => Number.isFinite(price));
+
+const listingPrices = marketListings
+  .map((listing) =>
+    Number(
+      listing.total_price ??
+      Number(listing.listing_price) +
+      Number(listing.shipping_price)
+    )
+  )
+  .filter((price) => Number.isFinite(price));
+
   const setData = Array.isArray(product.sets)
     ? product.sets[0]
     : product.sets;
@@ -169,7 +208,51 @@ const marketListings =
 
   const { marketPrice, change30d } =
     calculateMarketData(priceHistory);
+    
+  const fairValue = calculateFairValue({
+  sales: salePrices,
+});
 
+  const marketHealth = calculateMarketHealth({
+    sales: salePrices,
+    listings: listingPrices,
+  });
+
+const lowestListingPrice =
+  listingPrices.length > 0
+    ? Math.min(...listingPrices)
+    : null;
+
+const dealScore =
+  fairValue.fairValue !== null &&
+  lowestListingPrice !== null
+    ? calculateDealScore({
+        fairMarketValue: fairValue.fairValue,
+        listingPrice: lowestListingPrice,
+        recentSalesCount: marketSales.length,
+        activeListingsCount: marketListings.length,
+      })
+    : null;
+
+/*
+ * A neutral score is used when there is not enough data
+ * to calculate a dependable Deal Score.
+ */
+const dealScoreValue = dealScore?.score ?? 50;
+
+const investmentGrade =
+  calculateInvestmentGrade({
+    marketHealthScore:
+      marketHealth.score,
+    liquidityScore:
+      marketHealth.liquidityScore,
+    supplyBalanceScore:
+      marketHealth.supplyBalanceScore,
+    priceStabilityScore:
+      marketHealth.priceStabilityScore,
+    dealScore:
+      dealScoreValue,
+  });
   const marketStatistics = calculateMarketStatistics(
     priceHistory,
     marketSales
@@ -183,6 +266,16 @@ const marketListings =
     marketStatistics,
     trendAnalysis
   );
+
+const marketRating =
+  calculateMarketRating({
+    currentPrice: marketPrice,
+    trendAnalysis,
+    riskAnalysis,
+    fairValue,
+    marketHealth,
+    investmentGrade,
+  });
 
   return (
     <main className="site-shell products-page">
@@ -313,6 +406,10 @@ const marketListings =
       <section className="product-statistics-section">
         <div className="container">
           <MarketStatistics statistics={marketStatistics} />
+
+           <MarketRating
+            rating={marketRating}
+          />
 
           <TrendAnalysis
             analysis={trendAnalysis}
