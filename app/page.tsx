@@ -4,6 +4,10 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import {
+  calculateMarketData,
+  type PriceHistoryEntry,
+} from "@/lib/analytics/marketData";
 
 const features = [
   {
@@ -70,55 +74,7 @@ const faqs = [
       "The product is currently in development. Beta users will be invited in stages as core market data and deal analysis features become available.",
   },
 ];
-type PriceHistoryEntry = {
-  price: number | string;
-  recorded_at: string;
-};
 
-function calculateMarketData(priceHistory: PriceHistoryEntry[]) {
-  if (!priceHistory || priceHistory.length === 0) {
-    return {
-      marketPrice: null,
-      change30d: null,
-    };
-  }
-
-  const sortedHistory = [...priceHistory].sort(
-    (a, b) =>
-      new Date(a.recorded_at).getTime() -
-      new Date(b.recorded_at).getTime()
-  );
-
-  const latestEntry = sortedHistory[sortedHistory.length - 1];
-  const latestPrice = Number(latestEntry.price);
-  const latestDate = new Date(latestEntry.recorded_at);
-
-  const targetDate = new Date(latestDate);
-  targetDate.setDate(targetDate.getDate() - 30);
-
-  const olderEntries = sortedHistory.filter(
-    (entry) => new Date(entry.recorded_at) <= targetDate
-  );
-
-  const thirtyDayEntry =
-    olderEntries.length > 0
-      ? olderEntries[olderEntries.length - 1]
-      : null;
-
-  const thirtyDayPrice = thirtyDayEntry
-    ? Number(thirtyDayEntry.price)
-    : null;
-
-  const change30d =
-    thirtyDayPrice !== null && thirtyDayPrice > 0
-      ? ((latestPrice - thirtyDayPrice) / thirtyDayPrice) * 100
-      : null;
-
-  return {
-    marketPrice: latestPrice,
-    change30d,
-  };
-}
 type FeaturedProduct = {
   id: number;
   name: string;

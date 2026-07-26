@@ -1,19 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
+import MarketStatistics from "@/components/product/MarketStatistics";
+import { calculateMarketStatistics } from "@/lib/analytics/marketStatistics";
+import TrendAnalysis from "@/components/product/TrendAnalysis";
+import { calculateTrendAnalysis } from "@/lib/analytics/trendAnalysis";
+import RiskAnalysis from "@/components/product/RiskAnalysis";
+import { calculateRiskAnalysis } from "@/lib/analytics/riskAnalysis";
 import ProductTabs from "@/components/product/ProductTabs";
 import { supabase } from "@/lib/supabase";
+import {
+  calculateMarketData,
+  type PriceHistoryEntry,
+} from "@/lib/analytics/marketData";
 
 type ProductPageProps = {
   params: Promise<{
     slug: string;
   }>;
-};
-
-type PriceHistoryEntry = {
-  price: number | string;
-  recorded_at: string;
 };
 
 type MarketSale = {
@@ -42,50 +46,6 @@ type MarketListing = {
   listed_at: string | null;
   last_seen: string | null;
 };
-function calculateMarketData(priceHistory: PriceHistoryEntry[]) {
-  if (!priceHistory || priceHistory.length === 0) {
-    return {
-      marketPrice: null,
-      change30d: null,
-    };
-  }
-
-  const sortedHistory = [...priceHistory].sort(
-    (a, b) =>
-      new Date(a.recorded_at).getTime() -
-      new Date(b.recorded_at).getTime()
-  );
-
-  const latestEntry = sortedHistory[sortedHistory.length - 1];
-  const latestPrice = Number(latestEntry.price);
-  const latestDate = new Date(latestEntry.recorded_at);
-
-  const targetDate = new Date(latestDate);
-  targetDate.setDate(targetDate.getDate() - 30);
-
-  const olderEntries = sortedHistory.filter(
-    (entry) => new Date(entry.recorded_at) <= targetDate
-  );
-
-  const thirtyDayEntry =
-    olderEntries.length > 0
-      ? olderEntries[olderEntries.length - 1]
-      : null;
-
-  const thirtyDayPrice = thirtyDayEntry
-    ? Number(thirtyDayEntry.price)
-    : null;
-
-  const change30d =
-    thirtyDayPrice !== null && thirtyDayPrice > 0
-      ? ((latestPrice - thirtyDayPrice) / thirtyDayPrice) * 100
-      : null;
-
-  return {
-    marketPrice: latestPrice,
-    change30d,
-  };
-}
 
 export default async function ProductDetailPage({
   params,
@@ -209,6 +169,20 @@ const marketListings =
 
   const { marketPrice, change30d } =
     calculateMarketData(priceHistory);
+
+  const marketStatistics = calculateMarketStatistics(
+    priceHistory,
+    marketSales
+  ); 
+
+  const trendAnalysis =
+  calculateTrendAnalysis(marketStatistics);
+
+  const riskAnalysis =
+  calculateRiskAnalysis(
+    marketStatistics,
+    trendAnalysis
+  );
 
   return (
     <main className="site-shell products-page">
@@ -335,6 +309,20 @@ const marketListings =
           </div>
         </div>
       </section>
+
+      <section className="product-statistics-section">
+        <div className="container">
+          <MarketStatistics statistics={marketStatistics} />
+
+          <TrendAnalysis
+            analysis={trendAnalysis}
+          />
+          <RiskAnalysis
+            analysis={riskAnalysis}
+          />
+        </div>
+      </section>
+
       <ProductTabs
   priceHistory={priceHistory}
   sales={marketSales}
