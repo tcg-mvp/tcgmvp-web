@@ -68,7 +68,7 @@ These proprietary analytics engines form the foundation of TCGMVP.
 
 ---
 
-# Phase 3 – Intelligence Suite
+# Phase 3A – Intelligence Suite
 
 The flagship analytics layer of TCGMVP.
 
@@ -76,27 +76,30 @@ The flagship analytics layer of TCGMVP.
 
 Combines:
 
-- [] Trend Analysis
-- [] Risk Analysis
-- [] Fair Value
-- [] Investment Grade
-- [] Market Health
+- [x] Trend Analysis
+- [x] Risk Analysis
+- [x] Fair Value
+- [x] Investment Grade
+- [x] Market Health
 
 Outputs:
 
-- [ ] Overall Market Rating
-- [ ] Confidence Score
-- [ ] Supporting Reasons
+- [x] Overall Market Rating
+- [x] Confidence Score
+- [x] Supporting Reasons
 
 ---
 
 ## Price Target Engine
 
-- [ ] Estimated Fair Value
-- [ ] Potential Upside
-- [ ] Downside Risk
-- [ ] Margin of Safety
-
+- [x] Estimated Fair Value
+- [x] Potential Upside
+- [x] Downside Risk
+- [x] Margin of Safety
+- [x] Opportunity Verdict
+- [x] Confidence Score
+- [x] Supporting Drivers
+- [x] Risks and Limitations
 ---
 
 ## Investment Outlook Engine
@@ -117,6 +120,29 @@ Outputs:
 - [ ] Improve edge-case handling
 - [ ] Improve analytics consistency across engines
 
+
+# Phase 3B – Product Experience
+
+## Landing Page
+- [ ] Hero redesign
+- [ ] Scroll animations
+- [ ] Interactive intelligence preview
+- [ ] Feature highlights
+- [ ] Responsive refinement
+
+## Products Page
+- [ ] Premium product cards
+- [ ] Sorting & filtering
+- [ ] Search improvements
+- [ ] Quick analytics preview
+- [ ] Loading states
+
+## Product Pages
+- [ ] Intelligence polish
+- [ ] Analytics polish
+- [ ] Mobile optimization
+- [ ] Empty/loading states
+- [ ] Visual consistency
 ---
 
 # Phase 4 – Data Platform

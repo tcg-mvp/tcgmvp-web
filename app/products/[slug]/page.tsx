@@ -26,6 +26,9 @@ import MarketRating from "@/components/product/MarketRating";
 import {
   calculateMarketRating,
 } from "@/lib/analytics/marketRating";
+import { calculatePriceTarget } from "@/lib/analytics/priceTarget";
+import PriceTarget from "@/components/product/PriceTarget";
+import ProductAnalyticsTabs from "@/components/product/ProductAnalyticsTabs";
 import ProductTabs from "@/components/product/ProductTabs";
 import { supabase } from "@/lib/supabase";
 import {
@@ -266,6 +269,30 @@ const investmentGrade =
     marketStatistics,
     trendAnalysis
   );
+const priceTarget = calculatePriceTarget({
+  currentPrice: marketPrice,
+  fairValue: fairValue.fairValue,
+
+  trendScore: trendAnalysis.strength,
+  riskScore: riskAnalysis.riskScore,
+  marketHealthScore: marketHealth.score,
+  investmentGradeScore: investmentGrade.score,
+
+  recentSalesCount: marketSales.length,
+  activeListingsCount: marketListings.length,
+
+  priceVariationPercent:
+    marketHealth.priceVariationPercent,
+
+  trendConfidence:
+    trendAnalysis.confidence === "High"
+      ? 100
+      : trendAnalysis.confidence === "Medium"
+        ? 65
+        : trendAnalysis.confidence === "Low"
+          ? 35
+          : 0,
+});
 
 const marketRating =
   calculateMarketRating({
@@ -276,6 +303,7 @@ const marketRating =
     marketHealth,
     investmentGrade,
   });
+  
 
   return (
     <main className="site-shell products-page">
@@ -403,28 +431,99 @@ const marketRating =
         </div>
       </section>
 
-      <section className="product-statistics-section">
-        <div className="container">
-          <MarketStatistics statistics={marketStatistics} />
+     <section className="product-statistics-section">
+      <div className="container">
+        <MarketStatistics
+          statistics={marketStatistics}
+        />
+      </div>
+    </section>
 
-           <MarketRating
+    <section className="product-intelligence-section">
+      <div className="container">
+        <div className="product-section-heading">
+          <span className="section-kicker">
+            TCGMVP Intelligence
+          </span>
+
+          <h2>Market Intelligence</h2>
+
+          <p>
+            Proprietary product intelligence generated from
+            market direction, valuation, liquidity, pricing
+            stability, and risk.
+          </p>
+        </div>
+
+        <MarketRating
             rating={marketRating}
           />
 
-          <TrendAnalysis
-            analysis={trendAnalysis}
-          />
-          <RiskAnalysis
-            analysis={riskAnalysis}
-          />
+          <div className="product-price-target-wrapper">
+            <PriceTarget
+              priceTarget={priceTarget}
+            />
+          </div>
+
+          <div className="product-intelligence-supporting">
+            <TrendAnalysis
+              analysis={trendAnalysis}
+            />
+
+            <RiskAnalysis
+              analysis={riskAnalysis}
+            />
+          </div>
+      </div>
+    </section>
+
+    <section className="product-analytics-section">
+      <div className="container">
+        <div className="product-section-heading">
+          <span className="section-kicker">
+            TCGMVP Analytics
+          </span>
+
+          <h2>Supporting Analytics</h2>
+
+          <p>
+            Explore the underlying market-quality, valuation,
+            and investment metrics used to support the overall
+            Market Rating.
+          </p>
         </div>
-      </section>
+
+        <ProductAnalyticsTabs
+          marketHealth={marketHealth}
+          dealScore={dealScore}
+          investmentGrade={investmentGrade}
+        />
+      </div>
+    </section>
+
+    <section className="product-market-data-section">
+      <div className="container">
+        <div className="product-section-heading">
+          <span className="section-kicker">
+            Market Data
+          </span>
+
+          <h2>Market Evidence</h2>
+
+          <p>
+            Review the tracked price history, recent completed
+            sales, and current active listings behind the
+            analysis.
+          </p>
+        </div>
+      </div>
 
       <ProductTabs
-  priceHistory={priceHistory}
-  sales={marketSales}
-  listings={marketListings}
-/>
+        priceHistory={priceHistory}
+        sales={marketSales}
+        listings={marketListings}
+      />
+    </section>
     </main>
   );
 }
