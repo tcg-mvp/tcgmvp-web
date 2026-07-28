@@ -31,6 +31,10 @@ import {
 } from "@/lib/analytics/marketRating";
 import { calculatePriceTarget } from "@/lib/analytics/priceTarget";
 import PriceTarget from "@/components/product/PriceTarget";
+import MarketConfidence from "@/components/product/MarketConfidence";
+import {
+  calculateConfidence,
+} from "@/lib/analytics/confidence";
 import ProductAnalyticsTabs from "@/components/product/ProductAnalyticsTabs";
 import ProductTabs from "@/components/product/ProductTabs";
 import { supabase } from "@/lib/supabase";
@@ -342,6 +346,21 @@ const investmentOutlook =
     change30d:
       marketStatistics.change30d,
   });
+const sharedConfidence = calculateConfidence({
+  recentSalesCount: marketSales.length,
+  activeListingsCount: marketListings.length,
+  priceHistoryPoints: priceHistory.length,
+
+  hasCurrentPrice:
+    marketPrice !== null &&
+    marketPrice !== undefined,
+
+  hasFairValue:
+    fairValue.fairValue !== null &&
+    fairValue.fairValue !== undefined,
+
+  dataAgeDays: 1,
+});
 
   return (
     <main className="site-shell products-page">
@@ -498,18 +517,22 @@ const investmentOutlook =
         />
 
         <div className="product-price-target-wrapper">
+
+          <MarketConfidence
+            confidence={sharedConfidence}
+          />           
           <PriceTarget
             priceTarget={priceTarget}
           />
         </div>
-
         <div className="product-investment-outlook-wrapper">
+
           <InvestmentOutlook
             outlook={investmentOutlook}
           />
         </div>
-
         <div className="product-intelligence-supporting">
+
           <TrendAnalysis
             analysis={trendAnalysis}
           />
