@@ -12,7 +12,10 @@ import {
 import {
   calculateDealScore,
 } from "@/lib/analytics/dealScore";
-
+import InvestmentOutlook from "@/components/product/InvestmentOutlook";
+import {
+  calculateInvestmentOutlook,
+} from "@/lib/analytics/investmentOutlook";
 import {
   calculateInvestmentGrade,
 } from "@/lib/analytics/investmentGrade";
@@ -304,6 +307,41 @@ const marketRating =
     investmentGrade,
   });
   
+const investmentOutlook =
+  calculateInvestmentOutlook({
+    currentPrice: marketPrice,
+    fairValue: fairValue.fairValue,
+
+    marketRatingScore:
+      marketRating.ratingScore,
+
+    trendScore:
+      trendAnalysis.strength,
+
+    riskScore:
+      riskAnalysis.riskScore,
+
+    marketHealthScore:
+      marketHealth.score,
+
+    investmentGradeScore:
+      investmentGrade.score,
+
+    expectedReturnPercent:
+      priceTarget.potentialUpsidePercent,
+
+    recentSalesCount:
+      marketSales.length,
+
+    activeListingsCount:
+      marketListings.length,
+
+    confidenceScore:
+      priceTarget.confidenceScore,
+
+    change30d:
+      marketStatistics.change30d,
+  });
 
   return (
     <main className="site-shell products-page">
@@ -456,24 +494,30 @@ const marketRating =
         </div>
 
         <MarketRating
-            rating={marketRating}
+          rating={marketRating}
+        />
+
+        <div className="product-price-target-wrapper">
+          <PriceTarget
+            priceTarget={priceTarget}
+          />
+        </div>
+
+        <div className="product-investment-outlook-wrapper">
+          <InvestmentOutlook
+            outlook={investmentOutlook}
+          />
+        </div>
+
+        <div className="product-intelligence-supporting">
+          <TrendAnalysis
+            analysis={trendAnalysis}
           />
 
-          <div className="product-price-target-wrapper">
-            <PriceTarget
-              priceTarget={priceTarget}
-            />
-          </div>
-
-          <div className="product-intelligence-supporting">
-            <TrendAnalysis
-              analysis={trendAnalysis}
-            />
-
-            <RiskAnalysis
-              analysis={riskAnalysis}
-            />
-          </div>
+          <RiskAnalysis
+            analysis={riskAnalysis}
+          />
+        </div>
       </div>
     </section>
 

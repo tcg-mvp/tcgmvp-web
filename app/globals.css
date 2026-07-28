@@ -5675,3 +5675,454 @@ a {
     font-size: 3rem;
   }
 }
+.product-investment-outlook-wrapper {
+  margin-top: 32px;
+}
+
+.investment-outlook-card {
+  overflow: hidden;
+  border: 1px solid rgba(125, 150, 255, 0.18);
+  border-radius: 28px;
+  background:
+    radial-gradient(
+      circle at 12% 5%,
+      rgba(91, 108, 255, 0.11),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(15, 22, 46, 0.98),
+      rgba(7, 12, 27, 0.98)
+    );
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.investment-outlook-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 36px;
+  align-items: start;
+  padding: 34px 36px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.investment-outlook-kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: #73d7ff;
+  font-size: 0.76rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.investment-outlook-header h3 {
+  margin: 0 0 12px;
+  color: #ffffff;
+  font-size: clamp(1.75rem, 3vw, 2.45rem);
+  font-weight: 760;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+}
+
+.investment-outlook-header p {
+  max-width: 720px;
+  margin: 0;
+  color: rgba(225, 231, 255, 0.64);
+  line-height: 1.7;
+}
+
+.investment-outlook-verdict {
+  min-width: 170px;
+  padding: 17px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+  text-align: center;
+}
+
+.investment-outlook-verdict span {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(225, 231, 255, 0.48);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.investment-outlook-verdict strong {
+  display: block;
+  color: #ffffff;
+  font-size: 1.08rem;
+}
+
+.investment-outlook-verdict small {
+  display: block;
+  margin-top: 7px;
+  color: rgba(225, 231, 255, 0.5);
+  font-size: 0.76rem;
+}
+
+.investment-outlook-verdict.positive {
+  border-color: rgba(83, 226, 164, 0.22);
+  background: rgba(83, 226, 164, 0.065);
+}
+
+.investment-outlook-verdict.positive strong {
+  color: #72e7ae;
+}
+
+.investment-outlook-verdict.neutral {
+  border-color: rgba(100, 174, 255, 0.22);
+  background: rgba(100, 174, 255, 0.065);
+}
+
+.investment-outlook-verdict.neutral strong {
+  color: #82c6ff;
+}
+
+.investment-outlook-verdict.negative {
+  border-color: rgba(255, 133, 133, 0.22);
+  background: rgba(255, 133, 133, 0.06);
+}
+
+.investment-outlook-verdict.negative strong {
+  color: #ff9696;
+}
+
+.investment-outlook-verdict.unrated strong {
+  color: rgba(225, 231, 255, 0.62);
+}
+
+.investment-outlook-summary {
+  position: relative;
+  padding: 32px 36px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.investment-outlook-section-label {
+  display: block;
+  margin-bottom: 12px;
+  color: rgba(225, 231, 255, 0.5);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.investment-outlook-summary p {
+  max-width: 850px;
+  margin: 0;
+  color: rgba(236, 240, 255, 0.82);
+  font-size: 1.04rem;
+  line-height: 1.8;
+}
+
+.investment-outlook-confidence {
+  display: flex;
+  width: fit-content;
+  gap: 8px;
+  align-items: center;
+  margin-top: 20px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.investment-outlook-confidence span,
+.investment-outlook-confidence small {
+  color: rgba(225, 231, 255, 0.5);
+  font-size: 0.78rem;
+}
+
+.investment-outlook-confidence strong {
+  color: #ffffff;
+  font-size: 0.8rem;
+}
+
+.investment-outlook-primary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 30px 36px 18px;
+}
+
+.investment-outlook-primary-card {
+  display: flex;
+  min-height: 165px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 21px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.038),
+      rgba(255, 255, 255, 0.014)
+    );
+}
+
+.investment-outlook-primary-card > span {
+  margin-bottom: 13px;
+  color: rgba(225, 231, 255, 0.52);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.investment-outlook-primary-card strong {
+  color: #ffffff;
+  font-size: clamp(1.85rem, 4vw, 2.8rem);
+  font-weight: 780;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.investment-outlook-primary-card strong.positive {
+  color: #72e7ae;
+}
+
+.investment-outlook-primary-card strong.neutral {
+  color: #82c6ff;
+}
+
+.investment-outlook-primary-card strong.negative {
+  color: #ff9696;
+}
+
+.investment-outlook-primary-card small {
+  margin-top: 11px;
+  color: rgba(225, 231, 255, 0.48);
+  font-size: 0.78rem;
+}
+
+.investment-outlook-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 0 36px 30px;
+}
+
+.investment-outlook-metrics > div {
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.investment-outlook-metrics span {
+  display: block;
+  margin-bottom: 10px;
+  color: rgba(225, 231, 255, 0.5);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.investment-outlook-metrics strong {
+  display: block;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 730;
+  letter-spacing: -0.03em;
+}
+
+.investment-outlook-metrics small {
+  display: block;
+  margin-top: 8px;
+  color: rgba(225, 231, 255, 0.45);
+  font-size: 0.75rem;
+}
+
+.investment-outlook-score-bars {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 26px;
+  padding: 30px 36px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.investment-outlook-bar-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 9px;
+}
+
+.investment-outlook-bar-heading span {
+  color: rgba(225, 231, 255, 0.55);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.investment-outlook-bar-heading strong {
+  color: #ffffff;
+  font-size: 0.78rem;
+}
+
+.investment-outlook-bar-track {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.investment-outlook-bar-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #82c6ff;
+}
+
+.investment-outlook-bar-track span.positive {
+  background: #72e7ae;
+}
+
+.investment-outlook-bar-track span.neutral {
+  background: #82c6ff;
+}
+
+.investment-outlook-bar-track span.negative {
+  background: #ff9696;
+}
+
+.investment-outlook-evidence {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 30px 36px 36px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.investment-outlook-evidence-column {
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 19px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.investment-outlook-list-title {
+  display: block;
+  margin-bottom: 18px;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.investment-outlook-evidence-column ul {
+  display: grid;
+  gap: 13px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.investment-outlook-evidence-column li {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  color: rgba(225, 231, 255, 0.66);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.investment-outlook-evidence-column p {
+  margin: 0;
+  color: rgba(225, 231, 255, 0.55);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.investment-outlook-list-icon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.investment-outlook-list-icon.positive {
+  background: rgba(83, 226, 164, 0.11);
+  color: #72e7ae;
+}
+
+.investment-outlook-list-icon.negative {
+  background: rgba(255, 133, 133, 0.1);
+  color: #ff9696;
+}
+
+.investment-outlook-empty {
+  display: flex;
+  min-height: 330px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 30px;
+  text-align: center;
+}
+
+.investment-outlook-empty h4 {
+  margin: 0 0 12px;
+  color: #ffffff;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  letter-spacing: -0.04em;
+}
+
+.investment-outlook-empty p {
+  max-width: 650px;
+  margin: 0;
+  color: rgba(225, 231, 255, 0.62);
+  line-height: 1.7;
+}
+
+.investment-outlook-confidence-empty {
+  margin-top: 22px;
+  padding: 11px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 999px;
+  color: rgba(225, 231, 255, 0.58);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 760px) {
+  .investment-outlook-header {
+    grid-template-columns: 1fr;
+    padding: 28px 24px;
+  }
+
+  .investment-outlook-verdict {
+    width: fit-content;
+    min-width: 155px;
+  }
+
+  .investment-outlook-summary {
+    padding: 28px 24px;
+  }
+
+  .investment-outlook-primary-grid {
+    grid-template-columns: 1fr;
+    padding: 24px 24px 16px;
+  }
+
+  .investment-outlook-metrics {
+    grid-template-columns: 1fr;
+    padding: 0 24px 26px;
+  }
+
+  .investment-outlook-score-bars {
+    grid-template-columns: 1fr;
+    padding: 26px 24px;
+  }
+
+  .investment-outlook-evidence {
+    grid-template-columns: 1fr;
+    padding: 26px 24px 28px;
+  }
+}
