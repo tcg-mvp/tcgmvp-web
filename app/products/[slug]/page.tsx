@@ -299,20 +299,11 @@ const priceTarget = calculatePriceTarget({
   marketHealthScore: marketHealth.score,
   investmentGradeScore: investmentGrade.score,
 
-  recentSalesCount: marketSales.length,
-  activeListingsCount: marketListings.length,
+marketConfidenceScore:
+  sharedConfidence.score,
 
-  priceVariationPercent:
-    marketHealth.priceVariationPercent,
-
-  trendConfidence:
-    trendAnalysis.confidence === "High"
-      ? 100
-      : trendAnalysis.confidence === "Medium"
-        ? 65
-        : trendAnalysis.confidence === "Low"
-          ? 35
-          : 0,
+marketConfidence:
+  sharedConfidence.confidence,
 });
 
 const marketRating =
