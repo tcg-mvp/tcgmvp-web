@@ -267,7 +267,21 @@ const investmentGrade =
     priceHistory,
     marketSales
   ); 
+const sharedConfidence = calculateConfidence({
+  recentSalesCount: marketSales.length,
+  activeListingsCount: marketListings.length,
+  priceHistoryPoints: priceHistory.length,
 
+  hasCurrentPrice:
+    marketPrice !== null &&
+    marketPrice !== undefined,
+
+  hasFairValue:
+    fairValue.fairValue !== null &&
+    fairValue.fairValue !== undefined,
+
+  dataAgeDays: 1,
+});
   const trendAnalysis =
   calculateTrendAnalysis(marketStatistics);
 
@@ -346,21 +360,7 @@ const investmentOutlook =
     change30d:
       marketStatistics.change30d,
   });
-const sharedConfidence = calculateConfidence({
-  recentSalesCount: marketSales.length,
-  activeListingsCount: marketListings.length,
-  priceHistoryPoints: priceHistory.length,
 
-  hasCurrentPrice:
-    marketPrice !== null &&
-    marketPrice !== undefined,
-
-  hasFairValue:
-    fairValue.fairValue !== null &&
-    fairValue.fairValue !== undefined,
-
-  dataAgeDays: 1,
-});
 
   return (
     <main className="site-shell products-page">
