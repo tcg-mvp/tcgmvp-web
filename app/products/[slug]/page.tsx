@@ -314,6 +314,12 @@ const marketRating =
     fairValue,
     marketHealth,
     investmentGrade,
+
+    marketConfidenceScore:
+      sharedConfidence.score,
+
+    marketConfidence:
+      sharedConfidence.confidence,
   });
   
 const investmentOutlook =
@@ -345,8 +351,11 @@ const investmentOutlook =
     activeListingsCount:
       marketListings.length,
 
-    confidenceScore:
-      priceTarget.confidenceScore,
+    marketConfidenceScore:
+      sharedConfidence.score,
+
+    marketConfidence:
+      sharedConfidence.confidence,
 
     change30d:
       marketStatistics.change30d,

@@ -160,12 +160,12 @@ Strengthen the consistency, reliability, and explainability of the TCGMVP intell
 ## Confidence Unification
 
 - [ ] Audit confidence logic across engines
-- [ ] Replace duplicate Trend Analysis confidence logic
-- [ ] Replace duplicate Price Target confidence logic
-- [ ] Replace duplicate Market Rating confidence logic
+- [] Replace duplicate Trend Analysis confidence logic
+- [x] Replace duplicate Price Target confidence logic
+- [x] Replace duplicate Market Rating confidence logic
 - [ ] Replace duplicate Investment Outlook confidence logic
 - [ ] Standardize confidence terminology across components
-- [ ] Preserve Risk Analysis as an independent risk model
+- [x] Preserve Risk Analysis as an independent risk model
 
 ## Scoring and Consistency
 
@@ -211,9 +211,9 @@ Strengthen the consistency, reliability, and explainability of the TCGMVP intell
 
 ## Intelligence Validation
 
-- [ ] Validate Evolving Skies results
-- [ ] Validate Chilling Reign results
-- [ ] Validate Team Up insufficient-data behavior
+- [x] Validate Evolving Skies results
+- [x] Validate Chilling Reign results
+- [x] Validate Team Up insufficient-data behavior
 - [ ] Add additional high-liquidity products
 - [ ] Add additional low-liquidity products
 - [ ] Add overvalued product test cases
