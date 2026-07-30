@@ -6873,3 +6873,77 @@ a {
 .product-hero-title-type {
   color: var(--brand-gold-light);
 }
+/* =========================================================
+   Product Price Target Layout Fix
+   ========================================================= */
+
+/* Stop the confidence card from stretching to match the price-target card */
+.product-price-target-wrapper-v2 {
+  align-items: start;
+}
+
+.product-price-target-wrapper-v2 > * {
+  min-width: 0;
+  align-self: start;
+  width: 100%;
+}
+
+/* Prevent large price targets from overflowing into the return card */
+.price-target-main-value {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.price-target-main-value > strong {
+  max-width: 100%;
+  font-size: clamp(2.8rem, 4.4vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+  white-space: nowrap;
+}
+/* =========================================================
+   Product Hero Metric Hierarchy and Semantic Colors
+   ========================================================= */
+
+.product-hero-metric .product-hero-metric-value {
+  color: #ffffff;
+}
+
+.product-hero-metric .product-hero-metric-detail {
+  display: block;
+  margin-top: 9px;
+  font-weight: 650;
+}
+
+/* Default */
+.product-hero-metric .product-hero-metric-value-default {
+  color: #ffffff !important;
+}
+
+.product-hero-metric .product-hero-metric-detail-default {
+  color: #94a3b8 !important;
+}
+
+/* Positive */
+.product-hero-metric .product-hero-metric-value-positive,
+.product-hero-metric .product-hero-metric-detail-positive {
+  color: #2dd4bf !important;
+}
+
+/* Negative */
+.product-hero-metric .product-hero-metric-value-negative,
+.product-hero-metric .product-hero-metric-detail-negative {
+  color: #fb7185 !important;
+}
+
+/* Warning */
+.product-hero-metric .product-hero-metric-value-warning,
+.product-hero-metric .product-hero-metric-detail-warning {
+  color: #f59e0b !important;
+}
+
+/* Gold */
+.product-hero-metric .product-hero-metric-value-gold,
+.product-hero-metric .product-hero-metric-detail-gold {
+  color: #f5c451 !important;
+}

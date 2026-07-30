@@ -447,24 +447,55 @@ const investmentOutlook =
         change30d={formatPercent(change30d)}
         changeTone={changeTone}
         metrics={[
-          {
-            label: "Market Rating",
-            value: `${marketRating.ratingScore}/100`,
-            detail: marketRating.rating,
-            featured: true,
-          },
+        {
+          label: "Market Rating",
+          value: `${marketRating.ratingScore}/100`,
+          detail: marketRating.rating,
+          featured: true,
+          detailTone:
+            marketRating.ratingScore >= 70
+              ? "positive"
+              : marketRating.ratingScore < 40
+                ? "negative"
+                : "gold",
+        },
+
           {
             label: "Fair Value",
             value: formatCurrency(heroFairValue),
+
             detail:
               heroUpside === null
                 ? "Upside unavailable"
                 : `${heroUpside >= 0 ? "+" : ""}${heroUpside.toFixed(1)}% target potential`,
+
+            detailTone:
+              heroUpside === null
+                ? "default"
+                : heroUpside > 0
+                  ? "positive"
+                  : heroUpside < 0
+                    ? "negative"
+                    : "default",
           },
+
           {
             label: "Confidence",
+
             value: sharedConfidence.confidence,
+
             detail: `${sharedConfidence.score}/100 evidence score`,
+
+            valueTone:
+              sharedConfidence.confidence === "High"
+                ? "positive"
+                : sharedConfidence.confidence === "Medium"
+                  ? "warning"
+                  : sharedConfidence.confidence === "Low"
+                    ? "negative"
+                    : "default",
+
+            detailTone: "default",
           },
         ]}
       />
