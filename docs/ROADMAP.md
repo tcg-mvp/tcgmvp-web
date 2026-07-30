@@ -8,7 +8,7 @@ Build the premier market intelligence platform for Pokémon sealed products by t
 
 # Core Intelligence Engines
 
-These proprietary analytics engines form the foundation of TCGMVP.
+These proprietary analytics engines form the analytical foundation of TCGMVP.
 
 ## Completed
 
@@ -27,6 +27,8 @@ These proprietary analytics engines form the foundation of TCGMVP.
 ---
 
 # Phase 1 – Foundation
+
+Establish the core platform and product catalog.
 
 ## Platform
 
@@ -49,6 +51,8 @@ These proprietary analytics engines form the foundation of TCGMVP.
 
 # Phase 2 – Intelligence Platform
 
+Create the market intelligence foundation.
+
 ## Market Data
 
 - [x] Historical Price Charts
@@ -68,27 +72,20 @@ These proprietary analytics engines form the foundation of TCGMVP.
 
 # Phase 3A – Intelligence Suite
 
-The flagship analytics layer of TCGMVP.
+Build the flagship analytics suite that powers TCGMVP.
 
 ## Market Rating Engine
-
-Combines:
 
 - [x] Trend Analysis
 - [x] Risk Analysis
 - [x] Fair Value
 - [x] Investment Grade
 - [x] Market Health
-
-Outputs:
-
-- [x] Overall Market Rating
+- [x] Overall Rating
 - [x] Rating Score
 - [x] Confidence Score
 - [x] Supporting Reasons
-- [x] Risks and Limitations
-
----
+- [x] Risks & Limitations
 
 ## Price Target Engine
 
@@ -101,9 +98,7 @@ Outputs:
 - [x] Opportunity Verdict
 - [x] Confidence Score
 - [x] Supporting Drivers
-- [x] Risks and Limitations
-
----
+- [x] Risks & Limitations
 
 ## Investment Outlook Engine
 
@@ -113,119 +108,66 @@ Outputs:
 - [x] Collector Demand
 - [x] Supply Outlook
 - [x] Market Maturity
-- [x] Confidence Level
+- [x] Confidence
 - [x] Investment Thesis
 - [x] Strengths
 - [x] Headwinds
 - [x] Insufficient-data handling
 
----
-
 ## Market Confidence Engine
 
-Measures the quality and completeness of the market evidence supporting TCGMVP analytics.
+Inputs
 
-Inputs:
+- [x] Recent Sales
+- [x] Active Listings
+- [x] Historical Pricing
+- [x] Current Price
+- [x] Fair Value
+- [x] Data Freshness
 
-- [x] Recent sales volume
-- [x] Active listing depth
-- [x] Historical pricing depth
-- [x] Current price availability
-- [x] Fair value availability
-- [x] Data freshness
-
-Outputs:
+Outputs
 
 - [x] Confidence Score
 - [x] Confidence Level
 - [x] Confidence Factors
 - [x] Insufficient-data handling
-- [x] Standalone Market Confidence component
+- [x] Standalone Confidence Component
 
 ---
 
-# Phase 3B – Intelligence Refinement
+# Phase 3B – Intelligence Architecture
 
-Strengthen the consistency, reliability, and explainability of the TCGMVP intelligence suite.
+Standardize, validate, and unify the analytics platform.
 
 ## Completed
 
-- [x] Create intelligence audit
-- [x] Create shared confidence engine
-- [x] Add Market Confidence component
-- [x] Add insufficient-data confidence handling
-- [x] Establish confidence scoring foundation
-- [x] Document intelligence refinement roadmap
+- [x] Intelligence audit
+- [x] Shared Market Confidence engine
+- [x] Standalone Market Confidence component
+- [x] Confidence scoring framework
+- [x] Intelligence architecture roadmap
 
 ## Confidence Unification
 
-- [ ] Audit confidence logic across engines
-- [] Replace duplicate Trend Analysis confidence logic
+- [x] Audit confidence logic across engines
 - [x] Replace duplicate Price Target confidence logic
 - [x] Replace duplicate Market Rating confidence logic
-- [ ] Replace duplicate Investment Outlook confidence logic
-- [ ] Standardize confidence terminology across components
-- [x] Preserve Risk Analysis as an independent risk model
-
-## Scoring and Consistency
-
-- [ ] Improve analytics scoring
-- [ ] Calibrate engine weights and thresholds
-- [ ] Improve consistency across engines
-- [ ] Add cross-engine contradiction checks
-- [ ] Test scoring against a wider product set
-- [ ] Document calibration decisions
-- [ ] Add regression test cases for key products
-
-## Confidence Model Refinement
-
-- [ ] Add sales recency scoring
-- [ ] Add sales cadence scoring
-- [ ] Add listing-price consistency scoring
-- [ ] Add price-history coverage scoring
-- [ ] Replace temporary fixed data freshness
-- [ ] Add confidence category breakdowns
-- [ ] Improve confidence explanations
-
-## Explanation Quality
-
-- [ ] Improve explanation quality
-- [ ] Reduce repetitive analytics language
-- [ ] Standardize strengths, drivers, risks, and headwinds
-- [ ] Improve short-term versus long-term explanations
-- [ ] Improve overvalued and undervalued explanations
-- [ ] Improve neutral and mixed-signal explanations
-- [ ] Standardize insufficient-data messaging
-
-## Edge-Case Handling
-
-- [ ] Improve missing-data handling
-- [ ] Improve low-sales handling
-- [ ] Improve no-listing handling
-- [ ] Improve no-price-history handling
-- [ ] Improve unavailable fair-value handling
-- [ ] Improve extreme-price and outlier handling
-- [ ] Improve stale-data handling
-- [ ] Prevent misleading scores from partial datasets
-- [ ] Prevent NaN, Infinity, and invalid percentage outputs
+- [x] Replace duplicate Investment Outlook confidence logic
+- [x] Standardize confidence terminology
+- [x] Preserve Trend Analysis independence
+- [x] Preserve Risk Analysis independence
 
 ## Intelligence Validation
 
-- [x] Validate Evolving Skies results
-- [x] Validate Chilling Reign results
+- [x] Validate Evolving Skies
+- [x] Validate Chilling Reign
 - [x] Validate Team Up insufficient-data behavior
-- [ ] Add additional high-liquidity products
-- [ ] Add additional low-liquidity products
-- [ ] Add overvalued product test cases
-- [ ] Add undervalued product test cases
-- [ ] Add high-risk product test cases
-- [ ] Add conflicting-signal test cases
 
 ---
 
 # Phase 3C – Product Experience
 
-Improve the usability, polish, and presentation of the TCGMVP platform.
+Deliver a polished, intuitive, and trustworthy analytics experience.
 
 ## Landing Page
 
@@ -234,61 +176,129 @@ Improve the usability, polish, and presentation of the TCGMVP platform.
 - [ ] Interactive intelligence preview
 - [ ] Feature highlights
 - [ ] Responsive refinement
-- [ ] Clear product discovery call to action
+- [ ] Product discovery CTA
 - [ ] Intelligence methodology preview
 
 ## Products Page
 
 - [ ] Premium product cards
-- [ ] Sorting and filtering
-- [ ] Search improvements
+- [ ] Sorting
+- [ ] Filtering
+- [ ] Search
 - [ ] Quick analytics preview
 - [ ] Loading states
 - [ ] Empty states
-- [ ] Pagination or infinite loading
+- [ ] Pagination / Infinite Loading
 - [ ] Mobile refinement
 
 ## Product Pages
 
-- [ ] Intelligence polish
 - [ ] Analytics polish
-- [ ] Mobile optimization
-- [ ] Empty states
-- [ ] Loading states
+- [ ] Intelligence polish
 - [ ] Visual consistency
-- [ ] Standardize card spacing
 - [ ] Standardize score presentation
+- [ ] Standardize spacing
 - [ ] Improve section navigation
 - [ ] Improve chart responsiveness
-- [ ] Add analytics methodology tooltips
+- [ ] Methodology tooltips
+- [ ] Mobile optimization
+- [ ] Loading states
+- [ ] Empty states
 
-## Accessibility and Quality
+## Accessibility & Quality
 
-- [ ] Keyboard navigation review
+- [ ] Accessibility review
 - [ ] Color contrast review
-- [ ] Screen-reader label review
-- [ ] Responsive breakpoint review
+- [ ] Keyboard navigation
+- [ ] Screen reader review
 - [ ] Cross-browser testing
-- [ ] Performance review
-- [ ] TypeScript warning cleanup
-- [ ] Remove temporary console logging
+- [ ] Responsive breakpoint review
+- [ ] Performance optimization
+- [ ] TypeScript cleanup
+- [ ] Remove temporary logging
+
+---
+
+# Phase 3D – Analytics Refinement
+
+Improve reliability, consistency, and explainability.
+
+## Scoring & Consistency
+
+- [ ] Improve analytics scoring
+- [ ] Calibrate engine weights
+- [ ] Improve consistency across engines
+- [ ] Cross-engine contradiction detection
+- [ ] Test against larger product datasets
+- [ ] Regression testing
+- [ ] Document calibration decisions
+
+## Confidence Model
+
+- [ ] Sales recency scoring
+- [ ] Sales cadence scoring
+- [ ] Listing-price consistency
+- [ ] Price-history coverage
+- [ ] Dynamic data freshness
+- [ ] Confidence breakdowns
+- [ ] Confidence explanation improvements
+
+## Explanation Quality
+
+- [ ] Improve explanation quality
+- [ ] Reduce repetitive wording
+- [ ] Standardize strengths
+- [ ] Standardize drivers
+- [ ] Standardize risks
+- [ ] Standardize headwinds
+- [ ] Improve mixed-signal explanations
+- [ ] Improve overvalued explanations
+- [ ] Improve undervalued explanations
+- [ ] Improve insufficient-data messaging
+
+## Edge Cases
+
+- [ ] Missing data
+- [ ] Low sales
+- [ ] No listings
+- [ ] No price history
+- [ ] Missing fair value
+- [ ] Outlier handling
+- [ ] Stale data
+- [ ] Partial datasets
+- [ ] NaN / Infinity protection
+
+## Validation
+
+- [ ] Validate additional high-liquidity products
+- [ ] Validate additional low-liquidity products
+- [ ] Validate overvalued products
+- [ ] Validate undervalued products
+- [ ] Validate high-risk products
+- [ ] Validate conflicting-signal products
+
+## Analytics Versioning
+
+- [ ] Version analytics releases
+- [ ] Track scoring changes
+- [ ] Publish methodology changelog
+- [ ] Maintain backwards compatibility
 
 ---
 
 # Phase 4 – Data Platform
 
-Scale the analytics engines with automated and normalized market data.
+Scale TCGMVP through automated market intelligence.
 
 ## Historical Data
 
 - [ ] Historical market storage
 - [ ] Daily market snapshots
-- [ ] Marketplace normalization
-- [ ] Product-level price history
-- [ ] Sales-history retention
-- [ ] Listing-history retention
+- [ ] Product-level history
+- [ ] Sales retention
+- [ ] Listing retention
 - [ ] Data freshness tracking
-- [ ] Data-source attribution
+- [ ] Source attribution
 
 ## Marketplace Integrations
 
@@ -296,32 +306,30 @@ Scale the analytics engines with automated and normalized market data.
 - [ ] TCGplayer
 - [ ] Pokémon Center
 - [ ] Additional marketplaces
-- [ ] Marketplace-specific normalization
-- [ ] Duplicate listing detection
-- [ ] Duplicate sale detection
-- [ ] Shipping-cost normalization
+- [ ] Marketplace normalization
+- [ ] Duplicate detection
+- [ ] Shipping normalization
 - [ ] Condition normalization
 
 ## Automation
 
-- [ ] Scheduled data imports
-- [ ] Daily analytics recalculation
-- [ ] Historical trend tracking
-- [ ] Failed-import monitoring
-- [ ] Data-quality validation
-- [ ] Automated stale-data detection
-- [ ] Automated outlier detection
-- [ ] Analytics recalculation queue
+- [ ] Scheduled imports
+- [ ] Analytics recalculation
+- [ ] Trend tracking
+- [ ] Failed import monitoring
+- [ ] Data validation
+- [ ] Outlier detection
+- [ ] Stale-data detection
+- [ ] Analytics queue
 
 ## Data Quality
 
-- [ ] Product matching rules
+- [ ] Product matching
 - [ ] Marketplace title normalization
 - [ ] Language detection
 - [ ] Product-type detection
 - [ ] Sealed-condition validation
 - [ ] Suspicious-price filtering
-- [ ] Incomplete-listing filtering
 - [ ] Manual review workflow
 - [ ] Source confidence scoring
 
@@ -329,110 +337,101 @@ Scale the analytics engines with automated and normalized market data.
 
 # Phase 5 – Discovery
 
-Help users discover compelling Pokémon sealed product opportunities.
+Help collectors discover investment opportunities.
 
 ## Search
 
-- [ ] Product Search
+- [ ] Advanced Search
 - [ ] Advanced Filters
-- [ ] Search by set
-- [ ] Search by series
-- [ ] Search by product type
-- [ ] Search by language
-- [ ] Search by price range
-- [ ] Search by release year
+- [ ] Search by Set
+- [ ] Search by Series
+- [ ] Search by Product Type
+- [ ] Search by Language
+- [ ] Search by Price
+- [ ] Search by Release Year
 
 ## Rankings
 
 - [ ] Best Investments
-- [ ] Strongest Trends
-- [ ] Lowest Risk
 - [ ] Highest Upside
+- [ ] Lowest Risk
+- [ ] Strongest Trends
 - [ ] Most Undervalued
-- [ ] Highest Market Confidence
+- [ ] Highest Confidence
 - [ ] Strongest Collector Demand
-- [ ] Most Constrained Supply
 - [ ] Best Long-Term Outlook
-- [ ] Best Short-Term Outlook
 
 ## Comparison
 
 - [ ] Product Comparison
-- [ ] Historical Comparison
 - [ ] Trend Comparison
 - [ ] Risk Comparison
 - [ ] Market Rating Comparison
 - [ ] Price Target Comparison
 - [ ] Investment Outlook Comparison
 - [ ] Market Confidence Comparison
-- [ ] Side-by-side chart comparison
+- [ ] Side-by-side Charts
 
 ## Discovery Pages
 
 - [ ] Market Overview
 - [ ] Trending Products
 - [ ] Undervalued Products
-- [ ] High-Confidence Products
-- [ ] Newly Added Products
-- [ ] Recently Updated Products
-- [ ] Set-level intelligence pages
-- [ ] Series-level intelligence pages
+- [ ] High Confidence Products
+- [ ] Newly Added
+- [ ] Recently Updated
+- [ ] Set Intelligence
+- [ ] Series Intelligence
 
 ---
 
 # Phase 6 – User Platform
 
-Deliver personalized market intelligence and collection management.
+Personalized investing and collection management.
 
 ## Accounts
 
-- [ ] User Accounts
 - [ ] Authentication
 - [ ] User Profiles
-- [ ] Account Settings
-- [ ] Email preferences
-- [ ] Privacy controls
+- [ ] Settings
+- [ ] Email Preferences
+- [ ] Privacy Controls
 
-## Portfolio and Collection
+## Portfolio
 
 - [ ] Portfolio Tracking
 - [ ] Collection Analytics
-- [ ] Purchase price tracking
-- [ ] Quantity tracking
-- [ ] Cost-basis tracking
-- [ ] Unrealized gain and loss
-- [ ] Portfolio allocation
-- [ ] Product performance tracking
-- [ ] Collection import and export
+- [ ] Purchase Price Tracking
+- [ ] Quantity Tracking
+- [ ] Cost Basis
+- [ ] Unrealized Gains/Losses
+- [ ] Allocation
+- [ ] Collection Import/Export
 
-## Watchlists and Alerts
+## Watchlists & Alerts
 
 - [ ] Watchlists
 - [ ] Price Alerts
-- [ ] Market Rating Alerts
-- [ ] Trend Change Alerts
-- [ ] Risk Change Alerts
-- [ ] Price Target Alerts
-- [ ] Investment Outlook Alerts
-- [ ] Market Confidence Alerts
-- [ ] Data freshness alerts
+- [ ] Rating Alerts
+- [ ] Trend Alerts
+- [ ] Risk Alerts
+- [ ] Outlook Alerts
+- [ ] Confidence Alerts
 
-## Personalized Dashboard
+## Dashboard
 
-- [ ] Portfolio summary
-- [ ] Watchlist summary
-- [ ] Opportunity feed
-- [ ] Risk alerts
-- [ ] Market changes
-- [ ] Personalized rankings
-- [ ] Recently viewed products
-- [ ] Saved comparisons
+- [ ] Portfolio Summary
+- [ ] Opportunity Feed
+- [ ] Personalized Rankings
+- [ ] Market Changes
+- [ ] Recently Viewed
+- [ ] Saved Comparisons
 
 ---
 
 # Phase 7 – AI Intelligence
 
-AI enhances TCGMVP analytics. It does not replace the underlying evidence-based engines.
+AI enhances—not replaces—the evidence-based analytics.
 
 ## AI Market Intelligence
 
@@ -443,29 +442,48 @@ AI enhances TCGMVP analytics. It does not replace the underlying evidence-based 
 - [ ] AI Market Rating Explanation
 - [ ] AI Price Target Explanation
 - [ ] AI Investment Outlook Explanation
-- [ ] AI Market Confidence Explanation
-- [ ] AI comparison summaries
-- [ ] AI portfolio summaries
+- [ ] AI Confidence Explanation
+- [ ] AI Comparison Summaries
+- [ ] AI Portfolio Summaries
 
-## AI Research Assistance
+## AI Research
 
-- [ ] Explain conflicting market signals
-- [ ] Summarize major price movements
-- [ ] Identify unusual market activity
+- [ ] Explain conflicting signals
+- [ ] Summarize price movements
+- [ ] Identify unusual activity
 - [ ] Explain valuation changes
-- [ ] Explain supply and demand changes
-- [ ] Generate product research briefs
-- [ ] Generate set research briefs
-- [ ] Surface data limitations clearly
+- [ ] Generate research briefs
+- [ ] Surface data limitations
 
 ## AI Guardrails
 
-- [ ] Require analytics-source grounding
-- [ ] Prevent unsupported investment claims
-- [ ] Display confidence and limitations
-- [ ] Separate factual data from AI interpretation
-- [ ] Log AI-generated conclusions
-- [ ] Add user-facing AI disclaimers
+- [ ] Analytics-source grounding
+- [ ] Prevent unsupported claims
+- [ ] Show confidence & limitations
+- [ ] Separate AI from factual analytics
+- [ ] Log AI outputs
+- [ ] User-facing AI disclaimers
+
+---
+
+# Phase 8 – Business Platform
+
+Build a sustainable analytics business.
+
+## Monetization
+
+- [ ] Premium Subscription
+- [ ] Professional Tier
+- [ ] API Access
+- [ ] Research Reports
+- [ ] Data Licensing
+
+## Partnerships
+
+- [ ] Marketplace Partnerships
+- [ ] Affiliate Program
+- [ ] API Integrations
+- [ ] Enterprise Dashboards
 
 ---
 
@@ -474,31 +492,19 @@ AI enhances TCGMVP analytics. It does not replace the underlying evidence-based 
 ## Platform
 
 - [ ] Mobile App
-- [ ] Public API
 - [ ] Browser Extension
 - [ ] Discord Bot
-- [ ] Embeddable widgets
-- [ ] Partner integrations
+- [ ] Public API
+- [ ] Embeddable Widgets
 
 ## Market Expansion
 
-- [ ] Japanese Market
-- [ ] Additional Pokémon Products
-- [ ] PSA and Graded Products
-- [ ] Other Trading Card Games
+- [ ] Japanese Market Expansion
+- [ ] PSA / Graded Products
+- [ ] Additional Pokémon Categories
+- [ ] Other TCGs
 - [ ] Sports Cards
-- [ ] Additional collectibles markets
-
-## Business Platform
-
-- [ ] Premium subscription
-- [ ] Professional analytics tier
-- [ ] Marketplace referral partnerships
-- [ ] Data licensing
-- [ ] API subscriptions
-- [ ] Affiliate partnerships
-- [ ] Research reports
-- [ ] Business intelligence dashboards
+- [ ] Additional Collectibles
 
 ---
 
@@ -506,13 +512,12 @@ AI enhances TCGMVP analytics. It does not replace the underlying evidence-based 
 
 ## Active Phase
 
-Phase 3B – Intelligence Refinement
+**Phase 3C – Product Experience**
 
 ## Immediate Next Steps
 
-1. Audit confidence logic across all analytics engines.
-2. Create a confidence dependency map.
-3. Replace duplicate Trend Analysis confidence logic.
-4. Validate changes against Evolving Skies, Chilling Reign, and Team Up.
-5. Continue engine migrations one at a time.
-6. Calibrate scoring only after confidence unification is stable.
+1. Polish analytics presentation.
+2. Add analytics methodology tooltips.
+3. Improve loading, empty, and responsive states.
+4. Expand tracked products for broader validation.
+5. Begin Phase 4 data platform planning.

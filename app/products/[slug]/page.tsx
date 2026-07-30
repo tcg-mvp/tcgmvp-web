@@ -37,11 +37,14 @@ import {
 } from "@/lib/analytics/confidence";
 import ProductAnalyticsTabs from "@/components/product/ProductAnalyticsTabs";
 import ProductTabs from "@/components/product/ProductTabs";
+import MarketIntelligenceSummary from "@/components/ui/MarketIntelligenceSummary";
+import ProductHero from "@/components/product/layout/ProductHero";
+import ResearchSummary from "@/components/product/layout/ResearchSummary";
+import ReportSection from "@/components/product/layout/ReportSection";
+import AnalyticsGrid from "@/components/product/layout/AnalyticsGrid";
+import EvidenceSection from "@/components/product/layout/EvidenceSection";
 import { supabase } from "@/lib/supabase";
-import {
-  calculateMarketData,
-  type PriceHistoryEntry,
-} from "@/lib/analytics/marketData";
+import { calculateMarketData } from "@/lib/analytics/marketData";
 
 type ProductPageProps = {
   params: Promise<{
@@ -75,6 +78,26 @@ type MarketListing = {
   listed_at: string | null;
   last_seen: string | null;
 };
+
+function formatCurrency(value: number | null) {
+  if (value === null) {
+    return "N/A";
+  }
+
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+}
+
+function formatPercent(value: number | null) {
+  if (value === null) {
+    return "N/A";
+  }
+
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
 
 export default async function ProductDetailPage({
   params,
@@ -362,8 +385,27 @@ const investmentOutlook =
   });
 
 
+  const overviewName = product.name.replace(" Booster Box", "");
+  const heroFairValue = fairValue.fairValue;
+  const heroUpside = priceTarget.potentialUpsidePercent;
+  const keySignal =
+    investmentOutlook.strengths[0] ??
+    marketRating.strengths[0] ??
+    "Market conditions are balanced";
+  const primaryConcern =
+    investmentOutlook.headwinds[0] ??
+    marketRating.concerns[0] ??
+    "No major concern identified";
+
+  const changeTone =
+    change30d === null
+      ? "neutral"
+      : change30d < 0
+        ? "negative"
+        : "positive";
+
   return (
-    <main className="site-shell products-page">
+    <main className="site-shell products-page product-detail-page product-research-report">
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
@@ -388,209 +430,121 @@ const investmentOutlook =
             <span>Watchlist</span>
           </div>
 
-          <Link
-            className="button button-small button-primary"
-            href="/products"
-          >
+          <Link className="button button-small button-primary" href="/products">
             Back to market
             <span>↗</span>
           </Link>
         </nav>
       </header>
 
-      <section className="product-detail-hero">
-        <div className="container product-detail-hero-grid">
-          <div className="product-detail-image-area">
-            {product.image_url ? (
-              <Image
-                src={product.image_url}
-                alt={`${product.name} product image`}
-                width={600}
-                height={600}
-                priority
-                className="product-detail-image"
-              />
-            ) : (
-              <div className="product-detail-image-placeholder">
-                Product image unavailable
-              </div>
-            )}
-          </div>
+      <ProductHero
+        imageUrl={product.image_url}
+        productName={overviewName}
+        productType={productTypeData?.name ?? "Sealed Product"}
+        seriesName={seriesData?.name ?? "Unknown Series"}
+        languageName={languageData?.name ?? "Unknown Language"}
+        marketPrice={formatCurrency(marketPrice)}
+        change30d={formatPercent(change30d)}
+        changeTone={changeTone}
+        metrics={[
+          {
+            label: "Market Rating",
+            value: `${marketRating.ratingScore}/100`,
+            detail: marketRating.rating,
+            featured: true,
+          },
+          {
+            label: "Fair Value",
+            value: formatCurrency(heroFairValue),
+            detail:
+              heroUpside === null
+                ? "Upside unavailable"
+                : `${heroUpside >= 0 ? "+" : ""}${heroUpside.toFixed(1)}% target potential`,
+          },
+          {
+            label: "Confidence",
+            value: sharedConfidence.confidence,
+            detail: `${sharedConfidence.score}/100 evidence score`,
+          },
+        ]}
+      />
 
-          <div className="product-detail-information">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              Live product intelligence
-            </div>
-
-            <h1>
-              {product.name.replace(" Booster Box", "")}{" "}
-              <span className="gradient-text">
-                {productTypeData?.name ?? "Sealed Product"}
-              </span>
-            </h1>
-
-            <p className="product-detail-meta">
-              {seriesData?.name ?? "Unknown Series"} ·{" "}
-              {languageData?.name ?? "Unknown Language"}
-            </p>
-
-            <div className="products-market-summary product-market-panel">
-              <div>
-                <span>Market price</span>
-                <strong>
-                  {marketPrice === null
-                    ? "N/A"
-                    : marketPrice.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                        maximumFractionDigits: 0,
-                      })}
-                </strong>
-              </div>
-
-              <div>
-                <span>30-day movement</span>
-                <strong
-                  className={
-                    change30d !== null && change30d < 0
-                      ? "negative"
-                      : "positive"
-                  }
-                >
-                  {change30d === null
-                    ? "N/A"
-                    : `${change30d >= 0 ? "+" : ""}${change30d.toFixed(2)}%`}
-                </strong>
-              </div>
-
-              <div>
-                <span>Status</span>
-                <strong className="positive">Tracked</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="product-overview-section">
-        <div className="container">
-          <div className="product-overview-panel">
-            <span className="section-kicker">
-              Product overview
-            </span>
-
-            <p>
-              {setData?.overview ??
-                "Product overview is not available yet."}
-            </p>
-          </div>
-        </div>
-      </section>
-
-     <section className="product-statistics-section">
-      <div className="container">
-        <MarketStatistics
-          statistics={marketStatistics}
-        />
-      </div>
-    </section>
-
-    <section className="product-intelligence-section">
-      <div className="container">
-        <div className="product-section-heading">
-          <span className="section-kicker">
-            TCGMVP Intelligence
-          </span>
-
-          <h2>Market Intelligence</h2>
-
-          <p>
-            Proprietary product intelligence generated from
-            market direction, valuation, liquidity, pricing
-            stability, and risk.
-          </p>
-        </div>
-
-        <MarketRating
-          rating={marketRating}
-        />
-
-        <div className="product-price-target-wrapper">
-
-          <MarketConfidence
-            confidence={sharedConfidence}
-          />           
-          <PriceTarget
-            priceTarget={priceTarget}
+      <ResearchSummary
+        summary={
+          <MarketIntelligenceSummary
+            productName={overviewName}
+            rating={marketRating.rating}
+            ratingScore={marketRating.ratingScore}
+            outlook={investmentOutlook.overallOutlook}
+            summary={investmentOutlook.summary || marketRating.summary}
+            keySignal={keySignal}
+            primaryConcern={primaryConcern}
+            confidence={sharedConfidence.confidence}
+            confidenceScore={sharedConfidence.score}
           />
-        </div>
+        }
+        overview={setData?.overview ?? "Product overview is not available yet."}
+      />
+
+      <ReportSection
+        eyebrow="Investment Thesis"
+        title="Market Intelligence"
+        description="The platform's primary conclusion, forward outlook, valuation target, and supporting evidence confidence."
+        className="product-intelligence-section product-intelligence-section-v2"
+      >
+        <MarketRating rating={marketRating} />
+
         <div className="product-investment-outlook-wrapper">
-
-          <InvestmentOutlook
-            outlook={investmentOutlook}
-          />
-        </div>
-        <div className="product-intelligence-supporting">
-
-          <TrendAnalysis
-            analysis={trendAnalysis}
-          />
-
-          <RiskAnalysis
-            analysis={riskAnalysis}
-          />
-        </div>
-      </div>
-    </section>
-
-    <section className="product-analytics-section">
-      <div className="container">
-        <div className="product-section-heading">
-          <span className="section-kicker">
-            TCGMVP Analytics
-          </span>
-
-          <h2>Supporting Analytics</h2>
-
-          <p>
-            Explore the underlying market-quality, valuation,
-            and investment metrics used to support the overall
-            Market Rating.
-          </p>
+          <InvestmentOutlook outlook={investmentOutlook} />
         </div>
 
+        <AnalyticsGrid className="product-price-target-wrapper product-price-target-wrapper-v2">
+          <PriceTarget priceTarget={priceTarget} />
+          <MarketConfidence confidence={sharedConfidence} />
+        </AnalyticsGrid>
+      </ReportSection>
+
+      <ReportSection
+        eyebrow="Market Context"
+        title="Market Statistics"
+        description="Price behavior and market activity used to frame the intelligence above."
+        className="product-statistics-section product-statistics-section-v2 product-report-section-compact"
+      >
+        <MarketStatistics statistics={marketStatistics} />
+      </ReportSection>
+
+      <ReportSection
+        eyebrow="Direction & Risk"
+        title="Market Analysis"
+        description="A focused view of current momentum, trend quality, volatility, and downside exposure."
+        className="product-direction-section"
+      >
+        <AnalyticsGrid columns={1} className="product-intelligence-supporting">
+          <TrendAnalysis analysis={trendAnalysis} />
+          <RiskAnalysis analysis={riskAnalysis} />
+        </AnalyticsGrid>
+      </ReportSection>
+
+      <ReportSection
+        eyebrow="TCGMVP Analytics"
+        title="Supporting Analysis"
+        description="Explore the market-quality, valuation, and investment metrics supporting the overall Market Rating."
+        className="product-analytics-section"
+      >
         <ProductAnalyticsTabs
           marketHealth={marketHealth}
           dealScore={dealScore}
           investmentGrade={investmentGrade}
         />
-      </div>
-    </section>
+      </ReportSection>
 
-    <section className="product-market-data-section">
-      <div className="container">
-        <div className="product-section-heading">
-          <span className="section-kicker">
-            Market Data
-          </span>
-
-          <h2>Market Evidence</h2>
-
-          <p>
-            Review the tracked price history, recent completed
-            sales, and current active listings behind the
-            analysis.
-          </p>
-        </div>
-      </div>
-
-      <ProductTabs
-        priceHistory={priceHistory}
-        sales={marketSales}
-        listings={marketListings}
-      />
-    </section>
+      <EvidenceSection>
+        <ProductTabs
+          priceHistory={priceHistory}
+          sales={marketSales}
+          listings={marketListings}
+        />
+      </EvidenceSection>
     </main>
   );
 }
