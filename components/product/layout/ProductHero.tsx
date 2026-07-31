@@ -1,10 +1,19 @@
 import Image from "next/image";
 
+type MetricTone =
+  | "default"
+  | "positive"
+  | "negative"
+  | "warning"
+  | "gold";
+
 type ProductHeroMetric = {
   label: string;
   value: string;
   detail: string;
   featured?: boolean;
+  valueTone?: MetricTone;
+  detailTone?: MetricTone;
 };
 
 type ProductHeroProps = {
@@ -78,18 +87,33 @@ export default function ProductHero({
           </div>
 
           <div className="product-hero-intelligence-grid">
-            {metrics.map((metric) => (
-              <div
-                className={`product-hero-metric${
-                  metric.featured ? " product-hero-metric-featured" : ""
-                }`}
-                key={metric.label}
-              >
-                <span>{metric.label}</span>
-                <strong>{metric.value}</strong>
-                <small>{metric.detail}</small>
-              </div>
-            ))}
+            {metrics.map((metric) => {
+              const valueTone = metric.valueTone ?? "default";
+              const detailTone = metric.detailTone ?? "default";
+
+              return (
+                <div
+                  className={`product-hero-metric${
+                    metric.featured ? " product-hero-metric-featured" : ""
+                  }`}
+                  key={metric.label}
+                >
+                  <span>{metric.label}</span>
+
+                  <strong
+                    className={`product-hero-metric-value product-hero-metric-value-${valueTone}`}
+                  >
+                    {metric.value}
+                  </strong>
+
+                  <small
+                    className={`product-hero-metric-detail product-hero-metric-detail-${detailTone}`}
+                  >
+                    {metric.detail}
+                  </small>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
