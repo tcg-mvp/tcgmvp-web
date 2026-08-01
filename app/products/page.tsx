@@ -1,6 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import ProductCard from "@/components/ProductCard";
+import ProductsScreener, {
+  type ScreenerProduct,
+} from "@/components/product/market/ProductsScreener";
+import ProductsDashboard from "@/components/product/market/ProductsDashboard";
 import { supabase } from "@/lib/supabase";
 type PriceHistoryEntry = {
   price: number | string;
@@ -154,10 +157,12 @@ export default async function ProductsPage() {
               Live Pokémon market tracking
             </div>
 
-            <h1>
-              Explore the sealed{" "}
-              <span className="gradient-text">product market.</span>
-            </h1>
+        <h1 className="products-hero-title">
+          <span>Explore the sealed</span>
+          <span className="products-hero-title-accent">
+            product market.
+          </span>
+        </h1>
 
             <p>
               Compare market values and performance across tracked Pokémon
@@ -180,6 +185,70 @@ export default async function ProductsPage() {
       </main>
     );
   }
+  const productsWithMarketData = products.map((product) => {
+    const marketData = calculateMarketData(
+      product.product_price_history ?? []
+    );
+
+    return {
+      ...product,
+      marketPrice: marketData.marketPrice,
+      change30d: marketData.change30d,
+    };
+  });
+
+  const availableChanges = productsWithMarketData
+    .map((product) => product.change30d)
+    .filter((change): change is number => change !== null);
+
+  const averageChange30d =
+    availableChanges.length > 0
+      ? availableChanges.reduce(
+          (sum, change) => sum + change,
+          0
+        ) / availableChanges.length
+      : null;
+
+  const positiveMovers = availableChanges.filter(
+    (change) => change > 0
+  ).length;
+
+  const negativeMovers = availableChanges.filter(
+    (change) => change < 0
+  ).length;
+  const screenerProducts: ScreenerProduct[] =
+    productsWithMarketData.map((product) => {
+      const setData = Array.isArray(product.sets)
+        ? product.sets[0]
+        : product.sets;
+
+      const seriesData = Array.isArray(setData?.series)
+        ? setData.series[0]
+        : setData?.series;
+
+      const languageData = Array.isArray(product.languages)
+        ? product.languages[0]
+        : product.languages;
+
+      const productTypeData = Array.isArray(
+        product.product_types
+      )
+        ? product.product_types[0]
+        : product.product_types;
+
+      return {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        imageUrl: product.image_url,
+        productType:
+          productTypeData?.name ?? "Sealed Product",
+        language: languageData?.name ?? "Unknown",
+        series: seriesData?.name ?? "Unknown Series",
+        marketPrice: product.marketPrice,
+        change30d: product.change30d,
+      };
+    });
 
   return (
     <main className="site-shell products-page">
@@ -221,9 +290,11 @@ export default async function ProductsPage() {
             Live Pokémon market tracking
           </div>
 
-          <h1>
-            Explore the sealed{" "}
-            <span className="gradient-text">product market.</span>
+          <h1 className="products-hero-title">
+            <span>Explore the sealed</span>
+            <span className="products-hero-title-accent">
+              product market.
+            </span>
           </h1>
 
           <p>
@@ -232,23 +303,15 @@ export default async function ProductsPage() {
           </p>
         </div>
 
-        <div className="products-market-summary">
-          <div>
-            <span>Tracked products</span>
-            <strong>{products.length}</strong>
-          </div>
-
-          <div>
-            <span>Primary market</span>
-            <strong>English Pokémon</strong>
-          </div>
-
-          <div>
-            <span>Data status</span>
-            <strong className="positive">Live</strong>
-          </div>
-        </div>
       </section>
+
+        <ProductsDashboard
+          trackedProducts={products.length}
+          averageChange30d={averageChange30d}
+          positiveMovers={positiveMovers}
+          negativeMovers={negativeMovers}
+          productsWithMovement={availableChanges.length}
+        />
 
       <section
         className="market-ticker"
@@ -257,10 +320,9 @@ export default async function ProductsPage() {
         <div className="ticker-track">
           {[0, 1].map((group) => (
             <div className="ticker-group" key={group}>
-              {products.map((product) => {
-                const { change30d } = calculateMarketData(
-                  product.product_price_history ?? []
-                );
+              {productsWithMarketData.map((product) => {
+                const change30d = product.change30d;
+
                 return (
                   <span key={`${group}-${product.id}`}>
                     <strong>
@@ -285,59 +347,7 @@ export default async function ProductsPage() {
           ))}
         </div>
       </section>
-
-      <section className="section product-showcase-section">
-        <div className="container">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">Market watch</span>
-              <h2>Tracked sealed products.</h2>
-            </div>
-
-            <p>
-              Select a product to view its market value, recent movement,
-              transactions, listings, and long-term performance.
-            </p>
-          </div>
-
-          <div className="product-showcase">
-            {products.map((product) => {
-              const setData = Array.isArray(product.sets)
-                ? product.sets[0]
-                : product.sets;
-
-              const seriesData = Array.isArray(setData?.series)
-                ? setData.series[0]
-                : setData?.series;
-
-              const languageData = Array.isArray(product.languages)
-                ? product.languages[0]
-                : product.languages;
-
-              const productTypeData = Array.isArray(product.product_types)
-                ? product.product_types[0]
-                : product.product_types;
-
-              const { marketPrice, change30d } = calculateMarketData(
-                product.product_price_history ?? []
-              );
-              return (
-                <ProductCard
-                  key={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  image_url={product.image_url}
-                  productType={productTypeData?.name ?? "Sealed Product"}
-                  language={languageData?.name ?? "Unknown"}
-                  series={seriesData?.name ?? "Unknown Series"}
-                  marketPrice={marketPrice}
-                  change30d={change30d}
-                />
-              );
-            })}
-          </div>
-        </div>
-      </section>
+<ProductsScreener products={screenerProducts} />
     </main>
   );
 }

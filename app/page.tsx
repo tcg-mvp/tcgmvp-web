@@ -1,5 +1,5 @@
 "use client";
-import ProductCard from "@/components/ProductCard";
+import ProductCard from "@/components/product/ProductCard";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
