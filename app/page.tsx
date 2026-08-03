@@ -11,27 +11,27 @@ import {
 
 const features = [
   {
-    title: "Historical pricing",
+    title: "Market Rating",
     description:
-      "Track verified sales history, price movement, and long-term market direction across sealed TCG products.",
-    metric: "12M+",
-    label: "market observations",
+      "A unified assessment of valuation, demand, supply, momentum, risk, and investment quality.",
+    metric: "62/100",
+    label: "sample neutral rating",
     icon: "chart",
   },
   {
-    title: "Deal intelligence",
+    title: "Estimated Fair Value",
     description:
-      "Compare any listing against market value, recent sales, liquidity, and confidence before you buy.",
-    metric: "92",
-    label: "sample deal score",
+      "Compare the current market price against a forward-looking valuation built from market evidence.",
+    metric: "$2,510",
+    label: "sample fair value",
     icon: "spark",
   },
   {
-    title: "Liquidity insights",
+    title: "Evidence Confidence",
     description:
-      "Understand how quickly products move, how deep demand is, and how reliable the current price really is.",
-    metric: "High",
-    label: "sample liquidity",
+      "Understand how strongly recent sales, listings, and historical coverage support each conclusion.",
+    metric: "Medium",
+    label: "sample confidence level",
     icon: "pulse",
   },
 ];
@@ -39,21 +39,21 @@ const features = [
 const steps = [
   {
     number: "01",
-    title: "Search any product",
+    title: "Find the product",
     description:
-      "Find English Pokémon booster boxes, elite trainer boxes, premium collections, and more.",
+      "Search the tracked sealed market by product, series, language, or product type.",
   },
   {
     number: "02",
-    title: "Read the market",
+    title: "Review the intelligence",
     description:
-      "Review recent sales, trend direction, volatility, liquidity, and confidence in one place.",
+      "Evaluate market rating, fair value, trend, risk, confidence, and supporting evidence.",
   },
   {
     number: "03",
     title: "Make the decision",
     description:
-      "Use the deal score and market context to decide whether to buy, hold, sell, or wait.",
+      "Use the complete research picture to decide whether to buy, hold, sell, or wait.",
   },
 ];
 
@@ -232,7 +232,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main ref={shellRef} className="site-shell">
+    <main ref={shellRef} className="site-shell home-page">
       <div className="mesh-background" aria-hidden="true">
         <span className="mesh-orb mesh-orb-one" />
         <span className="mesh-orb mesh-orb-two" />
@@ -281,9 +281,11 @@ export default function Home() {
             Built for serious collectors and investors
           </div>
 
-          <h1>
-            The market intelligence layer for{" "}
-            <span className="gradient-text">trading cards.</span>
+          <h1 className="landing-hero-title">
+            <span>The market intelligence layer for</span>
+            <span className="landing-hero-title-accent">
+              trading cards.
+            </span>
           </h1>
 
           <p className="hero-lead">
@@ -319,118 +321,92 @@ export default function Home() {
             </div>
           </div>
         </div>
-
         <div className="hero-visual reveal delay-1" data-reveal>
           <div className="dashboard-glow" />
-          <div className="dashboard-window">
-            <div className="scan-line" aria-hidden="true" />
-            <div className="window-topbar">
-              <div className="window-dots">
-                <span />
-                <span />
-                <span />
+
+          <div className="landing-report-preview">
+            <div className="landing-report-preview-topbar">
+              <div>
+                <span className="mini-label">TCGMVP Research Report</span>
+                <strong>Evolving Skies Booster Box</strong>
               </div>
-              <div className="window-search">Search sealed products...</div>
-              <div className="window-avatar">YN</div>
+
+              <span className="landing-report-status">
+                Live intelligence
+              </span>
             </div>
 
-            <div className="dashboard-body">
-              <aside className="dashboard-sidebar">
-                <div className="side-logo">M</div>
-                <div className="side-item active" />
-                <div className="side-item" />
-                <div className="side-item" />
-                <div className="side-item" />
-              </aside>
+            <div className="landing-report-preview-hero">
+              <div className="landing-report-preview-rating">
+                <span>Market Rating</span>
 
-              <div className="dashboard-main">
-                <div className="product-heading">
-                  <div>
-                    <span className="mini-label">Pokémon · Sword & Shield</span>
-                    <h2>Evolving Skies Booster Box</h2>
-                  </div>
-                  <span className="status-pill">Live market</span>
-                </div>
+                <strong>
+                  62<small>/100</small>
+                </strong>
 
-                <div className="metric-grid">
-                  <div className="metric-card">
-                    <span>Market value</span>
-                    <strong>$2,487</strong>
-                    <small className="positive">+7.2% in 30 days</small>
-                  </div>
-                  
-                  <div className="metric-card">
-                    <span>Deal score</span>
-                    <strong>92/100</strong>
-                    <small>Strong buy range</small>
-                  </div>
-                  <div className="metric-card">
-                    <span>Liquidity</span>
-                    <strong>High</strong>
-                    <small>Consistent buyer demand</small>
-                  </div>
-                </div>
-
-                <div className="chart-card">
-                  <div className="chart-heading">
-                    <div>
-                      <span>Market trend</span>
-                      <strong>12-month performance</strong>
-                    </div>
-                    <div className="chart-tabs">
-                      <span>1M</span>
-                      <span>3M</span>
-                      <span className="active">1Y</span>
-                    </div>
-                  </div>
-
-                  <div className="chart-area">
-                    <div className="chart-grid-lines" />
-                    <svg viewBox="0 0 560 210" preserveAspectRatio="none">
-                      <defs>
-                        <linearGradient id="lineFill" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.35" />
-                          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
-                        </linearGradient>
-                      </defs>
-                      <path
-                        className="chart-fill"
-                        d="M0 184 C55 169 72 151 112 158 C151 165 171 121 214 127 C260 134 271 91 318 97 C362 104 375 73 421 82 C470 91 494 47 560 32 L560 210 L0 210 Z"
-                      />
-                      <path
-                        className="chart-line"
-                        d="M0 184 C55 169 72 151 112 158 C151 165 171 121 214 127 C260 134 271 91 318 97 C362 104 375 73 421 82 C470 91 494 47 560 32"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="dashboard-footer-row">
-                  <div>
-                    <span>Recent verified sale</span>
-                    <strong>$2,525</strong>
-                  </div>
-                  <div>
-                    <span>30-day volume</span>
-                    <strong>38 sales</strong>
-                  </div>
-                  <div>
-                    <span>Confidence</span>
-                    <strong>97%</strong>
-                  </div>
-                </div>
+                <b>Neutral</b>
               </div>
+
+              <div className="landing-report-preview-thesis">
+                <span>Investment thesis</span>
+
+                <h2>
+                  A balanced market profile with strong long-term collector
+                  demand.
+                </h2>
+
+                <p>
+                  Positive momentum and constrained supply support the long-term
+                  outlook, while moderate risk limits the current rating.
+                </p>
+              </div>
+            </div>
+
+            <div className="landing-report-preview-metrics">
+              <div>
+                <span>Current Price</span>
+                <strong>$2,500</strong>
+              </div>
+
+              <div>
+                <span>Fair Value</span>
+                <strong>$2,510</strong>
+                <small className="positive">+0.4% margin</small>
+              </div>
+
+              <div>
+                <span>Confidence</span>
+                <strong>Medium</strong>
+                <small>65/100 evidence score</small>
+              </div>
+            </div>
+
+            <div className="landing-report-preview-outlook">
+              <div>
+                <span>Short-Term Outlook</span>
+                <strong>Neutral</strong>
+              </div>
+
+              <div>
+                <span>Long-Term Outlook</span>
+                <strong className="positive">Bullish</strong>
+              </div>
+            </div>
+
+            <div className="landing-report-preview-footer">
+              <span>Research-backed market intelligence</span>
+              <strong>View full report →</strong>
             </div>
           </div>
 
           <div className="floating-card floating-card-left">
-            <span>Deal detected</span>
-            <strong>8.4% below market</strong>
+            <span>Forward outlook</span>
+            <strong className="positive">Bullish long term</strong>
           </div>
 
           <div className="floating-card floating-card-right">
-            <span>Momentum</span>
-            <strong className="positive">Bullish ↗</strong>
+            <span>Evidence quality</span>
+            <strong>Medium · 65/100</strong>
           </div>
         </div>
       </section>
@@ -485,13 +461,13 @@ export default function Home() {
       <section id="platform" className="section container">
         <div className="section-heading reveal" data-reveal>
           <div>
-            <span className="section-kicker">The platform</span>
-            <h2>Read the market before you make the move.</h2>
+        <span className="section-kicker">Research intelligence</span>
+        <h2>Understand the market behind every product.</h2>
           </div>
           <p>
-            TCGMVP brings the market context scattered across listings, sold
-            data, spreadsheets, and collector communities into one clear
-            decision system.
+            Each TCGMVP report combines valuation, market direction, risk,
+            investment quality, and evidence strength into one transparent
+            research experience.
           </p>
         </div>
 
@@ -589,15 +565,26 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="process-grid">
+          <div className="process-grid process-timeline">
             {steps.map((step, index) => (
               <article
-                className={`process-card reveal delay-${index}`}
+                className={`process-card process-timeline-card reveal delay-${index}`}
                 data-reveal
                 key={step.number}
               >
-                <span className="process-number">{step.number}</span>
-                <div className="process-line" />
+                <div className="process-timeline-marker">
+                  <span>{step.number}</span>
+                </div>
+
+                {index < steps.length - 1 && (
+                  <div
+                    className="process-timeline-connector"
+                    aria-hidden="true"
+                  >
+                    <span>→</span>
+                  </div>
+                )}
+
                 <h3>{step.title}</h3>
                 <p>{step.description}</p>
               </article>
