@@ -39,3 +39,29 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Python
+**/.venv/
+**/__pycache__/
+*.pyc
+
+# Playwright browser profile
+scripts/marketplace/ebay/ebay_browser_profile/
+
+# Debug output
+scripts/marketplace/ebay/ebay_sold_debug.*
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+*.wal
+*.shm
+*.lock
+
+# VS Code
+.vscode/
+
+# Environment
+.env
+.env.local
+.env.production
