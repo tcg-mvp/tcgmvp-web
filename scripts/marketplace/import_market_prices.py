@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 
 from scripts.marketplace.market_metrics import save_market_price
 from scripts.marketplace.product_identifiers import get_tcgplayer_id
+from scripts.marketplace.product_market_summary import (
+    update_product_market_summary,
+)
 from scripts.marketplace.providers.pokemon_price_tracker import (
     PokemonPriceTrackerProvider,
 )
@@ -72,9 +75,13 @@ def main() -> None:
                 marketplace_id=TCGPLAYER_MARKETPLACE_ID,
                 market_price=observation.market_price,
             )
-
+            summary = update_product_market_summary(
+                product_id=product_id,
+                market_price=observation.market_price,
+            )
             print(f"  Market price: ${observation.market_price}")
             print(f"  Daily metric ID: {saved_metric['id']}")
+            print(f"  Market summary updated for product {summary['product_id']}")
             print("  SUCCESS")
             print("")
 

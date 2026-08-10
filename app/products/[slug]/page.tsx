@@ -127,6 +127,10 @@ export default async function ProductDetailPage({
       product_price_history (
         price,
         recorded_at
+      ),
+      product_market_summary (
+        current_market_price,
+        change_30d_percent
       )
     `)
     .eq("slug", slug)
@@ -238,10 +242,27 @@ const listingPrices = marketListings
             new Date(b.recorded_at).getTime()
         )
     : [];
-
-  const { marketPrice, change30d } =
+  const historicalMarketData =
     calculateMarketData(priceHistory);
-    
+
+  const marketSummary = Array.isArray(
+    product.product_market_summary
+  )
+    ? product.product_market_summary[0]
+    : product.product_market_summary;
+
+  const marketPrice =
+    marketSummary?.current_market_price !== null &&
+    marketSummary?.current_market_price !== undefined
+      ? Number(marketSummary.current_market_price)
+      : historicalMarketData.marketPrice;
+
+  const change30d =
+    marketSummary?.change_30d_percent !== null &&
+    marketSummary?.change_30d_percent !== undefined
+      ? Number(marketSummary.change_30d_percent)
+      : historicalMarketData.change30d;    
+      
   const fairValue = calculateFairValue({
   sales: salePrices,
 });
