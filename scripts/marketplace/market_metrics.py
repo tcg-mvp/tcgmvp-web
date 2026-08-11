@@ -40,3 +40,38 @@ def save_market_price(
         )
 
     return response.data[0]
+
+
+def save_historical_market_price(
+    *,
+    product_id: int,
+    marketplace_id: int,
+    metric_date: str,
+    market_price: Decimal,
+) -> dict:
+    supabase = get_supabase_client()
+
+    record = {
+        "product_id": product_id,
+        "marketplace_id": marketplace_id,
+        "metric_date": metric_date,
+        "market_price": str(market_price),
+        "sales_count": 0,
+        "sales_volume": 0,
+    }
+
+    response = (
+        supabase.table("daily_market_metrics")
+        .upsert(
+            record,
+            on_conflict="product_id,marketplace_id,metric_date",
+        )
+        .execute()
+    )
+
+    if not response.data:
+        raise RuntimeError(
+            "Supabase did not return the saved historical market metric."
+        )
+
+    return response.data[0]

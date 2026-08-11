@@ -124,9 +124,10 @@ export default async function ProductDetailPage({
       product_types (
         name
       ),
-      product_price_history (
-        price,
-        recorded_at
+      daily_market_metrics (
+        metric_date,
+        market_price,
+        marketplace_id
       ),
       product_market_summary (
         current_market_price,
@@ -230,11 +231,16 @@ const listingPrices = marketListings
     ? product.product_types[0]
     : product.product_types;
 
-  const priceHistory = Array.isArray(product.product_price_history)
-    ? product.product_price_history
+  const priceHistory = Array.isArray(product.daily_market_metrics)
+    ? product.daily_market_metrics
+        .filter(
+          (item) =>
+            item.marketplace_id === 2 &&
+            item.market_price !== null
+        )
         .map((item) => ({
-          price: Number(item.price),
-          recorded_at: item.recorded_at,
+          price: Number(item.market_price),
+          recorded_at: item.metric_date,
         }))
         .sort(
           (a, b) =>

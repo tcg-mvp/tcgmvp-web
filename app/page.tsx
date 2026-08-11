@@ -4,10 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import {
-  calculateMarketData,
-  type PriceHistoryEntry,
-} from "@/lib/analytics/marketData";
+
 
 const features = [
   {
@@ -120,7 +117,16 @@ type FeaturedProduct = {
         name: string;
       }[]
     | null;
-  product_price_history: PriceHistoryEntry[] | null;
+    product_market_summary:
+      | {
+          current_market_price: number | null;
+          change_30d_percent: number | null;
+        }
+      | {
+          current_market_price: number | null;
+          change_30d_percent: number | null;
+        }[]
+      | null;
 };
 function Icon({ type }: { type: string }) {
   if (type === "chart") {
@@ -206,9 +212,9 @@ export default function Home() {
           product_types (
             name
           ),
-          product_price_history (
-            price,
-            recorded_at
+          product_market_summary (
+            current_market_price,
+            change_30d_percent
           )
         `)
         .eq("active", true)
@@ -427,9 +433,17 @@ export default function Home() {
           {[0, 1].map((group) => (
             <div className="ticker-group" key={group}>
               {featuredProducts.map((product) => {
-                const { change30d } = calculateMarketData(
-                  product.product_price_history ?? []
-                );
+              const marketSummary = Array.isArray(
+                product.product_market_summary
+              )
+                ? product.product_market_summary[0]
+                : product.product_market_summary;
+
+              const change30d =
+                marketSummary?.change_30d_percent !== null &&
+                marketSummary?.change_30d_percent !== undefined
+                  ? Number(marketSummary.change_30d_percent)
+                  : null;
 
                 return (
                   <span key={`${group}-${product.id}`}>
@@ -533,9 +547,23 @@ export default function Home() {
                   ? product.product_types[0]
                   : product.product_types;
 
-                const { marketPrice, change30d } = calculateMarketData(
-                  product.product_price_history ?? []
-                );
+                const marketSummary = Array.isArray(
+                  product.product_market_summary
+                )
+                  ? product.product_market_summary[0]
+                  : product.product_market_summary;
+
+                const marketPrice =
+                  marketSummary?.current_market_price !== null &&
+                  marketSummary?.current_market_price !== undefined
+                    ? Number(marketSummary.current_market_price)
+                    : null;
+
+                const change30d =
+                  marketSummary?.change_30d_percent !== null &&
+                  marketSummary?.change_30d_percent !== undefined
+                    ? Number(marketSummary.change_30d_percent)
+                    : null;
 
                 return (
                   <ProductCard
