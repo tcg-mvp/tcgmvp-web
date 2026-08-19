@@ -30,7 +30,7 @@ type MarketListing = {
   marketplace: string;
   title: string;
   listing_price: number | string;
-  shipping_price: number | string;
+  shipping_price: number | string | null;
   total_price: number | string | null;
   listing_type: string | null;
   seller_name: string | null;

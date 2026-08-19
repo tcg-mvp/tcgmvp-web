@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
 import {
   calculateFairValue,
 } from "@/lib/analytics/fairValue";
@@ -12,29 +13,52 @@ import {
 import {
   calculateDealScore,
 } from "@/lib/analytics/dealScore";
+
 import InvestmentOutlook from "@/components/product/InvestmentOutlook";
+
 import {
   calculateInvestmentOutlook,
 } from "@/lib/analytics/investmentOutlook";
+
 import {
   calculateInvestmentGrade,
 } from "@/lib/analytics/investmentGrade";
+
 import MarketStatistics from "@/components/product/MarketStatistics";
-import { calculateMarketStatistics } from "@/lib/analytics/marketStatistics";
+
+import {
+  calculateMarketStatistics,
+} from "@/lib/analytics/marketStatistics";
+
 import TrendAnalysis from "@/components/product/TrendAnalysis";
-import { calculateTrendAnalysis } from "@/lib/analytics/trendAnalysis";
+
+import {
+  calculateTrendAnalysis,
+} from "@/lib/analytics/trendAnalysis";
+
 import RiskAnalysis from "@/components/product/RiskAnalysis";
-import { calculateRiskAnalysis } from "@/lib/analytics/riskAnalysis";
+
+import {
+  calculateRiskAnalysis,
+} from "@/lib/analytics/riskAnalysis";
+
 import MarketRating from "@/components/product/MarketRating";
+
 import {
   calculateMarketRating,
 } from "@/lib/analytics/marketRating";
-import { calculatePriceTarget } from "@/lib/analytics/priceTarget";
+
+import {
+  calculatePriceTarget,
+} from "@/lib/analytics/priceTarget";
+
 import PriceTarget from "@/components/product/PriceTarget";
 import MarketConfidence from "@/components/product/MarketConfidence";
+
 import {
   calculateConfidence,
 } from "@/lib/analytics/confidence";
+
 import ProductAnalyticsTabs from "@/components/product/ProductAnalyticsTabs";
 import ProductTabs from "@/components/product/ProductTabs";
 import MarketIntelligenceSummary from "@/components/ui/MarketIntelligenceSummary";
@@ -43,14 +67,20 @@ import ResearchSummary from "@/components/product/layout/ResearchSummary";
 import ReportSection from "@/components/product/layout/ReportSection";
 import AnalyticsGrid from "@/components/product/layout/AnalyticsGrid";
 import EvidenceSection from "@/components/product/layout/EvidenceSection";
+
 import { supabase } from "@/lib/supabase";
-import { calculateMarketData } from "@/lib/analytics/marketData";
+
+import {
+  calculateMarketData,
+} from "@/lib/analytics/marketData";
+
 
 type ProductPageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
+
 
 type MarketSale = {
   id: number;
@@ -64,12 +94,14 @@ type MarketSale = {
   listing_url: string | null;
   is_verified: boolean;
 };
+
+
 type MarketListing = {
   id: number;
   marketplace: string;
   title: string;
   listing_price: number | string;
-  shipping_price: number | string;
+  shipping_price: number | string | null;
   total_price: number | string | null;
   listing_type: string | null;
   seller_name: string | null;
@@ -78,6 +110,7 @@ type MarketListing = {
   listed_at: string | null;
   last_seen: string | null;
 };
+
 
 function formatCurrency(value: number | null) {
   if (value === null) {
@@ -91,6 +124,7 @@ function formatCurrency(value: number | null) {
   });
 }
 
+
 function formatPercent(value: number | null) {
   if (value === null) {
     return "N/A";
@@ -98,6 +132,7 @@ function formatPercent(value: number | null) {
 
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
+
 
 export default async function ProductDetailPage({
   params,
@@ -131,7 +166,9 @@ export default async function ProductDetailPage({
       ),
       product_market_summary (
         current_market_price,
-        change_30d_percent
+        change_30d_percent,
+        active_listings,
+        lowest_listing_price
       )
     `)
     .eq("slug", slug)
@@ -142,7 +179,11 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const { data: salesData, error: salesError } = await supabase
+
+  const {
+    data: salesData,
+    error: salesError,
+  } = await supabase
     .from("market_sales")
     .select(`
       id,
@@ -157,81 +198,126 @@ export default async function ProductDetailPage({
       is_verified
     `)
     .eq("product_id", product.id)
-    .order("sold_at", { ascending: false })
+    .order("sold_at", {
+      ascending: false,
+    })
     .limit(10);
 
   if (salesError) {
-    console.error("Unable to load market sales:", salesError.message);
+    console.error(
+      "Unable to load market sales:",
+      salesError.message
+    );
   }
 
-  const marketSales = (salesData ?? []) as MarketSale[];
-  const { data: listingsData, error: listingsError } = await supabase
-  .from("market_listings")
-  .select(`
-    id,
-    marketplace,
-    title,
-    listing_price,
-    shipping_price,
-    total_price,
-    listing_type,
-    seller_name,
-    seller_feedback,
-    listing_url,
-    listed_at,
-    last_seen
-  `)
-  .eq("product_id", product.id)
-  .order("total_price", { ascending: true })
-  .limit(10);
+  const marketSales =
+    (salesData ?? []) as MarketSale[];
 
-if (listingsError) {
-  console.error(
-    "Unable to load market listings:",
-    listingsError.message
-  );
-}
 
-const marketListings =
-  (listingsData ?? []) as MarketListing[];
+  const {
+    data: listingsData,
+    error: listingsError,
+  } = await supabase
+    .from("market_listings")
+    .select(`
+      id,
+      marketplace,
+      title,
+      listing_price,
+      shipping_price,
+      total_price,
+      listing_type,
+      seller_name,
+      seller_feedback,
+      listing_url,
+      listed_at,
+      last_seen
+    `)
+    .eq("product_id", product.id)
+    .order("total_price", {
+      ascending: true,
+    })
+    .limit(10);
+
+  if (listingsError) {
+    console.error(
+      "Unable to load market listings:",
+      listingsError.message
+    );
+  }
+
+  const marketListings =
+    (listingsData ?? []) as MarketListing[];
+
 
   const salePrices = marketSales
-  .map((sale) =>
-    Number(
-      sale.total_price ??
-      Number(sale.sale_price) +
-      Number(sale.shipping_price)
+    .map((sale) =>
+      Number(
+        sale.total_price ??
+          Number(sale.sale_price) +
+            Number(sale.shipping_price)
+      )
     )
-  )
-  .filter((price) => Number.isFinite(price));
+    .filter((price) =>
+      Number.isFinite(price)
+    );
 
-const listingPrices = marketListings
-  .map((listing) =>
-    Number(
-      listing.total_price ??
-      Number(listing.listing_price) +
-      Number(listing.shipping_price)
-    )
-  )
-  .filter((price) => Number.isFinite(price));
 
-  const setData = Array.isArray(product.sets)
+  const listingPrices = marketListings
+    .map((listing) => {
+      if (listing.total_price !== null) {
+        return Number(
+          listing.total_price
+        );
+      }
+
+      if (listing.shipping_price !== null) {
+        return (
+          Number(listing.listing_price) +
+          Number(listing.shipping_price)
+        );
+      }
+
+      return null;
+    })
+    .filter(
+      (price): price is number =>
+        price !== null &&
+        Number.isFinite(price)
+    );
+
+
+  const setData = Array.isArray(
+    product.sets
+  )
     ? product.sets[0]
     : product.sets;
 
-  const seriesData = Array.isArray(setData?.series)
+
+  const seriesData = Array.isArray(
+    setData?.series
+  )
     ? setData.series[0]
     : setData?.series;
 
-  const languageData = Array.isArray(product.languages)
+
+  const languageData = Array.isArray(
+    product.languages
+  )
     ? product.languages[0]
     : product.languages;
 
-  const productTypeData = Array.isArray(product.product_types)
+
+  const productTypeData = Array.isArray(
+    product.product_types
+  )
     ? product.product_types[0]
     : product.product_types;
 
-  const priceHistory = Array.isArray(product.daily_market_metrics)
+
+  const priceHistory = Array.isArray(
+    product.daily_market_metrics
+  )
     ? product.daily_market_metrics
         .filter(
           (item) =>
@@ -239,17 +325,29 @@ const listingPrices = marketListings
             item.market_price !== null
         )
         .map((item) => ({
-          price: Number(item.market_price),
-          recorded_at: item.metric_date,
+          price: Number(
+            item.market_price
+          ),
+          recorded_at:
+            item.metric_date,
         }))
         .sort(
           (a, b) =>
-            new Date(a.recorded_at).getTime() -
-            new Date(b.recorded_at).getTime()
+            new Date(
+              a.recorded_at
+            ).getTime() -
+            new Date(
+              b.recorded_at
+            ).getTime()
         )
     : [];
+
+
   const historicalMarketData =
-    calculateMarketData(priceHistory);
+    calculateMarketData(
+      priceHistory
+    );
+
 
   const marketSummary = Array.isArray(
     product.product_market_summary
@@ -257,170 +355,277 @@ const listingPrices = marketListings
     ? product.product_market_summary[0]
     : product.product_market_summary;
 
+
   const marketPrice =
     marketSummary?.current_market_price !== null &&
-    marketSummary?.current_market_price !== undefined
-      ? Number(marketSummary.current_market_price)
+    marketSummary?.current_market_price !==
+      undefined
+      ? Number(
+          marketSummary.current_market_price
+        )
       : historicalMarketData.marketPrice;
+
 
   const change30d =
     marketSummary?.change_30d_percent !== null &&
-    marketSummary?.change_30d_percent !== undefined
-      ? Number(marketSummary.change_30d_percent)
-      : historicalMarketData.change30d;    
-      
+    marketSummary?.change_30d_percent !==
+      undefined
+      ? Number(
+          marketSummary.change_30d_percent
+        )
+      : historicalMarketData.change30d;
+
+
+  const activeListings =
+    marketSummary?.active_listings !== null &&
+    marketSummary?.active_listings !==
+      undefined
+      ? Number(
+          marketSummary.active_listings
+        )
+      : marketListings.length;
+
+
+  const lowestActiveListing =
+    marketSummary?.lowest_listing_price !==
+      null &&
+    marketSummary?.lowest_listing_price !==
+      undefined
+      ? Number(
+          marketSummary.lowest_listing_price
+        )
+      : null;
+
+
   const fairValue = calculateFairValue({
     sales: [],
   });
 
-  const marketHealth = calculateMarketHealth({
-    sales: [],
-    listings: [],
-  });
 
-const lowestListingPrice =
-  listingPrices.length > 0
-    ? Math.min(...listingPrices)
-    : null;
+  const marketHealth =
+    calculateMarketHealth({
+      sales: [],
+      listings: listingPrices,
+      activeListingsCount: activeListings,
+    });
 
-const dealScore =
-  fairValue.fairValue !== null &&
-  lowestListingPrice !== null
-    ? calculateDealScore({
-        fairMarketValue: fairValue.fairValue,
-        listingPrice: lowestListingPrice,
-        recentSalesCount: marketSales.length,
-        activeListingsCount: marketListings.length,
-      })
-    : null;
 
-/*
- * A neutral score is used when there is not enough data
- * to calculate a dependable Deal Score.
- */
-const dealScoreValue = dealScore?.score ?? 50;
+  const lowestListingPrice =
+    lowestActiveListing ??
+    (
+      listingPrices.length > 0
+        ? Math.min(
+            ...listingPrices
+          )
+        : null
+    );
 
-const investmentGrade =
-  calculateInvestmentGrade({
-    marketHealthScore:
-      marketHealth.score,
-    liquidityScore:
-      marketHealth.liquidityScore,
-    supplyBalanceScore:
-      marketHealth.supplyBalanceScore,
-    priceStabilityScore:
-      marketHealth.priceStabilityScore,
-    dealScore:
-      dealScoreValue,
-  });
-const marketStatistics = calculateMarketStatistics(
-  priceHistory,
-  []
-);
-const sharedConfidence = calculateConfidence({
-  recentSalesCount: 0,
-  activeListingsCount: 0,
-  priceHistoryPoints: priceHistory.length,
 
-  hasCurrentPrice:
-    marketPrice !== null &&
-    marketPrice !== undefined,
-
-  hasFairValue:
+  const dealScore =
     fairValue.fairValue !== null &&
-    fairValue.fairValue !== undefined,
+    lowestListingPrice !== null
+      ? calculateDealScore({
+          fairMarketValue:
+            fairValue.fairValue,
+          listingPrice:
+            lowestListingPrice,
+          recentSalesCount:
+            marketSales.length,
+          activeListingsCount:
+            activeListings,
+        })
+      : null;
 
-  dataAgeDays: 1,
-});
+
+  /*
+   * A neutral score is used when there is not enough
+   * data to calculate a dependable Deal Score.
+   */
+  const dealScoreValue =
+    dealScore?.score ?? 50;
+
+
+  const investmentGrade =
+    calculateInvestmentGrade({
+      marketHealthScore:
+        marketHealth.score,
+
+      liquidityScore:
+        marketHealth.liquidityScore,
+
+      supplyBalanceScore:
+        marketHealth.supplyBalanceScore,
+
+      priceStabilityScore:
+        marketHealth.priceStabilityScore,
+
+      dealScore:
+        dealScoreValue,
+    });
+
+
+  const marketStatistics =
+    calculateMarketStatistics(
+      priceHistory,
+      []
+    );
+
+
+  const sharedConfidence =
+    calculateConfidence({
+      recentSalesCount: 0,
+
+      activeListingsCount:
+        activeListings,
+
+      priceHistoryPoints:
+        priceHistory.length,
+
+      hasCurrentPrice:
+        marketPrice !== null &&
+        marketPrice !== undefined,
+
+      hasFairValue:
+        fairValue.fairValue !== null &&
+        fairValue.fairValue !==
+          undefined,
+
+      dataAgeDays: 1,
+    });
+
+
   const trendAnalysis =
-  calculateTrendAnalysis(marketStatistics);
+    calculateTrendAnalysis(
+      marketStatistics
+    );
+
 
   const riskAnalysis =
-  calculateRiskAnalysis(
-    marketStatistics,
-    trendAnalysis
-  );
-const priceTarget = calculatePriceTarget({
-  currentPrice: marketPrice,
-  fairValue: fairValue.fairValue,
-
-  trendScore: trendAnalysis.strength,
-  riskScore: riskAnalysis.riskScore,
-  marketHealthScore: marketHealth.score,
-  investmentGradeScore: investmentGrade.score,
-
-marketConfidenceScore:
-  sharedConfidence.score,
-
-marketConfidence:
-  sharedConfidence.confidence,
-});
-
-const marketRating =
-  calculateMarketRating({
-    currentPrice: marketPrice,
-    trendAnalysis,
-    riskAnalysis,
-    fairValue,
-    marketHealth,
-    investmentGrade,
-
-    marketConfidenceScore:
-      sharedConfidence.score,
-
-    marketConfidence:
-      sharedConfidence.confidence,
-  });
-  
-const investmentOutlook =
-  calculateInvestmentOutlook({
-    currentPrice: marketPrice,
-    fairValue: fairValue.fairValue,
-
-    marketRatingScore:
-      marketRating.ratingScore,
-
-    trendScore:
-      trendAnalysis.strength,
-
-    riskScore:
-      riskAnalysis.riskScore,
-
-    marketHealthScore:
-      marketHealth.score,
-
-    investmentGradeScore:
-      investmentGrade.score,
-
-    expectedReturnPercent:
-      priceTarget.potentialUpsidePercent,
-
-    recentSalesCount: 0,
-    
-    activeListingsCount: 0,
-
-    marketConfidenceScore:
-      sharedConfidence.score,
-
-    marketConfidence:
-      sharedConfidence.confidence,
-
-    change30d:
-      marketStatistics.change30d,
-  });
+    calculateRiskAnalysis(
+      marketStatistics,
+      trendAnalysis
+    );
 
 
-  const overviewName = product.name.replace(" Booster Box", "");
-  const heroFairValue = fairValue.fairValue;
-  const heroUpside = priceTarget.potentialUpsidePercent;
+  const priceTarget =
+    calculatePriceTarget({
+      currentPrice:
+        marketPrice,
+
+      fairValue:
+        fairValue.fairValue,
+
+      trendScore:
+        trendAnalysis.strength,
+
+      riskScore:
+        riskAnalysis.riskScore,
+
+      marketHealthScore:
+        marketHealth.score,
+
+      investmentGradeScore:
+        investmentGrade.score,
+
+      marketConfidenceScore:
+        sharedConfidence.score,
+
+      marketConfidence:
+        sharedConfidence.confidence,
+    });
+
+
+  const marketRating =
+    calculateMarketRating({
+      currentPrice:
+        marketPrice,
+
+      trendAnalysis,
+
+      riskAnalysis,
+
+      fairValue,
+
+      marketHealth,
+
+      investmentGrade,
+
+      marketConfidenceScore:
+        sharedConfidence.score,
+
+      marketConfidence:
+        sharedConfidence.confidence,
+    });
+
+
+  const investmentOutlook =
+    calculateInvestmentOutlook({
+      currentPrice:
+        marketPrice,
+
+      fairValue:
+        fairValue.fairValue,
+
+      marketRatingScore:
+        marketRating.ratingScore,
+
+      trendScore:
+        trendAnalysis.strength,
+
+      riskScore:
+        riskAnalysis.riskScore,
+
+      marketHealthScore:
+        marketHealth.score,
+
+      investmentGradeScore:
+        investmentGrade.score,
+
+      expectedReturnPercent:
+        priceTarget.potentialUpsidePercent,
+
+      recentSalesCount: 0,
+
+      activeListingsCount:
+        activeListings,
+
+      marketConfidenceScore:
+        sharedConfidence.score,
+
+      marketConfidence:
+        sharedConfidence.confidence,
+
+      change30d:
+        marketStatistics.change30d,
+    });
+
+
+  const overviewName =
+    product.name.replace(
+      " Booster Box",
+      ""
+    );
+
+
+  const heroFairValue =
+    fairValue.fairValue;
+
+
+  const heroUpside =
+    priceTarget.potentialUpsidePercent;
+
+
   const keySignal =
     investmentOutlook.strengths[0] ??
     marketRating.strengths[0] ??
     "Market conditions are balanced";
+
+
   const primaryConcern =
     investmentOutlook.headwinds[0] ??
     marketRating.concerns[0] ??
     "No major concern identified";
+
 
   const changeTone =
     change30d === null
@@ -429,6 +634,7 @@ const investmentOutlook =
         ? "negative"
         : "positive";
 
+
   return (
     <main className="site-shell products-page product-detail-page product-research-report">
       <div className="ambient ambient-one" />
@@ -436,7 +642,10 @@ const investmentOutlook =
 
       <header className="nav-wrap">
         <nav className="nav container">
-          <Link className="brand" href="/">
+          <Link
+            className="brand"
+            href="/"
+          >
             <Image
               src="/tcgmvp-mark.png"
               alt="TCGMVP"
@@ -445,49 +654,109 @@ const investmentOutlook =
               className="brand-logo"
               priority
             />
+
             <span>TCGMVP</span>
           </Link>
 
           <div className="nav-links">
-            <Link href="/">Home</Link>
-            <Link href="/products">Market</Link>
-            <span>Portfolio</span>
-            <span>Watchlist</span>
+            <Link href="/">
+              Home
+            </Link>
+
+            <Link href="/products">
+              Market
+            </Link>
+
+            <span>
+              Portfolio
+            </span>
+
+            <span>
+              Watchlist
+            </span>
           </div>
 
-          <Link className="button button-small button-primary" href="/products">
+          <Link
+            className="button button-small button-primary"
+            href="/products"
+          >
             Back to market
             <span>↗</span>
           </Link>
         </nav>
       </header>
 
+
       <ProductHero
-        imageUrl={product.image_url}
-        productName={overviewName}
-        productType={productTypeData?.name ?? "Sealed Product"}
-        seriesName={seriesData?.name ?? "Unknown Series"}
-        languageName={languageData?.name ?? "Unknown Language"}
-        marketPrice={formatCurrency(marketPrice)}
-        change30d={formatPercent(change30d)}
-        changeTone={changeTone}
+        imageUrl={
+          product.image_url
+        }
+
+        productName={
+          overviewName
+        }
+
+        productType={
+          productTypeData?.name ??
+          "Sealed Product"
+        }
+
+        seriesName={
+          seriesData?.name ??
+          "Unknown Series"
+        }
+
+        languageName={
+          languageData?.name ??
+          "Unknown Language"
+        }
+
+        marketPrice={
+          formatCurrency(
+            marketPrice
+          )
+        }
+
+        change30d={
+          formatPercent(
+            change30d
+          )
+        }
+
+        changeTone={
+          changeTone
+        }
+
         metrics={[
-        {
-          label: "Market Rating",
-          value: `${marketRating.ratingScore}/100`,
-          detail: marketRating.rating,
-          featured: true,
-          detailTone:
-            marketRating.ratingScore >= 70
-              ? "positive"
-              : marketRating.ratingScore < 40
-                ? "negative"
-                : "gold",
-        },
+          {
+            label:
+              "Market Rating",
+
+            value:
+              `${marketRating.ratingScore}/100`,
+
+            detail:
+              marketRating.rating,
+
+            featured:
+              true,
+
+            detailTone:
+              marketRating.ratingScore >= 70
+                ? "positive"
+                : marketRating.ratingScore < 40
+                  ? "negative"
+                  : "gold",
+          },
 
           {
-            label: "Fair Value",
-            value: formatCurrency(heroFairValue),
+            label:
+              "Fair Value",
+
+            value:
+              formatCurrency(
+                heroFairValue
+              ),
 
             detail:
               heroUpside === null
@@ -505,42 +774,82 @@ const investmentOutlook =
           },
 
           {
-            label: "Confidence",
+            label:
+              "Confidence",
 
-            value: sharedConfidence.confidence,
+            value:
+              sharedConfidence.confidence,
 
-            detail: `${sharedConfidence.score}/100 evidence score`,
+            detail:
+              `${sharedConfidence.score}/100 evidence score`,
 
             valueTone:
-              sharedConfidence.confidence === "High"
+              sharedConfidence.confidence ===
+              "High"
                 ? "positive"
-                : sharedConfidence.confidence === "Medium"
+                : sharedConfidence.confidence ===
+                    "Medium"
                   ? "warning"
-                  : sharedConfidence.confidence === "Low"
+                  : sharedConfidence.confidence ===
+                      "Low"
                     ? "negative"
                     : "default",
 
-            detailTone: "default",
+            detailTone:
+              "default",
           },
         ]}
       />
 
+
       <ResearchSummary
         summary={
           <MarketIntelligenceSummary
-            productName={overviewName}
-            rating={marketRating.rating}
-            ratingScore={marketRating.ratingScore}
-            outlook={investmentOutlook.overallOutlook}
-            summary={investmentOutlook.summary || marketRating.summary}
-            keySignal={keySignal}
-            primaryConcern={primaryConcern}
-            confidence={sharedConfidence.confidence}
-            confidenceScore={sharedConfidence.score}
+            productName={
+              overviewName
+            }
+
+            rating={
+              marketRating.rating
+            }
+
+            ratingScore={
+              marketRating.ratingScore
+            }
+
+            outlook={
+              investmentOutlook.overallOutlook
+            }
+
+            summary={
+              investmentOutlook.summary ||
+              marketRating.summary
+            }
+
+            keySignal={
+              keySignal
+            }
+
+            primaryConcern={
+              primaryConcern
+            }
+
+            confidence={
+              sharedConfidence.confidence
+            }
+
+            confidenceScore={
+              sharedConfidence.score
+            }
           />
         }
-        overview={setData?.overview ?? "Product overview is not available yet."}
+
+        overview={
+          setData?.overview ??
+          "Product overview is not available yet."
+        }
       />
+
 
       <ReportSection
         eyebrow="Investment Thesis"
@@ -548,17 +857,35 @@ const investmentOutlook =
         description="The platform's primary conclusion, forward outlook, valuation target, and supporting evidence confidence."
         className="product-intelligence-section product-intelligence-section-v2"
       >
-        <MarketRating rating={marketRating} />
+        <MarketRating
+          rating={
+            marketRating
+          }
+        />
 
         <div className="product-investment-outlook-wrapper">
-          <InvestmentOutlook outlook={investmentOutlook} />
+          <InvestmentOutlook
+            outlook={
+              investmentOutlook
+            }
+          />
         </div>
 
         <AnalyticsGrid className="product-price-target-wrapper product-price-target-wrapper-v2">
-          <PriceTarget priceTarget={priceTarget} />
-          <MarketConfidence confidence={sharedConfidence} />
+          <PriceTarget
+            priceTarget={
+              priceTarget
+            }
+          />
+
+          <MarketConfidence
+            confidence={
+              sharedConfidence
+            }
+          />
         </AnalyticsGrid>
       </ReportSection>
+
 
       <ReportSection
         eyebrow="Market Context"
@@ -566,8 +893,13 @@ const investmentOutlook =
         description="Price behavior and market activity used to frame the intelligence above."
         className="product-statistics-section product-statistics-section-v2 product-report-section-compact"
       >
-        <MarketStatistics statistics={marketStatistics} />
+        <MarketStatistics
+          statistics={
+            marketStatistics
+          }
+        />
       </ReportSection>
+
 
       <ReportSection
         eyebrow="Direction & Risk"
@@ -575,11 +907,24 @@ const investmentOutlook =
         description="A focused view of current momentum, trend quality, volatility, and downside exposure."
         className="product-direction-section"
       >
-        <AnalyticsGrid columns={1} className="product-intelligence-supporting">
-          <TrendAnalysis analysis={trendAnalysis} />
-          <RiskAnalysis analysis={riskAnalysis} />
+        <AnalyticsGrid
+          columns={1}
+          className="product-intelligence-supporting"
+        >
+          <TrendAnalysis
+            analysis={
+              trendAnalysis
+            }
+          />
+
+          <RiskAnalysis
+            analysis={
+              riskAnalysis
+            }
+          />
         </AnalyticsGrid>
       </ReportSection>
+
 
       <ReportSection
         eyebrow="TCGMVP Analytics"
@@ -588,17 +933,34 @@ const investmentOutlook =
         className="product-analytics-section"
       >
         <ProductAnalyticsTabs
-          marketHealth={marketHealth}
-          dealScore={dealScore}
-          investmentGrade={investmentGrade}
+          marketHealth={
+            marketHealth
+          }
+
+          dealScore={
+            dealScore
+          }
+
+          investmentGrade={
+            investmentGrade
+          }
         />
       </ReportSection>
 
+
       <EvidenceSection>
         <ProductTabs
-          priceHistory={priceHistory}
-          sales={marketSales}
-          listings={marketListings}
+          priceHistory={
+            priceHistory
+          }
+
+          sales={
+            marketSales
+          }
+
+          listings={
+            marketListings
+          }
         />
       </EvidenceSection>
     </main>

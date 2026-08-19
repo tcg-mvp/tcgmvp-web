@@ -49,6 +49,14 @@ def main() -> None:
                 f"  90D: "
                 f"{summary['change_90d_percent']}%"
             )
+            print(
+                f"  Active listings: "
+                f"{summary['active_listings']}"
+            )
+            print(
+                f"  Lowest listing: "
+                f"${summary['lowest_listing_price']}"
+            )
             print("  SUCCESS")
             print("")
 

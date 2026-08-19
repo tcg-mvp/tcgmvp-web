@@ -3,7 +3,7 @@ type MarketListing = {
   marketplace: string;
   title: string;
   listing_price: number | string;
-  shipping_price: number | string;
+  shipping_price: number | string | null;
   total_price: number | string | null;
   listing_type: string | null;
   seller_name: string | null;
@@ -17,7 +17,9 @@ type CurrentListingsProps = {
   listings: MarketListing[];
 };
 
-function formatCurrency(value: number | string | null) {
+function formatCurrency(
+  value: number | string | null
+): string {
   if (value === null || value === undefined) {
     return "N/A";
   }
@@ -30,17 +32,22 @@ function formatCurrency(value: number | string | null) {
   });
 }
 
-function formatListingType(listingType: string | null) {
+function formatListingType(
+  listingType: string | null
+): string {
   if (!listingType) {
     return "Listing";
   }
 
   return listingType
+    .replaceAll(",", " · ")
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase()
+    );
 }
 
-function formatDate(date: string | null) {
+function formatDate(date: string | null): string {
   if (!date) {
     return "N/A";
   }
@@ -61,11 +68,15 @@ export default function CurrentListings({
         <div className="current-listings-panel">
           <div className="current-listings-heading">
             <div>
-              <span className="section-kicker">Active market</span>
+              <span className="section-kicker">
+                Active market
+              </span>
+
               <h2>Current listings</h2>
+
               <p>
-                Active asking prices currently tracked across supported
-                marketplaces.
+                Active asking prices currently tracked
+                across supported marketplaces.
               </p>
             </div>
 
@@ -80,7 +91,7 @@ export default function CurrentListings({
               <table className="current-listings-table">
                 <thead>
                   <tr>
-                    <th>Total price</th>
+                    <th>Price</th>
                     <th>Marketplace</th>
                     <th>Seller</th>
                     <th>Listing type</th>
@@ -91,23 +102,41 @@ export default function CurrentListings({
 
                 <tbody>
                   {listings.map((listing) => {
-                    const totalPrice =
-                      listing.total_price ??
-                      Number(listing.listing_price) +
-                        Number(listing.shipping_price);
+                    const hasKnownShipping =
+                      listing.shipping_price !== null;
+
+                    const displayPrice =
+                      listing.total_price !== null
+                        ? listing.total_price
+                        : listing.listing_price;
 
                     return (
                       <tr key={listing.id}>
                         <td>
                           <div className="current-listing-price">
-                            <strong>{formatCurrency(totalPrice)}</strong>
+                            <strong>
+                              {formatCurrency(displayPrice)}
+                            </strong>
 
-                            {Number(listing.shipping_price) > 0 && (
+                            {listing.total_price !== null ? (
+                              Number(
+                                listing.shipping_price
+                              ) > 0 ? (
+                                <span>
+                                  Includes{" "}
+                                  {formatCurrency(
+                                    listing.shipping_price
+                                  )}{" "}
+                                  shipping
+                                </span>
+                              ) : (
+                                <span>Free shipping</span>
+                              )
+                            ) : !hasKnownShipping ? (
                               <span>
-                                Includes{" "}
-                                {formatCurrency(listing.shipping_price)} shipping
+                                Shipping not available
                               </span>
-                            )}
+                            ) : null}
                           </div>
                         </td>
 
@@ -120,29 +149,41 @@ export default function CurrentListings({
                         <td>
                           <div className="listing-seller">
                             <strong>
-                              {listing.seller_name ?? "Unknown seller"}
+                              {listing.seller_name ??
+                                "Unknown seller"}
                             </strong>
 
-                            {listing.seller_feedback !== null && (
+                            {listing.seller_feedback !==
+                              null && (
                               <span>
-                                {Number(listing.seller_feedback).toFixed(1)}%
-                                feedback
+                                {Number(
+                                  listing.seller_feedback
+                                ).toFixed(1)}
+                                % feedback
                               </span>
                             )}
                           </div>
                         </td>
 
                         <td>
-                          {formatListingType(listing.listing_type)}
+                          {formatListingType(
+                            listing.listing_type
+                          )}
                         </td>
 
-                        <td>{formatDate(listing.last_seen)}</td>
+                        <td>
+                          {formatDate(
+                            listing.last_seen
+                          )}
+                        </td>
 
                         <td>
                           {listing.listing_url ? (
                             <a
                               className="sale-link"
-                              href={listing.listing_url}
+                              href={
+                                listing.listing_url
+                              }
                               target="_blank"
                               rel="noreferrer"
                               aria-label={`View listing for ${listing.title}`}
@@ -150,7 +191,9 @@ export default function CurrentListings({
                               ↗
                             </a>
                           ) : (
-                            <span className="sale-link-disabled">—</span>
+                            <span className="sale-link-disabled">
+                              —
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -161,10 +204,13 @@ export default function CurrentListings({
             </div>
           ) : (
             <div className="current-listings-empty">
-              <strong>No active listings available</strong>
+              <strong>
+                No active listings available
+              </strong>
+
               <p>
-                Current listing data has not yet been recorded for this
-                product.
+                Current listing data has not yet been
+                recorded for this product.
               </p>
             </div>
           )}
