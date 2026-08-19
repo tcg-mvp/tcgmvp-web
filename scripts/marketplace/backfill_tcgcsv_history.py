@@ -10,12 +10,42 @@ from scripts.marketplace.historical_products import (
 from scripts.marketplace.market_metrics import (
     save_historical_market_price,
 )
+from scripts.marketplace.supabase_client import (
+    get_supabase_client,
+)
 from scripts.marketplace.tcgcsv_daily_archive import (
     fetch_daily_product_prices,
 )
 
 
 TCGPLAYER_MARKETPLACE_ID = 2
+
+
+def date_is_complete(
+    *,
+    metric_date: date,
+    product_ids: list[int],
+) -> bool:
+    supabase = get_supabase_client()
+
+    response = (
+        supabase.table("daily_market_metrics")
+        .select("product_id")
+        .eq("marketplace_id", TCGPLAYER_MARKETPLACE_ID)
+        .eq("metric_date", metric_date.isoformat())
+        .execute()
+    )
+
+    existing_product_ids = {
+        int(row["product_id"])
+        for row in (response.data or [])
+        if row.get("product_id") is not None
+    }
+
+    return all(
+        product_id in existing_product_ids
+        for product_id in product_ids
+    )
 
 
 def backfill_history(
@@ -25,6 +55,11 @@ def backfill_history(
 ) -> None:
     products = get_historical_import_products()
 
+    product_ids = [
+        int(product["tcgmvp_product_id"])
+        for product in products
+    ]
+
     print("")
     print(f"Products found: {len(products)}")
     print(f"Backfill range: {start_date} → {end_date}")
@@ -33,6 +68,7 @@ def backfill_history(
     current_date = start_date
 
     successful_days = 0
+    skipped_days = 0
     failed_days = 0
     saved_metrics = 0
 
@@ -40,6 +76,20 @@ def backfill_history(
         print("=" * 50)
         print(f"Processing archive date: {current_date}")
         print("=" * 50)
+
+        if date_is_complete(
+            metric_date=current_date,
+            product_ids=product_ids,
+        ):
+            print(
+                "Already complete in Supabase. "
+                "Skipping archive download."
+            )
+            print("")
+
+            skipped_days += 1
+            current_date += timedelta(days=1)
+            continue
 
         try:
             observations = fetch_daily_product_prices(
@@ -101,6 +151,7 @@ def backfill_history(
     print("=" * 50)
     print("Backfill complete.")
     print(f"Successful archive days: {successful_days}")
+    print(f"Skipped complete days: {skipped_days}")
     print(f"Failed archive days: {failed_days}")
     print(f"Metrics saved: {saved_metrics}")
     print("=" * 50)

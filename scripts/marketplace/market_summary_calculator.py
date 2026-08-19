@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 from scripts.marketplace.supabase_client import get_supabase_client
@@ -31,7 +31,7 @@ def _percent_change(
 
 def _get_price_on_or_before(
     rows: list[dict],
-    target_date,
+    target_date: date,
 ) -> Decimal | None:
     eligible = [
         row
@@ -49,6 +49,19 @@ def _get_price_on_or_before(
     )
 
     return Decimal(str(latest["market_price"]))
+
+
+def _one_year_before(target_date: date) -> date:
+    try:
+        return target_date.replace(
+            year=target_date.year - 1
+        )
+    except ValueError:
+        # Handles February 29 in leap years.
+        return target_date.replace(
+            year=target_date.year - 1,
+            day=28,
+        )
 
 
 def calculate_product_market_summary(
@@ -109,6 +122,11 @@ def calculate_product_market_summary(
         latest_date - timedelta(days=90),
     )
 
+    price_1y = _get_price_on_or_before(
+        priced_rows,
+        _one_year_before(latest_date),
+    )
+
     return {
         "product_id": product_id,
         "current_market_price": current_price,
@@ -125,9 +143,14 @@ def calculate_product_market_summary(
             current_price,
             price_90d,
         ),
-        "change_1y_percent": None,
+        "change_1y_percent": _percent_change(
+            current_price,
+            price_1y,
+        ),
         "calculated_at": datetime.now(UTC).isoformat(),
     }
+
+
 def update_calculated_market_summary(
     *,
     product_id: int,
@@ -163,7 +186,11 @@ def update_calculated_market_summary(
             if summary["change_90d_percent"] is not None
             else None
         ),
-        "change_1y_percent": None,
+        "change_1y_percent": (
+            str(summary["change_1y_percent"])
+            if summary["change_1y_percent"] is not None
+            else None
+        ),
         "calculated_at": summary["calculated_at"],
     }
 

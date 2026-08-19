@@ -270,12 +270,12 @@ const listingPrices = marketListings
       : historicalMarketData.change30d;    
       
   const fairValue = calculateFairValue({
-  sales: salePrices,
-});
+    sales: [],
+  });
 
   const marketHealth = calculateMarketHealth({
-    sales: salePrices,
-    listings: listingPrices,
+    sales: [],
+    listings: [],
   });
 
 const lowestListingPrice =
@@ -313,13 +313,13 @@ const investmentGrade =
     dealScore:
       dealScoreValue,
   });
-  const marketStatistics = calculateMarketStatistics(
-    priceHistory,
-    marketSales
-  ); 
+const marketStatistics = calculateMarketStatistics(
+  priceHistory,
+  []
+);
 const sharedConfidence = calculateConfidence({
-  recentSalesCount: marketSales.length,
-  activeListingsCount: marketListings.length,
+  recentSalesCount: 0,
+  activeListingsCount: 0,
   priceHistoryPoints: priceHistory.length,
 
   hasCurrentPrice:
@@ -395,11 +395,9 @@ const investmentOutlook =
     expectedReturnPercent:
       priceTarget.potentialUpsidePercent,
 
-    recentSalesCount:
-      marketSales.length,
-
-    activeListingsCount:
-      marketListings.length,
+    recentSalesCount: 0,
+    
+    activeListingsCount: 0,
 
     marketConfidenceScore:
       sharedConfidence.score,
