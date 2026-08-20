@@ -33,11 +33,23 @@ export type TrendAnalysisResult = {
   reasons: string[];
 };
 
-function clampScore(score: number): number {
-  return Math.min(100, Math.max(0, Math.round(score)));
+
+function clampScore(
+  score: number
+): number {
+  return Math.min(
+    100,
+    Math.max(
+      0,
+      Math.round(score)
+    )
+  );
 }
 
-function getTrendLabel(score: number): TrendDirection {
+
+function getTrendLabel(
+  score: number
+): TrendDirection {
   if (score >= 80) {
     return "Very Bullish";
   }
@@ -56,6 +68,7 @@ function getTrendLabel(score: number): TrendDirection {
 
   return "Very Bearish";
 }
+
 
 function getMomentum(
   change30d: number | null
@@ -91,26 +104,42 @@ function getMomentum(
   return "Strong Negative";
 }
 
+
 function getConfidenceReason(
   confidence: TrendConfidence,
   salesTracked: number
 ): string {
   switch (confidence) {
     case "High":
-      return `High confidence based on ${salesTracked} tracked sales and sufficient price history.`;
+      return (
+        `High trend confidence with ${salesTracked} ` +
+        "verified recent sales and sufficient price history."
+      );
 
     case "Medium":
-      return `Moderate confidence based on ${salesTracked} tracked sales and available price history.`;
+      return (
+        `Moderate trend confidence with ${salesTracked} ` +
+        "verified recent sales and available price history."
+      );
 
     case "Low":
-      return `Confidence is limited because only ${salesTracked} tracked ${
-        salesTracked === 1 ? "sale is" : "sales are"
-      } currently available.`;
+      return (
+        `Trend confidence is limited because only ` +
+        `${salesTracked} verified recent ${
+          salesTracked === 1
+            ? "sale is"
+            : "sales are"
+        } available.`
+      );
 
     case "Insufficient":
-      return "There is not enough market data to confirm the current trend.";
+      return (
+        "There is not enough market evidence " +
+        "to confirm the current trend."
+      );
   }
 }
+
 
 export function calculateTrendAnalysis(
   statistics: MarketStatisticsResult
@@ -130,10 +159,12 @@ export function calculateTrendAnalysis(
     confidence,
   } = statistics;
 
+
   /*
    * 30-day price momentum
+   *
+   * This is the primary directional signal.
    */
-
   if (change30d !== null) {
     if (change30d >= 10) {
       score += 20;
@@ -167,23 +198,25 @@ export function calculateTrendAnalysis(
       score -= 5;
 
       cautionReasons.push(
-        `Price declined modestly by ${Math.abs(change30d).toFixed(
-          1
-        )}% over the last 30 days.`
+        `Price declined modestly by ${Math.abs(
+          change30d
+        ).toFixed(1)}% over the last 30 days.`
       );
     } else if (change30d > -10) {
       score -= 12;
 
       cautionReasons.push(
-        `Price declined ${Math.abs(change30d).toFixed(
-          1
-        )}% over the last 30 days.`
+        `Price declined ${Math.abs(
+          change30d
+        ).toFixed(1)}% over the last 30 days.`
       );
     } else {
       score -= 20;
 
       cautionReasons.push(
-        `Price declined ${Math.abs(change30d).toFixed(
+        `Price declined ${Math.abs(
+          change30d
+        ).toFixed(
           1
         )}% over the last 30 days, indicating strong negative momentum.`
       );
@@ -194,10 +227,12 @@ export function calculateTrendAnalysis(
     );
   }
 
+
   /*
    * Position within the 52-week range
+   *
+   * This is a secondary directional signal.
    */
-
   const hasValidRange =
     currentPrice !== null &&
     high52Week !== null &&
@@ -206,8 +241,14 @@ export function calculateTrendAnalysis(
 
   if (hasValidRange) {
     const rangePosition =
-      (currentPrice - low52Week) /
-      (high52Week - low52Week);
+      (
+        currentPrice -
+        low52Week
+      ) /
+      (
+        high52Week -
+        low52Week
+      );
 
     if (rangePosition >= 0.9) {
       score += 12;
@@ -249,59 +290,67 @@ export function calculateTrendAnalysis(
     );
   }
 
+
   /*
    * Sales activity
    *
-   * Sales volume affects confidence more than direction.
-   * A high number of sales confirms a trend but does not
-   * automatically mean the trend is bullish.
+   * Sales volume confirms the reliability of the trend,
+   * but it does not make the trend inherently bullish
+   * or bearish. Therefore it does not directly modify
+   * the directional score.
    */
-
   if (salesTracked >= 20) {
-    score += 6;
-
     positiveReasons.push(
-      `${salesTracked} tracked sales provide strong confirmation of current market pricing.`
+      `${salesTracked} verified recent sales provide strong confirmation of current market behavior.`
     );
   } else if (salesTracked >= 10) {
-    score += 4;
-
     positiveReasons.push(
-      `${salesTracked} tracked sales provide reasonable confirmation of current market pricing.`
+      `${salesTracked} verified recent sales provide reasonable confirmation of current market behavior.`
     );
   } else if (salesTracked >= 5) {
-    score += 1;
-
     neutralReasons.push(
-      `${salesTracked} recent sales are available, but additional sales would improve confidence.`
+      `${salesTracked} verified recent sales are available, though additional transactions would strengthen trend confirmation.`
     );
   } else if (salesTracked > 0) {
     cautionReasons.push(
-      `Only ${salesTracked} recent ${
-        salesTracked === 1 ? "sale is" : "sales are"
+      `Only ${salesTracked} verified recent ${
+        salesTracked === 1
+          ? "sale is"
+          : "sales are"
       } available to confirm the trend.`
     );
   } else {
-    score -= 5;
-
     cautionReasons.push(
-      "No recent sales are available to confirm the current trend."
+      "No verified recent sales are available to confirm the current trend."
     );
   }
 
+
   /*
    * Data-confidence adjustment
+   *
+   * Confidence can moderately increase or reduce
+   * conviction in the directional score, but should
+   * not dominate the trend itself.
    */
-
   if (confidence === "High") {
-    score += 4;
+    score += 3;
+  } else if (confidence === "Medium") {
+    score += 1;
   } else if (confidence === "Low") {
     score -= 2;
-  } else if (confidence === "Insufficient") {
+  } else if (
+    confidence === "Insufficient"
+  ) {
     score -= 7;
   }
 
-  const strength = clampScore(score);
+
+  const strength =
+    clampScore(
+      score
+    );
+
 
   const reasons = [
     ...positiveReasons,
@@ -309,21 +358,46 @@ export function calculateTrendAnalysis(
     ...cautionReasons,
   ];
 
-  const confidenceReason = getConfidenceReason(
-    confidence,
-    salesTracked
-  );
 
-  if (!reasons.includes(confidenceReason)) {
-    reasons.push(confidenceReason);
+  const confidenceReason =
+    getConfidenceReason(
+      confidence,
+      salesTracked
+    );
+
+
+  if (
+    !reasons.includes(
+      confidenceReason
+    )
+  ) {
+    reasons.push(
+      confidenceReason
+    );
   }
 
-    return {
-    trend: getTrendLabel(strength),
-    momentum: getMomentum(change30d),
+
+  return {
+    trend:
+      getTrendLabel(
+        strength
+      ),
+
+    momentum:
+      getMomentum(
+        change30d
+      ),
+
     strength,
+
     confidence,
+
     salesTracked,
-    reasons: reasons.slice(0, 4),
-    };
+
+    reasons:
+      reasons.slice(
+        0,
+        4
+      ),
+  };
 }

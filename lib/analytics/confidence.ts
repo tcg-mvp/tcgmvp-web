@@ -42,11 +42,25 @@ export type ConfidenceResult = {
 | Low confidence simply means conclusions should be interpreted
 | with greater caution.
 |
+| The current model intentionally caps confidence at 95/100.
+| A perfect 100 is reserved for a future model that also accounts
+| for factors such as cross-source agreement and broader source
+| diversity.
+|
 */
 
-const clampScore = (score: number): number => {
-  return Math.max(0, Math.min(100, Math.round(score)));
+const clampScore = (
+  score: number
+): number => {
+  return Math.max(
+    0,
+    Math.min(
+      95,
+      Math.round(score)
+    )
+  );
 };
+
 
 const getConfidenceLevel = (
   score: number,
@@ -60,16 +74,17 @@ const getConfidenceLevel = (
     return "Insufficient";
   }
 
-  if (score >= 75) {
+  if (score >= 80) {
     return "High";
   }
 
-  if (score >= 50) {
+  if (score >= 55) {
     return "Medium";
   }
 
   return "Low";
 };
+
 
 export const calculateConfidence = (
   input: ConfidenceInput
@@ -177,51 +192,94 @@ export const calculateConfidence = (
     score += 2;
   }
 
-  const finalScore = clampScore(score);
+  const finalScore =
+    clampScore(score);
+
   const confidence =
-    getConfidenceLevel(finalScore, input);
+    getConfidenceLevel(
+      finalScore,
+      input
+    );
 
   const reasons: string[] = [];
 
-  if (recentSalesCount >= 10) {
-    reasons.push("Strong recent sales evidence");
+  if (recentSalesCount >= 20) {
+    reasons.push(
+      "Deep recent sales evidence"
+    );
+  } else if (recentSalesCount >= 10) {
+    reasons.push(
+      "Strong recent sales evidence"
+    );
   } else if (recentSalesCount >= 5) {
-    reasons.push("Moderate recent sales evidence");
+    reasons.push(
+      "Moderate recent sales evidence"
+    );
   } else if (recentSalesCount > 0) {
-    reasons.push("Limited recent sales evidence");
+    reasons.push(
+      "Limited recent sales evidence"
+    );
   } else {
-    reasons.push("No recent sales evidence");
+    reasons.push(
+      "No recent sales evidence"
+    );
   }
 
-  if (activeListingsCount >= 10) {
-    reasons.push("Healthy active listing depth");
+  if (activeListingsCount >= 20) {
+    reasons.push(
+      "Deep active listing coverage"
+    );
+  } else if (activeListingsCount >= 10) {
+    reasons.push(
+      "Healthy active listing depth"
+    );
   } else if (activeListingsCount >= 2) {
-    reasons.push("Limited active listing depth");
+    reasons.push(
+      "Limited active listing depth"
+    );
   } else {
-    reasons.push("Minimal active listing data");
+    reasons.push(
+      "Minimal active listing data"
+    );
   }
 
-  if (priceHistoryPoints >= 30) {
-    reasons.push("Meaningful historical pricing data");
+  if (priceHistoryPoints >= 90) {
+    reasons.push(
+      "Deep historical pricing coverage"
+    );
+  } else if (priceHistoryPoints >= 30) {
+    reasons.push(
+      "Meaningful historical pricing data"
+    );
   } else if (priceHistoryPoints > 0) {
-    reasons.push("Limited historical pricing data");
+    reasons.push(
+      "Limited historical pricing data"
+    );
   } else {
-    reasons.push("No historical pricing data");
+    reasons.push(
+      "No historical pricing data"
+    );
   }
 
   if (!input.hasCurrentPrice) {
-    reasons.push("Current market price is unavailable");
+    reasons.push(
+      "Current market price is unavailable"
+    );
   }
 
   if (!input.hasFairValue) {
-    reasons.push("Fair value estimate is unavailable");
+    reasons.push(
+      "Fair value estimate is unavailable"
+    );
   }
 
   if (
     input.dataAgeDays !== undefined &&
     input.dataAgeDays > 30
   ) {
-    reasons.push("Market data may be outdated");
+    reasons.push(
+      "Market data may be outdated"
+    );
   }
 
   return {

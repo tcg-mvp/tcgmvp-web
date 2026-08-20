@@ -3,7 +3,7 @@ type MarketSale = {
   marketplace: string;
   title: string;
   sale_price: number | string;
-  shipping_price: number | string;
+  shipping_price: number | string | null;
   total_price: number | string | null;
   sale_type: string | null;
   sold_at: string;
@@ -15,7 +15,9 @@ type RecentSalesProps = {
   sales: MarketSale[];
 };
 
-function formatCurrency(value: number | string | null) {
+function formatCurrency(
+  value: number | string | null
+): string {
   if (value === null || value === undefined) {
     return "N/A";
   }
@@ -28,22 +30,33 @@ function formatCurrency(value: number | string | null) {
   });
 }
 
-function formatSaleType(saleType: string | null) {
+function formatSaleType(
+  saleType: string | null
+): string {
   if (!saleType) {
     return "Sale";
   }
 
   return saleType
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase()
+    );
 }
 
-function formatSaleDate(date: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(date));
+function formatSaleDate(
+  date: string
+): string {
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }
+  ).format(
+    new Date(date)
+  );
 }
 
 export default function RecentSales({
@@ -59,17 +72,24 @@ export default function RecentSales({
                 Transaction data
               </span>
 
-              <h2>Recent sales</h2>
+              <h2>
+                Recent sales
+              </h2>
 
               <p>
-                Latest recorded sales for this product across
-                supported marketplaces.
+                Latest recorded sales for this product
+                across supported marketplaces.
               </p>
             </div>
 
             <div className="recent-sales-count">
-              <strong>{sales.length}</strong>
-              <span>sales shown</span>
+              <strong>
+                {sales.length}
+              </strong>
+
+              <span>
+                sales shown
+              </span>
             </div>
           </div>
 
@@ -78,39 +98,71 @@ export default function RecentSales({
               <table className="recent-sales-table">
                 <thead>
                   <tr>
-                    <th>Sale price</th>
-                    <th>Marketplace</th>
-                    <th>Sale type</th>
-                    <th>Date sold</th>
-                    <th>Status</th>
+                    <th>
+                      Sale price
+                    </th>
+
+                    <th>
+                      Marketplace
+                    </th>
+
+                    <th>
+                      Sale type
+                    </th>
+
+                    <th>
+                      Date sold
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
+
                     <th aria-label="Listing link" />
                   </tr>
                 </thead>
 
                 <tbody>
                   {sales.map((sale) => {
-                    const totalPrice =
-                      sale.total_price ??
-                      Number(sale.sale_price) +
-                        Number(sale.shipping_price);
+                    const hasKnownShipping =
+                      sale.shipping_price !== null;
+
+                    const displayPrice =
+                      sale.total_price !== null
+                        ? sale.total_price
+                        : sale.sale_price;
 
                     return (
                       <tr key={sale.id}>
                         <td>
                           <div className="recent-sale-price">
                             <strong>
-                              {formatCurrency(totalPrice)}
+                              {formatCurrency(
+                                displayPrice
+                              )}
                             </strong>
 
-                            {Number(sale.shipping_price) > 0 && (
+                            {sale.total_price !== null ? (
+                              Number(
+                                sale.shipping_price
+                              ) > 0 ? (
+                                <span>
+                                  Includes{" "}
+                                  {formatCurrency(
+                                    sale.shipping_price
+                                  )}{" "}
+                                  shipping
+                                </span>
+                              ) : (
+                                <span>
+                                  Free shipping
+                                </span>
+                              )
+                            ) : !hasKnownShipping ? (
                               <span>
-                                Includes{" "}
-                                {formatCurrency(
-                                  sale.shipping_price
-                                )}{" "}
-                                shipping
+                                Shipping not available
                               </span>
-                            )}
+                            ) : null}
                           </div>
                         </td>
 
@@ -121,11 +173,15 @@ export default function RecentSales({
                         </td>
 
                         <td>
-                          {formatSaleType(sale.sale_type)}
+                          {formatSaleType(
+                            sale.sale_type
+                          )}
                         </td>
 
                         <td>
-                          {formatSaleDate(sale.sold_at)}
+                          {formatSaleDate(
+                            sale.sold_at
+                          )}
                         </td>
 
                         <td>
@@ -138,7 +194,7 @@ export default function RecentSales({
                           >
                             {sale.is_verified
                               ? "Verified"
-                              : "Sample"}
+                              : "Unverified"}
                           </span>
                         </td>
 
@@ -146,7 +202,9 @@ export default function RecentSales({
                           {sale.listing_url ? (
                             <a
                               className="sale-link"
-                              href={sale.listing_url}
+                              href={
+                                sale.listing_url
+                              }
                               target="_blank"
                               rel="noreferrer"
                               aria-label={`View sale for ${sale.title}`}
@@ -167,11 +225,13 @@ export default function RecentSales({
             </div>
           ) : (
             <div className="recent-sales-empty">
-              <strong>No recent sales available</strong>
+              <strong>
+                No recent sales available
+              </strong>
 
               <p>
-                Sales data has not yet been recorded for this
-                product.
+                Sales data has not yet been recorded
+                for this product.
               </p>
             </div>
           )}

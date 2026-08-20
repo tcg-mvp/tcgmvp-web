@@ -87,7 +87,7 @@ type MarketSale = {
   marketplace: string;
   title: string;
   sale_price: number | string;
-  shipping_price: number | string;
+  shipping_price: number | string | null;
   total_price: number | string | null;
   sale_type: string | null;
   sold_at: string;
@@ -214,6 +214,66 @@ export default async function ProductDetailPage({
     (salesData ?? []) as MarketSale[];
 
 
+  /*
+   * Only verified SoldComps transactions should
+   * influence Fair Value, Market Health, Deal Score,
+   * Confidence, and Investment Outlook.
+   *
+   * Unverified sales remain visible as evidence but
+   * are excluded from scoring.
+   */
+  const thirtyDaysAgo = new Date(
+    Date.now() - 30 * 24 * 60 * 60 * 1000
+  ).toISOString();
+
+  const {
+    data: verifiedSalesData,
+    error: verifiedSalesError,
+  } = await supabase
+    .from("market_sales")
+    .select(`
+      id,
+      marketplace,
+      title,
+      sale_price,
+      shipping_price,
+      total_price,
+      sale_type,
+      sold_at,
+      listing_url,
+      is_verified
+    `)
+    .eq("product_id", product.id)
+    .eq("marketplace", "ebay")
+    .eq("data_source", "soldcomps")
+    .eq("is_verified", true)
+    .gte("sold_at", thirtyDaysAgo)
+    .order("sold_at", {
+      ascending: false,
+    });
+
+  if (verifiedSalesError) {
+    console.error(
+      "Unable to load verified market sales:",
+      verifiedSalesError.message
+    );
+  }
+
+  const verifiedMarketSales =
+    (verifiedSalesData ?? []) as MarketSale[];
+
+  const verifiedSalePrices =
+    verifiedMarketSales
+      .map((sale) =>
+        Number(sale.sale_price)
+      )
+      .filter(
+        (price) =>
+          Number.isFinite(price) &&
+          price > 0
+      );
+
+
   const {
     data: listingsData,
     error: listingsError,
@@ -250,19 +310,12 @@ export default async function ProductDetailPage({
     (listingsData ?? []) as MarketListing[];
 
 
-  const salePrices = marketSales
-    .map((sale) =>
-      Number(
-        sale.total_price ??
-          Number(sale.sale_price) +
-            Number(sale.shipping_price)
-      )
-    )
-    .filter((price) =>
-      Number.isFinite(price)
-    );
-
-
+  /*
+   * Only calculate delivered listing prices when
+   * shipping is actually known.
+   *
+   * Unknown shipping must never silently become $0.
+   */
   const listingPrices = marketListings
     .map((listing) => {
       if (listing.total_price !== null) {
@@ -315,6 +368,10 @@ export default async function ProductDetailPage({
     : product.product_types;
 
 
+  /*
+   * TCGPlayer / TCGCSV remains the historical
+   * reference-price evidence source.
+   */
   const priceHistory = Array.isArray(
     product.daily_market_metrics
   )
@@ -376,6 +433,11 @@ export default async function ProductDetailPage({
       : historicalMarketData.change30d;
 
 
+  /*
+   * Use the complete active-market snapshot rather
+   * than marketListings.length, because the UI only
+   * displays up to 10 listing rows.
+   */
   const activeListings =
     marketSummary?.active_listings !== null &&
     marketSummary?.active_listings !==
@@ -397,16 +459,34 @@ export default async function ProductDetailPage({
       : null;
 
 
-  const fairValue = calculateFairValue({
-    sales: [],
-  });
+  /*
+   * Fair Value now uses verified realized-sale
+   * evidence rather than placeholder data.
+   */
+  const fairValue =
+    calculateFairValue({
+      sales:
+        verifiedSalePrices,
+
+      referencePrice:
+        marketPrice,
+    });
 
 
+  /*
+   * Market Health now receives verified sold evidence
+   * plus real active eBay supply.
+   */
   const marketHealth =
     calculateMarketHealth({
-      sales: [],
-      listings: listingPrices,
-      activeListingsCount: activeListings,
+      sales:
+        verifiedSalePrices,
+
+      listings:
+        listingPrices,
+
+      activeListingsCount:
+        activeListings,
     });
 
 
@@ -427,10 +507,13 @@ export default async function ProductDetailPage({
       ? calculateDealScore({
           fairMarketValue:
             fairValue.fairValue,
+
           listingPrice:
             lowestListingPrice,
+
           recentSalesCount:
-            marketSales.length,
+            verifiedSalePrices.length,
+
           activeListingsCount:
             activeListings,
         })
@@ -464,16 +547,27 @@ export default async function ProductDetailPage({
     });
 
 
+  /*
+   * MarketStatistics still uses historical reference
+   * pricing here. We will connect richer sold evidence
+   * to this component separately so the analytics and
+   * display datasets are not accidentally conflated.
+   */
   const marketStatistics =
     calculateMarketStatistics(
       priceHistory,
-      []
+      verifiedMarketSales
     );
 
 
+  /*
+   * Confidence now receives verified realized sales,
+   * live active-listing depth, and historical pricing.
+   */
   const sharedConfidence =
     calculateConfidence({
-      recentSalesCount: 0,
+      recentSalesCount:
+        verifiedSalePrices.length,
 
       activeListingsCount:
         activeListings,
@@ -584,7 +678,8 @@ export default async function ProductDetailPage({
       expectedReturnPercent:
         priceTarget.potentialUpsidePercent,
 
-      recentSalesCount: 0,
+      recentSalesCount:
+        verifiedSalePrices.length,
 
       activeListingsCount:
         activeListings,
@@ -655,7 +750,9 @@ export default async function ProductDetailPage({
               priority
             />
 
-            <span>TCGMVP</span>
+            <span>
+              TCGMVP
+            </span>
           </Link>
 
           <div className="nav-links">

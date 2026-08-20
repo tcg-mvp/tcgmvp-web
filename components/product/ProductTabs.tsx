@@ -17,7 +17,7 @@ type MarketSale = {
   marketplace: string;
   title: string;
   sale_price: number | string;
-  shipping_price: number | string;
+  shipping_price: number | string | null;
   total_price: number | string | null;
   sale_type: string | null;
   sold_at: string;
