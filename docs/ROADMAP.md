@@ -23,6 +23,7 @@ These proprietary analytics engines form the analytical foundation of TCGMVP.
 - Design System
 - Active Listings Experience
 - Historical Price Visualization
+- Verified Recent Sales Experience
 
 ## Analytics
 
@@ -39,7 +40,9 @@ These proprietary analytics engines form the analytical foundation of TCGMVP.
 - Investment Outlook
 - Confidence Engine
 
-🚧 Current analytics refinement is focused on replacing placeholder/insufficient evidence with real marketplace data.
+✅ Analytics V1 calibrated against live marketplace evidence for the initial three-product test set.
+
+🚧 Current refinement is focused on broader validation, automation, and cross-source agreement rather than placeholder data replacement.
 
 ## Data Platform
 
@@ -49,13 +52,45 @@ These proprietary analytics engines form the analytical foundation of TCGMVP.
 
 ✅ eBay Active Listings Pipeline Operational
 
+✅ SoldComps Sold-Market Pipeline Operational
+
+✅ Verified Sales Pipeline Operational
+
 ✅ Daily Marketplace Metrics Operational
 
-🚧 Sold-market evidence integration is the next major data objective.
+✅ Verified 30-Day Sold Statistics Operational
+
+✅ Real Sold Evidence Integrated Into Analytics
+
+🚧 The next major data objective is automation, broader product coverage, and historical accumulation.
 
 ## Current Focus
 
 🚧 Phase 4 – Building the complete live market intelligence platform.
+
+### Current Milestone
+
+✅ Analytics V1 is now connected to real marketplace evidence.
+
+The initial three-product validation set now uses:
+
+- Historical TCGPlayer/TCGCSV reference pricing
+- Live eBay active listings
+- SoldComps completed-sales evidence
+- Verified / unverified sold classification
+- Rolling 30-day sold statistics
+- Real Fair Value
+- Real Market Health
+- Real Market Statistics
+- Shared Market Confidence
+- Calibrated Trend Analysis
+- Calibrated Risk Analysis
+- Calibrated Investment Grade
+- Calibrated Price Target
+- Calibrated Market Rating
+- Calibrated Investment Outlook
+
+The immediate engineering focus has shifted from proving the analytics architecture to making the data pipeline reliable, automated, and scalable.
 
 ---
 
@@ -151,7 +186,7 @@ Build the flagship analytics suite that powers TCGMVP.
 
 ### Inputs
 
-- [x] Recent Sales input architecture
+- [x] Recent Sales
 - [x] Active Listings
 - [x] Historical Pricing
 - [x] Current Price
@@ -194,7 +229,8 @@ Standardize, validate, and unify the analytics platform.
 
 - [x] Validate Evolving Skies
 - [x] Validate Chilling Reign
-- [x] Validate Team Up insufficient-data behavior
+- [x] Validate Team Up low-liquidity behavior
+- [x] Revalidate analytics after real sold-data integration
 
 ---
 
@@ -244,6 +280,9 @@ Deliver a polished, intuitive, and trustworthy analytics experience.
 - [x] Marketplace seller information
 - [x] Shipping-aware listing display
 - [x] Live active-listing counts integrated into analytics
+- [x] Verified recent-sales display
+- [x] Manual placeholder sales removed
+- [x] Real sold-market evidence connected to analytics
 
 ## Accessibility & Quality
 
@@ -281,9 +320,9 @@ Improve reliability, consistency, and explainability.
 
 ## Scoring & Consistency
 
-- [ ] Improve analytics scoring
-- [ ] Calibrate engine weights using live marketplace evidence
-- [ ] Improve consistency across engines
+- [x] Improve analytics scoring
+- [x] Calibrate engine weights using live marketplace evidence for initial three-product validation set
+- [x] Improve consistency across engines
 - [ ] Cross-engine contradiction detection
 - [ ] Test against larger product datasets
 - [ ] Regression testing
@@ -297,6 +336,7 @@ Improve reliability, consistency, and explainability.
 - [ ] Price-history coverage scoring
 - [x] Basic active-listing evidence integration
 - [x] Basic stale-listing protection
+- [x] Verified recent-sales evidence integration
 - [ ] Full dynamic data freshness scoring
 - [ ] Marketplace sample-size scoring
 - [ ] Cross-source agreement scoring
@@ -321,12 +361,15 @@ Improve reliability, consistency, and explainability.
 - [x] Unknown listing shipping handled safely
 - [x] Active-listing sample-size differences identified
 - [x] Stale listing handling framework
+- [x] Initial sold-data outlier and bundle handling
+- [x] Best Offer uncertainty preserved
+- [x] Verified vs unverified sale distinction
 - [ ] Missing data
 - [ ] Low sales
 - [ ] No listings
 - [ ] No price history
 - [ ] Missing fair value
-- [ ] General outlier handling
+- [ ] Generalized outlier handling
 - [ ] Partial datasets
 - [ ] NaN / Infinity protection
 
@@ -335,6 +378,7 @@ Improve reliability, consistency, and explainability.
 - [x] Initial validation with Evolving Skies
 - [x] Initial validation with Chilling Reign
 - [x] Initial low-liquidity validation with Team Up
+- [x] Validation using real sold-market evidence
 - [ ] Validate additional high-liquidity products
 - [ ] Validate additional low-liquidity products
 - [ ] Validate overvalued products
@@ -369,8 +413,10 @@ Scale TCGMVP through automated, multi-source market intelligence.
 - [x] Listing `last_seen` tracking
 - [x] Data freshness framework
 - [x] Marketplace/source attribution
-- [ ] Verified sales retention pipeline
+- [x] Verified sales retention pipeline
+- [x] Rolling 30-day sold statistics
 - [ ] Continuous daily historical import automation
+- [ ] Long-term sold-history accumulation
 
 ## TCGPlayer / TCGCSV Integration
 
@@ -384,7 +430,7 @@ Scale TCGMVP through automated, multi-source market intelligence.
 - [x] Current market reference price
 - [x] Historical trend calculations
 
-## eBay Integration
+## eBay Active Listings Integration
 
 - [x] eBay Production developer access
 - [x] Production OAuth authentication
@@ -421,20 +467,67 @@ Scale TCGMVP through automated, multi-source market intelligence.
 - [x] Active-listing data integrated into frontend analytics
 - [ ] Scheduled eBay collection
 - [ ] Full listing lifecycle detection
-- [ ] eBay completed/sold-data capability assessment
+
+## SoldComps / eBay Sold-Market Integration
+
+- [x] SoldComps API integration
+- [x] API authentication
+- [x] Retry handling
+- [x] Temporary 503 handling
+- [x] Multi-page retrieval
+- [x] Result deduplication
+- [x] Product-specific sold queries
+- [x] Booster-box validation
+- [x] Sealed-product validation
+- [x] Case exclusion
+- [x] Multi-box lot exclusion
+- [x] Bundle exclusion
+- [x] Ambiguous-quantity filtering
+- [x] Seller extraction
+- [x] Shipping extraction
+- [x] Sale-format extraction
+- [x] Auction identification
+- [x] Bid-count extraction
+- [x] Best Offer detection
+- [x] Exact-price classification
+- [x] Verified / unverified classification
+- [x] Unknown shipping handling
+- [x] Unique sold-listing identity
+- [x] Duplicate prevention
+- [x] `market_sales` ingestion
+- [x] Multi-product sold collector
+- [x] Rolling 30-day verified sales calculations
+- [x] Average sold price
+- [x] Median sold price
+- [x] Low sold price
+- [x] High sold price
+- [x] Sales count
+- [x] Sales volume
+- [x] Daily sold metrics
+- [x] Sold evidence integrated into frontend
+- [x] Manual placeholder sales removed
+- [ ] Scheduled SoldComps collection
+- [ ] Import-run logging
+- [ ] Historical sold-volume tracking
+- [ ] Generalized statistical outlier detection
 
 ## Multi-Source Architecture
 
 - [x] Separate historical/reference-price evidence from active asks
+- [x] Separate active asks from completed-sale evidence
 - [x] Separate marketplace-specific daily metrics
 - [x] TCGPlayer marketplace attribution
 - [x] eBay marketplace attribution
+- [x] SoldComps sold-market attribution
 - [x] Preserve `current_market_price` as reference-price evidence
 - [x] Prevent eBay asks from overwriting market price
 - [x] Active eBay evidence integrated into Market Confidence
 - [x] Active eBay evidence integrated into Market Health
+- [x] Verified sold evidence integrated into Fair Value
+- [x] Verified sold evidence integrated into Market Health
+- [x] Verified sold evidence integrated into Market Statistics
+- [x] Verified sold evidence integrated into analytics
 - [ ] PokémonPriceTracker integration
-- [ ] Sold transaction evidence integration
 - [ ] Cross-source pricing comparison
 - [ ] Cross-source agreement scoring
 - [ ] Source confidence weighting
@@ -444,29 +537,34 @@ Scale TCGMVP through automated, multi-source market intelligence.
 - [x] Historical charts
 - [x] Price history visualization
 - [x] Active listings explorer
+- [x] Verified recent sales explorer
 - [x] Current active-listing count
 - [x] Active asking-price evidence
 - [x] Lowest active ask
 - [x] Seller evidence
 - [x] Shipping-aware pricing display
 - [x] Basic active-supply analytics
-- [ ] Verified recent sales explorer
-- [ ] Full liquidity analysis
+- [x] Verified-sales liquidity analysis
+- [x] Sold-price stability analysis
+- [x] Real Fair Value
+- [x] Market Overview UI
 - [ ] Market depth visualization
 - [ ] Historical active-supply chart
+- [ ] Historical sold-volume chart
 - [ ] Market timeline
-- [x] Market Overview UI
 - [ ] Trending Products
 - [ ] Undervalued Products
 - [ ] Market movers
 - [ ] Price movement timeline enhancements
 - [ ] Advanced supply & demand indicators
+- [ ] Ask-vs-fair-value spread analysis
 - [ ] Ask-vs-market-price spread analysis
 - [ ] Seller concentration analysis
 
 ## Marketplace Integrations
 
 - [x] eBay active listings
+- [x] SoldComps completed-sales evidence
 - [x] TCGPlayer / TCGCSV historical pricing
 - [ ] PokémonPriceTracker API
 - [ ] Pokémon Center market integration
@@ -483,13 +581,15 @@ Scale TCGMVP through automated, multi-source market intelligence.
 - [ ] Scheduled imports
 - [ ] Scheduled TCGCSV refresh
 - [ ] Scheduled eBay refresh
+- [ ] Scheduled SoldComps refresh
 - [ ] Automatic market-summary recalculation
 - [ ] Automated analytics recalculation
 - [ ] Trend tracking automation
 - [x] Per-product collector failure isolation
 - [ ] Failed import monitoring
 - [x] Basic data validation
-- [ ] Outlier detection
+- [x] Initial sold-data filtering
+- [ ] Generalized outlier detection
 - [x] Basic stale-data protection
 - [ ] Analytics queue
 - [ ] Import run logging
@@ -503,13 +603,18 @@ Scale TCGMVP through automated, multi-source market intelligence.
 - [x] Sealed-condition validation
 - [x] Case exclusion
 - [x] Multi-box lot exclusion
+- [x] Bundle exclusion for sold evidence
+- [x] Ambiguous sold-quantity filtering
 - [x] Unknown-shipping handling
 - [x] Duplicate listing protection
+- [x] Duplicate sold-transaction protection
 - [x] Manual placeholder data removed
+- [x] Verified / unverified sold-price distinction
+- [x] Best Offer uncertainty handling
+- [x] Initial suspicious-price guardrails
 - [ ] Generalized language detection
 - [ ] Generalized product-type detection
-- [ ] Statistical suspicious-price filtering
-- [ ] Automated outlier detection
+- [ ] Automated generalized outlier detection
 - [ ] Manual review workflow
 - [ ] Source confidence scoring
 
@@ -695,71 +800,149 @@ Build a sustainable analytics business.
 
 **Phase 4 – Market Intelligence Platform**
 
-TCGMVP has moved beyond the initial "build the live pipeline" stage.
+TCGMVP has moved beyond both the initial live-pipeline stage and the initial sold-data integration stage.
 
-Historical TCGPlayer/TCGCSV pricing and live eBay active-listing evidence are now operational and integrated into the platform.
+The platform now combines three distinct forms of market evidence:
 
-The primary remaining Phase 4 gap is **verified sold-market evidence and automation**.
+1. Historical/reference pricing from TCGPlayer/TCGCSV
+2. Live active-supply evidence from the eBay Browse API
+3. Completed-sale evidence from SoldComps
+
+These sources now feed the quantitative analytics architecture rather than relying on manually entered sales or placeholder evidence.
+
+The primary remaining Phase 4 gap is **automation, broader product coverage, and long-term historical accumulation**.
 
 ## Immediate Next Steps
 
-1. Integrate PokémonPriceTracker as an additional market evidence source.
-2. Determine whether PokémonPriceTracker provides transaction-level, aggregate sold, or reference-price evidence.
-3. Investigate eBay Production sold/completed-data capabilities.
-4. Build verified `market_sales` ingestion.
-5. Connect real sales evidence to Fair Value.
-6. Connect sales evidence to Market Health liquidity and price stability.
-7. Improve Market Confidence using sales recency, listing depth, and source agreement.
-8. Automate TCGCSV and eBay collection.
-9. Automate market-summary and analytics recalculation.
-10. Expand beyond the initial three tracked booster boxes.
-11. Add statistical outlier and suspicious-price filtering.
-12. Begin historical supply / market-depth tracking.
+1. Push and preserve the current Analytics V1 + live-market pipeline baseline in GitHub/Vercel.
+
+2. Productionize the SoldComps collector for unattended execution, including retries, partial-failure handling, logging, and quota-aware request limits.
+
+3. Automate TCGCSV, eBay active-listing, SoldComps, daily-metrics, and market-summary refreshes.
+
+4. Automate analytics recalculation after each successful data refresh.
+
+5. Expand beyond the initial three tracked booster boxes to an initial validation catalog of roughly 10–20 products.
+
+6. Validate the quantitative engine across high-liquidity, low-liquidity, overvalued, undervalued, high-risk, and conflicting-signal products.
+
+7. Continue strengthening sold-data classification for bundles, ambiguous quantities, condition issues, and suspicious-price edge cases.
+
+8. Accumulate daily historical sold, listing, and supply evidence so TCGMVP builds its own proprietary time series.
+
+9. Add cross-source pricing comparison and agreement scoring.
+
+10. Evaluate PokémonPriceTracker and other secondary sources as supplemental evidence rather than a replacement for SoldComps.
+
+11. Add historical active-supply / market-depth tracking.
+
+12. Prepare for a private beta once automation is stable and the first expanded product set is validated.
 
 ---
 
 # Current Data Architecture
 
-TCGPlayer / TCGCSV:
+## TCGPlayer / TCGCSV
 
 Historical market-price evidence
+
 → `daily_market_metrics`
+
 → Price history / performance
+
 → `product_market_summary`
+
 → TCGMVP Analytics
 
-eBay Browse API:
+## eBay Browse API
 
 eBay Browse API
+
 → Listing filtering
+
 → `market_listings`
+
 → Daily listing statistics
+
 → `daily_market_metrics`
+
 → Active supply / asking evidence
+
 → `product_market_summary`
+
 → TCGMVP Analytics
 
-Analytics output:
+## SoldComps
 
-`product_market_summary`
-→ Market Rating
-→ Market Health
+SoldComps API
+
+→ Multi-page recent sold retrieval
+
+→ Deduplication
+
+→ Booster-box validation
+
+→ Bundle / multi-box / ambiguous-quantity filtering
+
+→ Best Offer uncertainty handling
+
+→ Verified vs. unverified classification
+
+→ `market_sales`
+
+→ 30-day sold statistics
+
+→ `daily_market_metrics`
+
+→ Fair Value
+
+→ Liquidity
+
+→ Price Stability
+
+→ Market Statistics
+
 → Market Confidence
+
+→ TCGMVP Analytics
+
+## Analytics Output
+
+Historical Pricing + Active Listings + Verified Sales
+
+→ Fair Value
+
+→ Market Health
+
+→ Market Statistics
+
+→ Market Confidence
+
 → Trend Analysis
+
 → Risk Analysis
+
+→ Deal Score
+
+→ Investment Grade
+
 → Investment Outlook
+
 → Price Target
+
+→ Market Rating
 
 ## Next Evidence Layer
 
-PokémonPriceTracker / potential sold-market sources
-→ Classified sales evidence
-→ `market_sales`
-→ Fair Value
-→ Liquidity
-→ Price Stability
-→ Sales Confidence
-→ Cross-source validation
+Additional pricing / marketplace sources
+
+→ Cross-source pricing comparison
+
+→ Cross-source agreement scoring
+
+→ Source confidence weighting
+
+→ Broader market validation
 
 ---
 
@@ -779,7 +962,7 @@ PokémonPriceTracker / potential sold-market sources
 
 ## v0.4 – Live Market Intelligence
 
-🚧 **In Progress – Major backend milestone reached.**
+🚧 **In Progress – Live sold-market intelligence milestone reached.**
 
 ### Completed Toward v0.4
 
@@ -795,16 +978,34 @@ PokémonPriceTracker / potential sold-market sources
 - [x] Active supply analytics
 - [x] Frontend active listings
 - [x] Initial live-data analytics integration
+- [x] SoldComps API integration
+- [x] Multi-page sold-result retrieval
+- [x] Verified/unverified sold classification
+- [x] Verified sales retention in `market_sales`
+- [x] Bundle / ambiguous-quantity sold filtering
+- [x] 30-day verified sold metrics
+- [x] Fair Value driven by verified sold evidence
+- [x] Market Health driven by verified sales + live supply
+- [x] Market Statistics driven by verified sales
+- [x] Confidence recalibrated to live evidence
+- [x] Analytics V1 weight cleanup
+- [x] Initial three-product live-data calibration
+- [x] Evolving Skies live validation
+- [x] Chilling Reign live validation
+- [x] Team Up low-liquidity validation
 
 ### Remaining for v0.4
 
-- [ ] Verified sold-market evidence
-- [ ] PokémonPriceTracker integration
 - [ ] Automated scheduled imports
-- [ ] Automated recalculation
-- [ ] Stronger data-quality framework
-- [ ] Expanded product catalog
+- [ ] Automated analytics recalculation
+- [ ] Production-grade import logging / monitoring
+- [ ] Broader product catalog
+- [ ] Cross-source agreement scoring
+- [ ] Historical sold / supply accumulation
+- [ ] Generalized outlier detection
 - [ ] Advanced market-depth intelligence
+- [ ] Expanded analytics validation
+- [ ] Private beta readiness validation
 
 ## v0.5 – User Platform
 
