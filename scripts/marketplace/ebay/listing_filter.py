@@ -19,6 +19,12 @@ EXCLUDED_TITLE_PHRASES = (
     "proxy",
     "replica",
     "custom",
+
+    # Non-standard / wrong sealed-product formats.
+    "mini pack",
+    "mini packs",
+    "96 pack",
+    "96 packs",
 )
 
 CASE_EXCLUSION_PHRASES = (
@@ -63,47 +69,60 @@ def is_valid_booster_box_listing(
     condition: str | None,
     product_keywords: tuple[str, ...],
 ) -> bool:
-    normalized_title = title.lower().strip()
+    normalized_title = (
+        title.lower().strip()
+    )
+
     normalized_condition = (
         condition.lower().strip()
         if condition
         else ""
     )
 
-    # Exact tracked product keywords must be present.
+    # Exact tracked product keywords
+    # must be present.
     for keyword in product_keywords:
-        if keyword.lower() not in normalized_title:
+        if (
+            keyword.lower()
+            not in normalized_title
+        ):
             return False
 
     # We are tracking sealed product only.
     if normalized_condition and (
-        "new" not in normalized_condition
-        and "factory sealed" not in normalized_condition
+        "new"
+        not in normalized_condition
+        and "factory sealed"
+        not in normalized_condition
     ):
         return False
 
     # Known bad / misleading listing patterns.
     if any(
         phrase in normalized_title
-        for phrase in EXCLUDED_TITLE_PHRASES
+        for phrase
+        in EXCLUDED_TITLE_PHRASES
     ):
         return False
 
     # Reject non-English product listings.
     if any(
         phrase in normalized_title
-        for phrase in NON_ENGLISH_PHRASES
+        for phrase
+        in NON_ENGLISH_PHRASES
     ):
         return False
 
-    # Do not confuse an individual booster box with
-    # a wholesale booster-box case.
+    # Do not confuse an individual booster box
+    # with a wholesale booster-box case.
     #
-    # "acrylic case" is intentionally allowed because
-    # it refers to a protective case around a single box.
+    # "acrylic case" is intentionally allowed
+    # because it refers to a protective case
+    # around a single box.
     if any(
         phrase in normalized_title
-        for phrase in CASE_EXCLUSION_PHRASES
+        for phrase
+        in CASE_EXCLUSION_PHRASES
     ):
         return False
 
