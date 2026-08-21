@@ -24,7 +24,10 @@ from scripts.marketplace.update_sold_metrics import (
 from scripts.marketplace.update_tcgcsv_prices import (
     update_tcgcsv_prices,
 )
-
+from scripts.marketplace.pipeline_logging import (
+    finish_pipeline_run,
+    start_pipeline_run,
+)
 
 def _print_header(
     title: str,
@@ -473,7 +476,9 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-
+    run_id = start_pipeline_run(
+        pipeline_name="market_pipeline"
+    )
     pipeline_started_at = (
         time.perf_counter()
     )
@@ -662,7 +667,34 @@ def main() -> None:
         "Completed: "
         f"{datetime.now(UTC).isoformat()}"
     )
+    pipeline_status = (
+        "success"
+        if (
+            failed_steps == 0
+            and fatal_error is None
+        )
+        else "failed"
+    )
 
+    finish_pipeline_run(
+        run_id=run_id,
+        status=pipeline_status,
+        steps_successful=successful_steps,
+        steps_failed=failed_steps,
+        duration_seconds=total_duration,
+        details={
+            "results": results,
+            "skip_tcgcsv": args.skip_tcgcsv,
+            "skip_ebay": args.skip_ebay,
+            "skip_soldcomps": args.skip_soldcomps,
+            "skip_sold_metrics": (
+                args.skip_sold_metrics
+            ),
+            "skip_summaries": (
+                args.skip_summaries
+            ),
+        },
+    )
     if fatal_error is not None:
         print("")
         print(

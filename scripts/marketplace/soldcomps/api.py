@@ -42,6 +42,38 @@ def get_soldcomps_api_key() -> str:
     return api_key
 
 
+def _response_indicates_quota_exhaustion(
+    response: requests.Response,
+) -> bool:
+    """
+    Detect monthly / usage quota exhaustion so
+    we fail immediately instead of retrying.
+
+    Temporary 429 rate limits are still allowed
+    to use the normal retry path.
+    """
+    body = (
+        response.text
+        or ""
+    ).lower()
+
+    quota_phrases = (
+        "quota_exceeded",
+        "quota exceeded",
+        "monthly quota",
+        "monthly limit",
+        "request quota",
+        "usage limit",
+        "quota reached",
+        "quota exhausted",
+    )
+
+    return any(
+        phrase in body
+        for phrase in quota_phrases
+    )
+
+
 def search_sold_listings(
     *,
     keyword: str,
@@ -78,13 +110,9 @@ def search_sold_listings(
     }
 
     if sold_after:
-        params["soldAfter"] = (
-            sold_after
-        )
+        params["soldAfter"] = sold_after
 
-    last_error: (
-        RuntimeError | None
-    ) = None
+    last_error: RuntimeError | None = None
 
     for attempt in range(
         1,
@@ -143,6 +171,21 @@ def search_sold_listings(
                 )
 
             return payload
+
+        if (
+            response.status_code == 429
+            and _response_indicates_quota_exhaustion(
+                response
+            )
+        ):
+            raise RuntimeError(
+                "SoldComps monthly/API quota "
+                "appears to be exhausted.\n"
+                f"Status: "
+                f"{response.status_code}\n"
+                f"Response: "
+                f"{response.text}"
+            )
 
         error = RuntimeError(
             "SoldComps API request failed.\n"
