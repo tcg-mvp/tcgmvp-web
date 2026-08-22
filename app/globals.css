@@ -8135,3 +8135,241 @@ a {
   font-size: 1.15rem;
   opacity: 0.9;
 }
+/* =========================================================
+   Product Detail UX Polish — Aug 2026
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   HERO PRODUCT IMAGE
+   Larger product art + premium hover interaction
+   --------------------------------------------------------- */
+
+.product-research-report .product-detail-image-area-v2 {
+  position: relative;
+  overflow: hidden;
+  min-height: 410px;
+  transition:
+    transform 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.product-research-report .product-detail-image-v2 {
+  width: min(100%, 500px);
+  max-width: 500px;
+  max-height: 440px;
+  height: 440px;
+  object-fit: contain;
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 320ms ease;
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .product-research-report
+    .product-detail-image-area-v2:hover {
+    transform: translateY(-3px);
+    border-color: var(--brand-gold-border);
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.25),
+      0 0 30px rgba(214, 173, 82, 0.055);
+  }
+
+  .product-research-report
+    .product-detail-image-area-v2:hover
+    .product-detail-image-v2 {
+    transform:
+      translateY(-6px)
+      scale(1.055);
+    filter:
+      drop-shadow(
+        0 32px 38px
+        rgba(0, 0, 0, 0.4)
+      );
+  }
+}
+
+
+/* ---------------------------------------------------------
+   MARKET CASE VERDICT CARDS
+   More compact and centered like Reliability
+   --------------------------------------------------------- */
+
+.market-intelligence-summary-verdicts {
+  align-self: center;
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(138px, 1fr));
+  gap: 12px;
+}
+
+.market-intelligence-summary-score {
+  display: flex;
+  min-height: 150px;
+  padding: 20px 16px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid
+    rgba(148, 163, 184, 0.16);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.018)
+    );
+  text-align: center;
+}
+
+.market-intelligence-summary-score > span {
+  margin: 0;
+  text-align: center;
+}
+
+.market-intelligence-summary-score > strong {
+  display: flex;
+  margin-top: 10px;
+  align-items: baseline;
+  justify-content: center;
+  color: var(--text);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.market-intelligence-summary-score
+  > strong
+  > small {
+  margin-left: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.market-intelligence-summary-score
+  .market-intelligence-summary-outlook {
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
+}
+
+.market-intelligence-summary-score > b {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.79rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.market-intelligence-summary-score
+  > b:not(.positive):not(.negative):not(.neutral) {
+  color: var(--text-secondary);
+}
+
+
+/* ---------------------------------------------------------
+   SUPPORTING ANALYSIS SCORE CONTEXT
+   --------------------------------------------------------- */
+
+.analytics-metric-grid > div {
+  display: flex;
+  min-height: 116px;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.analytics-metric-score {
+  display: flex;
+  align-items: baseline;
+}
+
+.analytics-metric-score small {
+  margin-left: 4px;
+  color: rgba(225, 231, 255, 0.42);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.analytics-metric-grid em {
+  display: block;
+  margin-top: 8px;
+  color: rgba(225, 231, 255, 0.42);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.analytics-metric-text-value {
+  max-width: 100%;
+  font-size: 1.15rem !important;
+  line-height: 1.3;
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE HERO POLISH
+   --------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .product-research-report
+    .product-detail-image-area-v2 {
+    min-height: 360px;
+  }
+
+  .product-research-report
+    .product-detail-image-v2 {
+    width: min(100%, 420px);
+    height: 390px;
+    max-height: 390px;
+  }
+}
+
+@media (max-width: 760px) {
+  .product-research-report
+    .product-detail-image-area-v2 {
+    min-height: 290px;
+  }
+
+  .product-research-report
+    .product-detail-image-v2 {
+    width: min(100%, 310px);
+    height: 290px;
+    max-height: 290px;
+  }
+
+  .market-intelligence-summary-verdicts {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .market-intelligence-summary-score {
+    min-height: 132px;
+  }
+}
+
+@media (max-width: 480px) {
+  .market-intelligence-summary-verdicts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-research-report
+    .product-detail-image-area-v2,
+  .product-research-report
+    .product-detail-image-v2 {
+    transform: none;
+    transition: none;
+  }
+}
+.investment-grade-separator {
+  display: inline-block;
+  margin-left: 0.12em;
+  margin-right: 0.28em;
+}

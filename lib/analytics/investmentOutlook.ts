@@ -13,11 +13,12 @@ export type CollectorDemand =
   | "Weak"
   | "Unknown";
 
-export type SupplyOutlook =
-  | "Highly Constrained"
-  | "Constrained"
+export type InventoryAbsorption =
+  | "Very Strong"
+  | "Strong"
   | "Balanced"
-  | "Abundant"
+  | "Weak"
+  | "Very Weak"
   | "Unknown";
 
 export type MarketMaturity =
@@ -70,7 +71,7 @@ export type InvestmentOutlookInput = {
   expectedReturnPercent: number | null;
 
   /**
-   * Market participation.
+   * Observable market participation.
    */
   recentSalesCount: number;
   activeListingsCount: number;
@@ -100,8 +101,8 @@ export type InvestmentOutlookResult = {
   collectorDemand: CollectorDemand;
   collectorDemandScore: number;
 
-  supplyOutlook: SupplyOutlook;
-  supplyScore: number;
+  inventoryAbsorption: InventoryAbsorption;
+  inventoryAbsorptionScore: number;
 
   marketMaturity: MarketMaturity;
   maturityScore: number;
@@ -118,26 +119,31 @@ export type InvestmentOutlookResult = {
 function clamp(
   value: number,
   minimum = 0,
-  maximum = 100
+  maximum = 100,
 ): number {
   return Math.min(
-    Math.max(value, minimum),
-    maximum
+    Math.max(
+      value,
+      minimum,
+    ),
+    maximum,
   );
 }
 
 
 function roundScore(
-  value: number
+  value: number,
 ): number {
   return Math.round(
-    clamp(value)
+    clamp(
+      value,
+    ),
   );
 }
 
 
 function getOutlook(
-  score: number
+  score: number,
 ): InvestmentOutlookDirection {
   if (score >= 80) {
     return "Very Bullish";
@@ -160,7 +166,7 @@ function getOutlook(
 
 
 function getCollectorDemand(
-  score: number
+  score: number,
 ): CollectorDemand {
   if (score >= 82) {
     return "Exceptional";
@@ -178,27 +184,31 @@ function getCollectorDemand(
 }
 
 
-function getSupplyOutlook(
-  score: number
-): SupplyOutlook {
+function getInventoryAbsorption(
+  score: number,
+): InventoryAbsorption {
   if (score >= 80) {
-    return "Highly Constrained";
+    return "Very Strong";
   }
 
   if (score >= 62) {
-    return "Constrained";
+    return "Strong";
   }
 
   if (score >= 40) {
     return "Balanced";
   }
 
-  return "Abundant";
+  if (score >= 20) {
+    return "Weak";
+  }
+
+  return "Very Weak";
 }
 
 
 function getMarketMaturity(
-  score: number
+  score: number,
 ): MarketMaturity {
   if (score >= 80) {
     return "Mature";
@@ -217,7 +227,7 @@ function getMarketMaturity(
 
 
 function getExpectedReturnScore(
-  expectedReturnPercent: number | null
+  expectedReturnPercent: number | null,
 ): number {
   if (expectedReturnPercent === null) {
     return 50;
@@ -253,22 +263,23 @@ function getExpectedReturnScore(
  * composite analytics.
  *
  * Sales activity is primary.
- * Sell-through provides secondary confirmation.
+ * Sales relative to visible listings provide
+ * secondary confirmation.
  */
 function calculateCollectorDemandScore(
   recentSalesCount: number,
-  activeListingsCount: number
+  activeListingsCount: number,
 ): number {
   const safeSales =
     Math.max(
       0,
-      recentSalesCount
+      recentSalesCount,
     );
 
   const safeListings =
     Math.max(
       0,
-      activeListingsCount
+      activeListingsCount,
     );
 
 
@@ -291,12 +302,10 @@ function calculateCollectorDemandScore(
   }
 
 
-  let sellThroughScore: number;
+  let absorptionConfirmationScore: number;
 
-  if (
-    safeListings === 0
-  ) {
-    sellThroughScore =
+  if (safeListings === 0) {
+    absorptionConfirmationScore =
       safeSales > 0
         ? 85
         : 0;
@@ -306,48 +315,51 @@ function calculateCollectorDemandScore(
       safeListings;
 
     if (ratio >= 2) {
-      sellThroughScore = 100;
+      absorptionConfirmationScore = 100;
     } else if (ratio >= 1.25) {
-      sellThroughScore = 85;
+      absorptionConfirmationScore = 85;
     } else if (ratio >= 0.75) {
-      sellThroughScore = 70;
+      absorptionConfirmationScore = 70;
     } else if (ratio >= 0.4) {
-      sellThroughScore = 50;
+      absorptionConfirmationScore = 50;
     } else if (ratio >= 0.2) {
-      sellThroughScore = 30;
+      absorptionConfirmationScore = 30;
     } else {
-      sellThroughScore = 15;
+      absorptionConfirmationScore = 15;
     }
   }
 
 
   return roundScore(
     salesActivityScore * 0.7 +
-    sellThroughScore * 0.3
+    absorptionConfirmationScore * 0.3,
   );
 }
 
 
 /*
- * Higher supply score means tighter supply.
+ * Inventory Absorption measures recent verified
+ * sales relative to currently visible listings.
  *
- * This is based on inventory absorption,
- * not investment-quality scores.
+ * Higher score = stronger observed absorption.
+ *
+ * This does NOT claim to measure total sealed
+ * product supply or true market scarcity.
  */
-function calculateSupplyScore(
+function calculateInventoryAbsorptionScore(
   recentSalesCount: number,
-  activeListingsCount: number
+  activeListingsCount: number,
 ): number {
   const safeSales =
     Math.max(
       0,
-      recentSalesCount
+      recentSalesCount,
     );
 
   const safeListings =
     Math.max(
       0,
-      activeListingsCount
+      activeListingsCount,
     );
 
 
@@ -359,18 +371,14 @@ function calculateSupplyScore(
   }
 
 
-  if (
-    safeListings === 0
-  ) {
+  if (safeListings === 0) {
     return safeSales > 0
       ? 90
       : 0;
   }
 
 
-  if (
-    safeSales === 0
-  ) {
+  if (safeSales === 0) {
     return 15;
   }
 
@@ -409,7 +417,7 @@ function buildSummary({
   shortTermOutlook,
   longTermOutlook,
   collectorDemand,
-  supplyOutlook,
+  inventoryAbsorption,
   expectedReturnPercent,
   entryPrice,
   fairValue,
@@ -426,8 +434,8 @@ function buildSummary({
   collectorDemand:
     CollectorDemand;
 
-  supplyOutlook:
-    SupplyOutlook;
+  inventoryAbsorption:
+    InventoryAbsorption;
 
   expectedReturnPercent:
     number | null;
@@ -442,41 +450,42 @@ function buildSummary({
 
 
   sentences.push(
-    `The overall investment outlook is ${overallOutlook.toLowerCase()}, with a ${shortTermOutlook.toLowerCase()} short-term view and a ${longTermOutlook.toLowerCase()} long-term outlook.`
+    `The overall investment outlook is ${overallOutlook.toLowerCase()}, with a ${shortTermOutlook.toLowerCase()} short-term view and a ${longTermOutlook.toLowerCase()} long-term outlook.`,
   );
 
 
   if (
-    collectorDemand ===
-      "Exceptional" ||
-    collectorDemand ===
-      "Strong"
+    collectorDemand === "Exceptional" ||
+    collectorDemand === "Strong"
   ) {
     sentences.push(
-      `${collectorDemand} observed market demand supports continued buyer interest.`
+      `${collectorDemand} observed market demand supports continued buyer interest.`,
     );
   } else {
     sentences.push(
-      `${collectorDemand} observed market demand provides limited support for appreciation.`
+      `${collectorDemand} observed market demand provides limited support for appreciation.`,
     );
   }
 
 
   if (
-    supplyOutlook ===
-      "Highly Constrained" ||
-    supplyOutlook ===
-      "Constrained"
+    inventoryAbsorption === "Very Strong"
   ) {
     sentences.push(
-      `${supplyOutlook} supply conditions may support longer-term pricing.`
+      "Very strong inventory absorption indicates recent sales are high relative to currently visible listings, which may support longer-term pricing.",
     );
   } else if (
-    supplyOutlook ===
-      "Abundant"
+    inventoryAbsorption === "Strong"
   ) {
     sentences.push(
-      "Abundant active supply may limit near-term price growth."
+      "Strong inventory absorption indicates healthy sales activity relative to currently visible listings.",
+    );
+  } else if (
+    inventoryAbsorption === "Weak" ||
+    inventoryAbsorption === "Very Weak"
+  ) {
+    sentences.push(
+      `${inventoryAbsorption} inventory absorption indicates visible listings are high relative to recent sales activity.`,
     );
   }
 
@@ -495,23 +504,23 @@ function buildSummary({
       fairValue * 1.03
     ) {
       sentences.push(
-        "The best available entry price is above estimated fair value, which may limit near-term returns."
+        "The best available entry price is above estimated fair value, which may limit near-term returns.",
       );
     } else if (
       entryPrice <
       fairValue * 0.97
     ) {
       sentences.push(
-        "The best available entry price is below estimated fair value, providing a modest valuation cushion."
+        "The best available entry price is below estimated fair value, providing a modest valuation cushion.",
       );
     } else {
       sentences.push(
-        "The best available entry price is currently near estimated fair value."
+        "The best available entry price is currently near estimated fair value.",
       );
     }
   } else {
     sentences.push(
-      "An actionable entry price is currently unavailable, limiting entry-value analysis."
+      "An actionable entry price is currently unavailable, limiting entry-value analysis.",
     );
   }
 
@@ -521,52 +530,42 @@ function buildSummary({
     expectedReturnPercent >= 8
   ) {
     sentences.push(
-      "The current price target indicates meaningful appreciation potential from the best available entry price."
+      "The current price target indicates meaningful appreciation potential from the best available entry price.",
     );
   } else if (
     expectedReturnPercent !== null &&
     expectedReturnPercent >= 0
   ) {
     sentences.push(
-      "The current price target indicates limited but positive appreciation potential from the best available entry price."
+      "The current price target indicates limited but positive appreciation potential from the best available entry price.",
     );
   } else if (
     expectedReturnPercent !== null
   ) {
     sentences.push(
-      "The current price target indicates limited immediate upside from the best available entry price."
+      "The current price target indicates limited immediate upside from the best available entry price.",
     );
   }
 
 
   return sentences.join(
-    " "
+    " ",
   );
 }
 
 
 export function calculateInvestmentOutlook(
-  input: InvestmentOutlookInput
+  input: InvestmentOutlookInput,
 ): InvestmentOutlookResult {
   const confidenceScore =
     roundScore(
-      input.marketConfidenceScore
+      input.marketConfidenceScore,
     );
 
   const confidence =
     input.marketConfidence;
 
 
-  /*
-   * A forward-looking outlook requires
-   * a valid Fair Value anchor and usable
-   * market evidence.
-   *
-   * An actionable entry price improves
-   * valuation interpretation but is not
-   * required to describe the underlying
-   * market outlook.
-   */
   if (
     input.fairValue === null ||
     input.fairValue <= 0 ||
@@ -597,10 +596,10 @@ export function calculateInvestmentOutlook(
       collectorDemandScore:
         0,
 
-      supplyOutlook:
+      inventoryAbsorption:
         "Unknown",
 
-      supplyScore:
+      inventoryAbsorptionScore:
         0,
 
       marketMaturity:
@@ -629,42 +628,42 @@ export function calculateInvestmentOutlook(
 
   const marketRatingScore =
     clamp(
-      input.marketRatingScore
+      input.marketRatingScore,
     );
 
   const trendScore =
     clamp(
-      input.trendScore
+      input.trendScore,
     );
 
   const riskScore =
     clamp(
-      input.riskScore
+      input.riskScore,
     );
 
   const marketHealthScore =
     clamp(
-      input.marketHealthScore
+      input.marketHealthScore,
     );
 
 
   const expectedReturnScore =
     getExpectedReturnScore(
-      input.expectedReturnPercent
+      input.expectedReturnPercent,
     );
 
 
   const collectorDemandScore =
     calculateCollectorDemandScore(
       input.recentSalesCount,
-      input.activeListingsCount
+      input.activeListingsCount,
     );
 
 
-  const supplyScore =
-    calculateSupplyScore(
+  const inventoryAbsorptionScore =
+    calculateInventoryAbsorptionScore(
       input.recentSalesCount,
-      input.activeListingsCount
+      input.activeListingsCount,
     );
 
 
@@ -680,11 +679,11 @@ export function calculateInvestmentOutlook(
       confidenceScore * 0.45 +
       marketHealthScore * 0.25 +
       clamp(
-        input.recentSalesCount * 4
+        input.recentSalesCount * 4,
       ) * 0.20 +
       clamp(
-        input.activeListingsCount * 3
-      ) * 0.10
+        input.activeListingsCount * 3,
+      ) * 0.10,
     );
 
 
@@ -693,22 +692,17 @@ export function calculateInvestmentOutlook(
    * SHORT-TERM OUTLOOK
    * --------------------------------------------------
    *
-   * Answers:
-   *
-   * "What does the next phase of the market
-   * look like based on current momentum?"
-   *
-   * Trend:             45%
-   * Expected Return:   30%
-   * Market Health:     15%
-   * Inverse Risk:      10%
+   * Trend:                 45%
+   * Expected Return:       30%
+   * Market Health:         15%
+   * Inverse Risk:          10%
    */
   const shortTermScore =
     roundScore(
       trendScore * 0.45 +
       expectedReturnScore * 0.30 +
       marketHealthScore * 0.15 +
-      (100 - riskScore) * 0.10
+      (100 - riskScore) * 0.10,
     );
 
 
@@ -717,24 +711,19 @@ export function calculateInvestmentOutlook(
    * LONG-TERM OUTLOOK
    * --------------------------------------------------
    *
-   * Answers:
-   *
-   * "Does the underlying market structure
-   * support longer-term appreciation?"
-   *
-   * Market Health:     30%
-   * Collector Demand:  25%
-   * Supply:            20%
-   * Expected Return:   15%
-   * Inverse Risk:      10%
+   * Market Health:         30%
+   * Collector Demand:      25%
+   * Inventory Absorption:  20%
+   * Expected Return:       15%
+   * Inverse Risk:          10%
    */
   const longTermScore =
     roundScore(
       marketHealthScore * 0.30 +
       collectorDemandScore * 0.25 +
-      supplyScore * 0.20 +
+      inventoryAbsorptionScore * 0.20 +
       expectedReturnScore * 0.15 +
-      (100 - riskScore) * 0.10
+      (100 - riskScore) * 0.10,
     );
 
 
@@ -746,20 +735,12 @@ export function calculateInvestmentOutlook(
    * Short Term:        35%
    * Long Term:         45%
    * Market Rating:     20%
-   *
-   * Market Rating receives only a supporting
-   * weight because it already synthesizes several
-   * underlying market dimensions.
-   *
-   * Investment Grade is intentionally excluded
-   * to avoid reusing Market Health and valuation
-   * evidence yet again.
    */
   let overallScore =
     roundScore(
       shortTermScore * 0.35 +
       longTermScore * 0.45 +
-      marketRatingScore * 0.20
+      marketRatingScore * 0.20,
     );
 
 
@@ -767,8 +748,8 @@ export function calculateInvestmentOutlook(
    * Confidence does not make the market bullish
    * or bearish.
    *
-   * Instead, lower confidence pulls extreme
-   * forward-looking conclusions toward neutral.
+   * Lower confidence pulls extreme conclusions
+   * toward neutral.
    */
   const confidenceMultiplier =
     confidence === "High"
@@ -785,38 +766,38 @@ export function calculateInvestmentOutlook(
         overallScore -
         50
       ) *
-      confidenceMultiplier
+      confidenceMultiplier,
     );
 
 
   const shortTermOutlook =
     getOutlook(
-      shortTermScore
+      shortTermScore,
     );
 
   const longTermOutlook =
     getOutlook(
-      longTermScore
+      longTermScore,
     );
 
   const overallOutlook =
     getOutlook(
-      overallScore
+      overallScore,
     );
 
   const collectorDemand =
     getCollectorDemand(
-      collectorDemandScore
+      collectorDemandScore,
     );
 
-  const supplyOutlook =
-    getSupplyOutlook(
-      supplyScore
+  const inventoryAbsorption =
+    getInventoryAbsorption(
+      inventoryAbsorptionScore,
     );
 
   const marketMaturity =
     getMarketMaturity(
-      maturityScore
+      maturityScore,
     );
 
 
@@ -825,106 +806,82 @@ export function calculateInvestmentOutlook(
   const headwinds: string[] = [];
 
 
-  if (
-    trendScore >= 65
-  ) {
+  if (trendScore >= 65) {
     strengths.push(
-      "Positive market momentum supports the near-term outlook."
+      "Positive market momentum supports the near-term outlook.",
     );
-  } else if (
-    trendScore <= 35
-  ) {
+  } else if (trendScore <= 35) {
     headwinds.push(
-      "Weak price momentum creates near-term pressure."
+      "Weak price momentum creates near-term pressure.",
+    );
+  }
+
+
+  if (marketHealthScore >= 65) {
+    strengths.push(
+      "Healthy underlying market conditions support the outlook.",
+    );
+  } else if (marketHealthScore <= 35) {
+    headwinds.push(
+      "Weak market health reduces long-term conviction.",
+    );
+  }
+
+
+  if (collectorDemandScore >= 65) {
+    strengths.push(
+      "Strong observed buyer activity supports collector demand.",
+    );
+  } else if (collectorDemandScore <= 35) {
+    headwinds.push(
+      "Limited observed buyer activity weakens demand support.",
+    );
+  }
+
+
+  if (riskScore <= 35) {
+    strengths.push(
+      "Lower overall risk supports a more dependable outlook.",
+    );
+  } else if (riskScore >= 65) {
+    headwinds.push(
+      "Elevated risk may produce greater price instability.",
     );
   }
 
 
   if (
-    marketHealthScore >= 65
+    inventoryAbsorptionScore >= 65
   ) {
     strengths.push(
-      "Healthy underlying market conditions support the outlook."
+      "Strong inventory absorption indicates recent sales are high relative to currently visible listings.",
     );
   } else if (
-    marketHealthScore <= 35
+    inventoryAbsorptionScore <= 35
   ) {
     headwinds.push(
-      "Weak market health reduces long-term conviction."
+      "Weak inventory absorption indicates visible listings are high relative to recent sales activity.",
     );
   }
 
 
   if (
-    collectorDemandScore >= 65
+    input.expectedReturnPercent !== null &&
+    input.expectedReturnPercent >= 8
   ) {
     strengths.push(
-      "Strong observed buyer activity supports collector demand."
+      "The current price target indicates meaningful potential return from the best available entry price.",
     );
   } else if (
-    collectorDemandScore <= 35
+    input.expectedReturnPercent !== null &&
+    input.expectedReturnPercent < 0
   ) {
     headwinds.push(
-      "Limited observed buyer activity weakens demand support."
+      "The current price target indicates limited near-term upside from the best available entry price.",
     );
   }
 
 
-  if (
-    riskScore <= 35
-  ) {
-    strengths.push(
-      "Lower overall risk supports a more dependable outlook."
-    );
-  } else if (
-    riskScore >= 65
-  ) {
-    headwinds.push(
-      "Elevated risk may produce greater price instability."
-    );
-  }
-
-
-  if (
-    supplyScore >= 65
-  ) {
-    strengths.push(
-      "Strong inventory absorption suggests relatively constrained supply."
-    );
-  } else if (
-    supplyScore <= 35
-  ) {
-    headwinds.push(
-      "Available supply appears high relative to recent sales activity."
-    );
-  }
-
-
-  if (
-    input.expectedReturnPercent !==
-      null &&
-    input.expectedReturnPercent >=
-      8
-  ) {
-    strengths.push(
-      "The current price target indicates meaningful potential return from the best available entry price."
-    );
-  } else if (
-    input.expectedReturnPercent !==
-      null &&
-    input.expectedReturnPercent <
-      0
-  ) {
-    headwinds.push(
-      "The current price target indicates limited near-term upside from the best available entry price."
-    );
-  }
-
-
-  /*
-   * Entry valuation must use the actionable
-   * listing price rather than reference price.
-   */
   if (
     input.entryPrice !== null &&
     input.entryPrice > 0
@@ -934,28 +891,26 @@ export function calculateInvestmentOutlook(
       input.fairValue * 1.03
     ) {
       headwinds.push(
-        "The best available entry price is above estimated fair value."
+        "The best available entry price is above estimated fair value.",
       );
     } else if (
       input.entryPrice <
       input.fairValue * 0.9
     ) {
       strengths.push(
-        "The best available entry price provides a meaningful valuation cushion."
+        "The best available entry price provides a meaningful valuation cushion.",
       );
     }
   } else {
     headwinds.push(
-      "An actionable entry price is unavailable, limiting valuation analysis."
+      "An actionable entry price is unavailable, limiting valuation analysis.",
     );
   }
 
 
-  if (
-    confidence === "Low"
-  ) {
+  if (confidence === "Low") {
     headwinds.push(
-      "Limited market evidence reduces outlook confidence."
+      "Limited market evidence reduces outlook confidence.",
     );
   }
 
@@ -970,7 +925,7 @@ export function calculateInvestmentOutlook(
 
       collectorDemand,
 
-      supplyOutlook,
+      inventoryAbsorption,
 
       expectedReturnPercent:
         input.expectedReturnPercent,
@@ -1000,9 +955,9 @@ export function calculateInvestmentOutlook(
 
     collectorDemandScore,
 
-    supplyOutlook,
+    inventoryAbsorption,
 
-    supplyScore,
+    inventoryAbsorptionScore,
 
     marketMaturity,
 
@@ -1017,13 +972,13 @@ export function calculateInvestmentOutlook(
     strengths:
       strengths.slice(
         0,
-        5
+        5,
       ),
 
     headwinds:
       headwinds.slice(
         0,
-        5
+        5,
       ),
   };
 }

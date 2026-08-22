@@ -27,7 +27,9 @@ function getOutlookClass(
   }
 }
 
-function getScoreClass(score: number) {
+function getScoreClass(
+  score: number,
+) {
   if (score >= 65) {
     return "positive";
   }
@@ -43,11 +45,13 @@ export default function InvestmentOutlook({
   outlook,
 }: InvestmentOutlookProps) {
   const hasOutlook =
-    outlook.overallOutlook !== "Unknown";
+    outlook.overallOutlook !==
+    "Unknown";
 
-  const outlookClass = getOutlookClass(
-    outlook.overallOutlook,
-  );
+  const outlookClass =
+    getOutlookClass(
+      outlook.overallOutlook,
+    );
 
   return (
     <section className="investment-outlook-card">
@@ -57,19 +61,23 @@ export default function InvestmentOutlook({
             TCGMVP Investment Outlook
           </span>
 
-          <h3>Forward Investment Analysis</h3>
+          <h3>
+            Forward Investment Analysis
+          </h3>
 
           <p>
             A strategic outlook combining market direction,
-            investment quality, expected return, supply,
-            collector demand, and risk.
+            expected return, inventory absorption, collector
+            demand, market quality, and risk.
           </p>
         </div>
 
         <div
           className={`investment-outlook-verdict ${outlookClass}`}
         >
-          <span>Overall Outlook</span>
+          <span>
+            Overall Outlook
+          </span>
 
           <strong>
             {outlook.overallOutlook}
@@ -90,10 +98,14 @@ export default function InvestmentOutlook({
               Investment Thesis
             </span>
 
-            <p>{outlook.summary}</p>
+            <p>
+              {outlook.summary}
+            </p>
 
             <div className="investment-outlook-confidence">
-              <span>Confidence</span>
+              <span>
+                Confidence
+              </span>
 
               <strong>
                 {outlook.confidence}
@@ -107,7 +119,9 @@ export default function InvestmentOutlook({
 
           <div className="investment-outlook-primary-grid">
             <div className="investment-outlook-primary-card">
-              <span>Short-Term Outlook</span>
+              <span>
+                Short-Term Outlook
+              </span>
 
               <strong
                 className={getOutlookClass(
@@ -123,7 +137,9 @@ export default function InvestmentOutlook({
             </div>
 
             <div className="investment-outlook-primary-card">
-              <span>Long-Term Outlook</span>
+              <span>
+                Long-Term Outlook
+              </span>
 
               <strong
                 className={getOutlookClass(
@@ -141,7 +157,9 @@ export default function InvestmentOutlook({
 
           <div className="investment-outlook-metrics">
             <div>
-              <span>Collector Demand</span>
+              <span>
+                Collector Demand
+              </span>
 
               <strong>
                 {outlook.collectorDemand}
@@ -153,19 +171,23 @@ export default function InvestmentOutlook({
             </div>
 
             <div>
-              <span>Supply Outlook</span>
+              <span>
+                Inventory Absorption
+              </span>
 
               <strong>
-                {outlook.supplyOutlook}
+                {outlook.inventoryAbsorption}
               </strong>
 
               <small>
-                {outlook.supplyScore}/100
+                {outlook.inventoryAbsorptionScore}/100
               </small>
             </div>
 
             <div>
-              <span>Market Maturity</span>
+              <span>
+                Market Maturity
+              </span>
 
               <strong>
                 {outlook.marketMaturity}
@@ -180,7 +202,10 @@ export default function InvestmentOutlook({
           <div className="investment-outlook-score-bars">
             <div>
               <div className="investment-outlook-bar-heading">
-                <span>Short-Term Strength</span>
+                <span>
+                  Short-Term Strength
+                </span>
+
                 <strong>
                   {outlook.shortTermScore}
                 </strong>
@@ -200,7 +225,10 @@ export default function InvestmentOutlook({
 
             <div>
               <div className="investment-outlook-bar-heading">
-                <span>Long-Term Strength</span>
+                <span>
+                  Long-Term Strength
+                </span>
+
                 <strong>
                   {outlook.longTermScore}
                 </strong>
@@ -220,7 +248,10 @@ export default function InvestmentOutlook({
 
             <div>
               <div className="investment-outlook-bar-heading">
-                <span>Collector Demand</span>
+                <span>
+                  Collector Demand
+                </span>
+
                 <strong>
                   {outlook.collectorDemandScore}
                 </strong>
@@ -240,19 +271,22 @@ export default function InvestmentOutlook({
 
             <div>
               <div className="investment-outlook-bar-heading">
-                <span>Supply Constraint</span>
+                <span>
+                  Inventory Absorption
+                </span>
+
                 <strong>
-                  {outlook.supplyScore}
+                  {outlook.inventoryAbsorptionScore}
                 </strong>
               </div>
 
               <div className="investment-outlook-bar-track">
                 <span
                   className={getScoreClass(
-                    outlook.supplyScore,
+                    outlook.inventoryAbsorptionScore,
                   )}
                   style={{
-                    width: `${outlook.supplyScore}%`,
+                    width: `${outlook.inventoryAbsorptionScore}%`,
                   }}
                 />
               </div>
@@ -269,7 +303,11 @@ export default function InvestmentOutlook({
                 <ul>
                   {outlook.strengths.map(
                     (strength) => (
-                      <li key={strength}>
+                      <li
+                        key={
+                          strength
+                        }
+                      >
                         <span
                           className="investment-outlook-list-icon positive"
                           aria-hidden="true"
@@ -299,7 +337,11 @@ export default function InvestmentOutlook({
                 <ul>
                   {outlook.headwinds.map(
                     (headwind) => (
-                      <li key={headwind}>
+                      <li
+                        key={
+                          headwind
+                        }
+                      >
                         <span
                           className="investment-outlook-list-icon negative"
                           aria-hidden="true"
@@ -327,9 +369,13 @@ export default function InvestmentOutlook({
             Insufficient Market Evidence
           </span>
 
-          <h4>Investment outlook unavailable</h4>
+          <h4>
+            Investment outlook unavailable
+          </h4>
 
-          <p>{outlook.summary}</p>
+          <p>
+            {outlook.summary}
+          </p>
 
           <div className="investment-outlook-confidence-empty">
             Confidence: {outlook.confidence} ·{" "}

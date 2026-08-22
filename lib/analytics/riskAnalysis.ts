@@ -668,17 +668,17 @@ function calculateDataRisk(
   ) {
     case "High":
       reason =
-        `High-quality market evidence (${marketConfidence.score}/95 confidence) keeps data risk low.`;
+        `High-quality market evidence (${marketConfidence.score}/100 confidence) keeps data risk low.`;
       break;
 
     case "Medium":
       reason =
-        `Market evidence is moderately reliable (${marketConfidence.score}/95 confidence), leaving some data uncertainty.`;
+        `Market evidence is moderately reliable (${marketConfidence.score}/100 confidence), leaving some data uncertainty.`;
       break;
 
     case "Low":
       reason =
-        `Market evidence confidence is low (${marketConfidence.score}/95), increasing data risk.`;
+        `Market evidence confidence is low (${marketConfidence.score}/100), increasing data risk.`;
       break;
 
     case "Insufficient":

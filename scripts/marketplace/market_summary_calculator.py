@@ -75,6 +75,14 @@ def _get_latest_ebay_listing_summary(
     Return the latest fresh eBay listing evidence
     for one product.
 
+    The summary-level lowest listing price is the
+    lowest known delivered price, not merely the
+    lowest raw asking price.
+
+    Listings with unknown shipping remain stored
+    as market evidence but do not define the
+    actionable entry price.
+
     Stale eBay snapshots are not presented as
     current active-listing evidence.
     """
@@ -85,7 +93,7 @@ def _get_latest_ebay_listing_summary(
         .select(
             "metric_date,"
             "active_listing_count,"
-            "lowest_listing_price"
+            "lowest_delivered_price"
         )
         .eq("product_id", product_id)
         .eq("marketplace_id", EBAY_MARKETPLACE_ID)
@@ -124,7 +132,7 @@ def _get_latest_ebay_listing_summary(
     )
 
     lowest_listing_price = latest.get(
-        "lowest_listing_price"
+        "lowest_delivered_price"
     )
 
     return {

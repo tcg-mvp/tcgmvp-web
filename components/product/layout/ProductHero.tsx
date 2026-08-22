@@ -47,8 +47,8 @@ export default function ProductHero({
             <Image
               src={imageUrl}
               alt={`${productName} product image`}
-              width={520}
-              height={520}
+              width={620}
+              height={620}
               priority
               className="product-detail-image product-detail-image-v2"
             />
@@ -66,8 +66,13 @@ export default function ProductHero({
           </div>
 
           <h1 className="product-hero-title">
-            <span className="product-hero-title-name">{productName}</span>
-            <span className="product-hero-title-type">{productType}</span>
+            <span className="product-hero-title-name">
+              {productName}
+            </span>
+
+            <span className="product-hero-title-type">
+              {productType}
+            </span>
           </h1>
 
           <p className="product-detail-meta">
@@ -82,19 +87,26 @@ export default function ProductHero({
 
             <div>
               <span>30-day movement</span>
-              <strong className={changeTone}>{change30d}</strong>
+              <strong className={changeTone}>
+                {change30d}
+              </strong>
             </div>
           </div>
 
           <div className="product-hero-intelligence-grid">
             {metrics.map((metric) => {
-              const valueTone = metric.valueTone ?? "default";
-              const detailTone = metric.detailTone ?? "default";
+              const valueTone =
+                metric.valueTone ?? "default";
+
+              const detailTone =
+                metric.detailTone ?? "default";
 
               return (
                 <div
                   className={`product-hero-metric${
-                    metric.featured ? " product-hero-metric-featured" : ""
+                    metric.featured
+                      ? " product-hero-metric-featured"
+                      : ""
                   }`}
                   key={metric.label}
                 >

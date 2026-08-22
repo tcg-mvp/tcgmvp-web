@@ -204,7 +204,7 @@ export default function MarketRating({
           <strong>
             {rating.confidenceScore}
             <small>
-              /95
+              /100
             </small>
           </strong>
 

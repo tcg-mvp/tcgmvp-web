@@ -446,29 +446,27 @@ export default async function ProductDetailPage({
   |--------------------------------------------------------------------------
   | Active eBay evidence UI
   |--------------------------------------------------------------------------
+  |
+  | Evidence shown on the product page must come
+  | from the same latest successful collection
+  | snapshot used by listing_statistics.py.
+  |
+  | Older rows remain stored as historical/raw
+  | evidence but are not presented as current
+  | active listings.
+  |
   */
 
   const {
-    data: listingsData,
-    error: listingsError,
+    data: latestListingSnapshotData,
+    error: latestListingSnapshotError,
   } = await supabase
     .from(
       "market_listings",
     )
-    .select(`
-      id,
-      marketplace,
-      title,
-      listing_price,
-      shipping_price,
-      total_price,
-      listing_type,
-      seller_name,
-      seller_feedback,
-      listing_url,
-      listed_at,
-      last_seen
-    `)
+    .select(
+      "last_seen",
+    )
     .eq(
       "product_id",
       product.id,
@@ -478,29 +476,99 @@ export default async function ProductDetailPage({
       "ebay",
     )
     .order(
-      "total_price",
+      "last_seen",
       {
-        ascending: true,
+        ascending: false,
       },
     )
     .limit(
-      10,
+      1,
     );
 
 
-  if (listingsError) {
+  if (
+    latestListingSnapshotError
+  ) {
     console.error(
-      "Unable to load market listings:",
-      listingsError.message,
+      "Unable to identify latest eBay listing snapshot:",
+      latestListingSnapshotError.message,
     );
   }
 
 
-  const marketListings =
-    (
-      listingsData ??
-      []
-    ) as MarketListing[];
+  const latestListingSeen =
+    latestListingSnapshotData?.[0]
+      ?.last_seen ??
+    null;
+
+
+  let marketListings:
+    MarketListing[] = [];
+
+
+  if (
+    latestListingSeen !== null
+  ) {
+    const {
+      data: listingsData,
+      error: listingsError,
+    } = await supabase
+      .from(
+        "market_listings",
+      )
+      .select(`
+        id,
+        marketplace,
+        title,
+        listing_price,
+        shipping_price,
+        total_price,
+        listing_type,
+        seller_name,
+        seller_feedback,
+        listing_url,
+        listed_at,
+        last_seen
+      `)
+      .eq(
+        "product_id",
+        product.id,
+      )
+      .eq(
+        "marketplace",
+        "ebay",
+      )
+      .eq(
+        "last_seen",
+        latestListingSeen,
+      )
+      .order(
+        "total_price",
+        {
+          ascending: true,
+        },
+      )
+      .limit(
+        10,
+      );
+
+
+    if (
+      listingsError
+    ) {
+      console.error(
+        "Unable to load current eBay market listings:",
+        listingsError.message,
+      );
+    }
+
+
+    marketListings =
+      (
+        listingsData ??
+        []
+      ) as MarketListing[];
+  }
 
 
   const listingPrices =
@@ -1370,13 +1438,13 @@ export default async function ProductDetailPage({
           investmentOutlook
             .collectorDemandScore,
 
-        supplyOutlook:
+        inventoryAbsorption:
           investmentOutlook
-            .supplyOutlook,
+            .inventoryAbsorption,
 
-        supplyScore:
+        inventoryAbsorptionScore:
           investmentOutlook
-            .supplyScore,
+            .inventoryAbsorptionScore,
 
         confidence:
           investmentOutlook
@@ -1597,7 +1665,7 @@ export default async function ProductDetailPage({
                 .confidence,
 
             detail:
-              `${sharedConfidence.score}/95 evidence score`,
+              `${sharedConfidence.score}/100 evidence score`,
 
             valueTone:
               sharedConfidence

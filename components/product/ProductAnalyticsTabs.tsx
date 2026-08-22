@@ -16,12 +16,10 @@ import type {
   InvestmentGradeResult,
 } from "@/lib/analytics/investmentGrade";
 
-
 type AnalyticsTab =
   | "market-health"
   | "deal-score"
   | "investment-grade";
-
 
 type ProductAnalyticsTabsProps = {
   marketHealth:
@@ -34,7 +32,6 @@ type ProductAnalyticsTabsProps = {
     InvestmentGradeResult;
 };
 
-
 function formatPercent(
   value: number | null,
 ) {
@@ -42,11 +39,8 @@ function formatPercent(
     return "N/A";
   }
 
-  return `${value.toFixed(
-    1,
-  )}%`;
+  return `${value.toFixed(1)}%`;
 }
-
 
 function formatSignedPercent(
   value: number,
@@ -55,7 +49,6 @@ function formatSignedPercent(
     1,
   )}%`;
 }
-
 
 function getPricePositionLabel(
   discountPercent: number,
@@ -79,6 +72,52 @@ function getPricePositionLabel(
   return "Meaningfully Above Fair Value";
 }
 
+function getScoreLabel(
+  score: number,
+) {
+  if (score >= 85) {
+    return "Very Strong";
+  }
+
+  if (score >= 70) {
+    return "Strong";
+  }
+
+  if (score >= 50) {
+    return "Moderate";
+  }
+
+  if (score >= 30) {
+    return "Weak";
+  }
+
+  return "Very Weak";
+}
+
+function ScoreMetric({
+  label,
+  score,
+}: {
+  label: string;
+  score: number;
+}) {
+  return (
+    <div>
+      <span>
+        {label}
+      </span>
+
+      <strong className="analytics-metric-score">
+        {score}
+        <small>/100</small>
+      </strong>
+
+      <em>
+        {getScoreLabel(score)}
+      </em>
+    </div>
+  );
+}
 
 export default function ProductAnalyticsTabs({
   marketHealth,
@@ -92,7 +131,6 @@ export default function ProductAnalyticsTabs({
     useState<AnalyticsTab>(
       "market-health",
     );
-
 
   return (
     <div className="product-analytics-tabs">
@@ -123,7 +161,6 @@ export default function ProductAnalyticsTabs({
           Market Health
         </button>
 
-
         <button
           type="button"
           role="tab"
@@ -145,7 +182,6 @@ export default function ProductAnalyticsTabs({
         >
           Deal Score
         </button>
-
 
         <button
           type="button"
@@ -170,7 +206,6 @@ export default function ProductAnalyticsTabs({
         </button>
       </div>
 
-
       <div className="product-analytics-tab-panel">
         {activeTab ===
           "market-health" && (
@@ -182,24 +217,22 @@ export default function ProductAnalyticsTabs({
                 </span>
 
                 <h3>
-                  {
-                    marketHealth.label
-                  }
+                  {marketHealth.label}
                 </h3>
 
                 <p>
                   Measures transaction liquidity,
                   supply balance, and realized-price
                   stability across the tracked market.
+                  Component metrics use a 0–100 scale,
+                  where higher scores indicate stronger
+                  market conditions.
                 </p>
               </div>
 
-
               <div className="analytics-primary-score">
                 <strong>
-                  {
-                    marketHealth.score
-                  }
+                  {marketHealth.score}
                 </strong>
 
                 <span>
@@ -208,46 +241,27 @@ export default function ProductAnalyticsTabs({
               </div>
             </div>
 
-
             <div className="analytics-metric-grid">
-              <div>
-                <span>
-                  Liquidity
-                </span>
+              <ScoreMetric
+                label="Liquidity"
+                score={
+                  marketHealth.liquidityScore
+                }
+              />
 
-                <strong>
-                  {
-                    marketHealth.liquidityScore
-                  }
-                </strong>
-              </div>
+              <ScoreMetric
+                label="Supply balance"
+                score={
+                  marketHealth.supplyBalanceScore
+                }
+              />
 
-
-              <div>
-                <span>
-                  Supply balance
-                </span>
-
-                <strong>
-                  {
-                    marketHealth.supplyBalanceScore
-                  }
-                </strong>
-              </div>
-
-
-              <div>
-                <span>
-                  Price stability
-                </span>
-
-                <strong>
-                  {
-                    marketHealth.priceStabilityScore
-                  }
-                </strong>
-              </div>
-
+              <ScoreMetric
+                label="Price stability"
+                score={
+                  marketHealth.priceStabilityScore
+                }
+              />
 
               <div>
                 <span>
@@ -255,12 +269,13 @@ export default function ProductAnalyticsTabs({
                 </span>
 
                 <strong>
-                  {
-                    marketHealth.salesCount
-                  }
+                  {marketHealth.salesCount}
                 </strong>
-              </div>
 
+                <em>
+                  Recent transactions
+                </em>
+              </div>
 
               <div>
                 <span>
@@ -268,12 +283,13 @@ export default function ProductAnalyticsTabs({
                 </span>
 
                 <strong>
-                  {
-                    marketHealth.activeListingsCount
-                  }
+                  {marketHealth.activeListingsCount}
                 </strong>
-              </div>
 
+                <em>
+                  Visible market supply
+                </em>
+              </div>
 
               <div>
                 <span>
@@ -285,11 +301,14 @@ export default function ProductAnalyticsTabs({
                     marketHealth.priceVariationPercent,
                   )}
                 </strong>
+
+                <em>
+                  Lower is more stable
+                </em>
               </div>
             </div>
           </div>
         )}
-
 
         {activeTab ===
           "deal-score" && (
@@ -303,24 +322,23 @@ export default function ProductAnalyticsTabs({
                     </span>
 
                     <h3>
-                      {
-                        dealScore.label
-                      }
+                      {dealScore.label}
                     </h3>
 
                     <p>
                       Measures how attractive the
-                      current market price is relative
-                      to TCGMVP estimated Fair Value.
+                      current actionable entry price
+                      is relative to TCGMVP estimated
+                      Fair Value. Scores use a 0–100
+                      scale, with higher values
+                      representing more attractive
+                      valuation.
                     </p>
                   </div>
 
-
                   <div className="analytics-primary-score">
                     <strong>
-                      {
-                        dealScore.score
-                      }
+                      {dealScore.score}
                     </strong>
 
                     <span>
@@ -329,20 +347,13 @@ export default function ProductAnalyticsTabs({
                   </div>
                 </div>
 
-
                 <div className="analytics-metric-grid">
-                  <div>
-                    <span>
-                      Valuation score
-                    </span>
-
-                    <strong>
-                      {
-                        dealScore.priceScore
-                      }
-                    </strong>
-                  </div>
-
+                  <ScoreMetric
+                    label="Valuation score"
+                    score={
+                      dealScore.priceScore
+                    }
+                  />
 
                   <div>
                     <span>
@@ -354,19 +365,26 @@ export default function ProductAnalyticsTabs({
                         dealScore.discountPercent,
                       )}
                     </strong>
-                  </div>
 
+                    <em>
+                      Versus Fair Value
+                    </em>
+                  </div>
 
                   <div>
                     <span>
                       Price position
                     </span>
 
-                    <strong>
+                    <strong className="analytics-metric-text-value">
                       {getPricePositionLabel(
                         dealScore.discountPercent,
                       )}
                     </strong>
+
+                    <em>
+                      Current valuation
+                    </em>
                   </div>
                 </div>
               </>
@@ -382,14 +400,13 @@ export default function ProductAnalyticsTabs({
 
                 <p>
                   A Deal Score requires both a valid
-                  current market price and a Fair Value
-                  estimate.
+                  actionable entry price and a Fair
+                  Value estimate.
                 </p>
               </div>
             )}
           </div>
         )}
-
 
         {activeTab ===
           "investment-grade" && (
@@ -401,78 +418,53 @@ export default function ProductAnalyticsTabs({
                 </span>
 
                 <h3>
-                  {
-                    investmentGrade.grade
-                  }{" "}
-                  ·{" "}
-                  {
-                    investmentGrade.label
-                  }
+                  {investmentGrade.grade}
+                  <span className="investment-grade-separator"> : </span>
+                  {investmentGrade.label}
                 </h3>
 
                 <p>
                   Combines underlying market quality
                   with current valuation opportunity
-                  while keeping risk analysis separate.
+                  while keeping risk analysis
+                  separate. Component scores use a
+                  0–100 scale.
                 </p>
               </div>
 
-
               <div className="analytics-grade-score">
                 <strong>
-                  {
-                    investmentGrade.grade
-                  }
+                  {investmentGrade.grade}
                 </strong>
 
                 <span>
-                  {
-                    investmentGrade.score
-                  }
+                  {investmentGrade.score}
                   /100
                 </span>
               </div>
             </div>
 
-
             <div className="analytics-metric-grid">
-              <div>
-                <span>
-                  Overall score
-                </span>
+              <ScoreMetric
+                label="Overall score"
+                score={
+                  investmentGrade.score
+                }
+              />
 
-                <strong>
-                  {
-                    investmentGrade.score
-                  }
-                </strong>
-              </div>
+              <ScoreMetric
+                label="Market quality"
+                score={
+                  investmentGrade.marketQualityScore
+                }
+              />
 
-
-              <div>
-                <span>
-                  Market quality
-                </span>
-
-                <strong>
-                  {
-                    investmentGrade.marketQualityScore
-                  }
-                </strong>
-              </div>
-
-
-              <div>
-                <span>
-                  Current opportunity
-                </span>
-
-                <strong>
-                  {
-                    investmentGrade.opportunityScore
-                  }
-                </strong>
-              </div>
+              <ScoreMetric
+                label="Current opportunity"
+                score={
+                  investmentGrade.opportunityScore
+                }
+              />
             </div>
           </div>
         )}

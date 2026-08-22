@@ -11,7 +11,8 @@ type MarketIntelligenceSummaryProps = {
 };
 
 function getTone(value: string) {
-  const normalized = value.toLowerCase();
+  const normalized =
+    value.toLowerCase();
 
   if (
     normalized.includes("exceptional") ||
@@ -45,46 +46,83 @@ export default function MarketIntelligenceSummary({
   confidenceScore,
 }: MarketIntelligenceSummaryProps) {
   return (
-    <section className="market-intelligence-summary" aria-labelledby="tcgmvp-view-title">
-      <div className="market-intelligence-summary-accent" aria-hidden="true" />
+    <section
+      className="market-intelligence-summary"
+      aria-labelledby="tcgmvp-view-title"
+    >
+      <div
+        className="market-intelligence-summary-accent"
+        aria-hidden="true"
+      />
 
       <div className="market-intelligence-summary-copy">
-        <span className="market-intelligence-summary-kicker">TCGMVP View</span>
-        <h2 id="tcgmvp-view-title">The market case for {productName}</h2>
+        <span className="market-intelligence-summary-kicker">
+          TCGMVP View
+        </span>
+
+        <h2 id="tcgmvp-view-title">
+          The market case for {productName}
+        </h2>
+
         <p>{summary}</p>
       </div>
 
       <div className="market-intelligence-summary-verdicts">
         <div className="market-intelligence-summary-score">
           <span>Market Rating</span>
-          <strong>{ratingScore}</strong>
-          <small className={getTone(rating)}>{rating}</small>
+
+          <strong>
+            {ratingScore}
+            <small>/100</small>
+          </strong>
+
+          <b className={getTone(rating)}>
+            {rating}
+          </b>
         </div>
 
         <div className="market-intelligence-summary-score">
           <span>Investment Outlook</span>
-          <strong className={`market-intelligence-summary-word ${getTone(outlook)}`}>
+
+          <strong
+            className={`market-intelligence-summary-outlook ${getTone(
+              outlook,
+            )}`}
+          >
             {outlook}
           </strong>
-          <small>Forward view</small>
+
+          <b>Forward view</b>
         </div>
       </div>
 
       <div className="market-intelligence-summary-signals">
         <div>
           <span>Key signal</span>
-          <strong>{keySignal}</strong>
+
+          <strong>
+            {keySignal}
+          </strong>
         </div>
 
         <div>
           <span>Primary concern</span>
-          <strong>{primaryConcern}</strong>
+
+          <strong>
+            {primaryConcern}
+          </strong>
         </div>
 
         <div>
           <span>Evidence confidence</span>
-          <strong>{confidence}</strong>
-          <small>{confidenceScore}/100</small>
+
+          <strong>
+            {confidence}
+          </strong>
+
+          <small>
+            {confidenceScore}/100
+          </small>
         </div>
       </div>
     </section>
