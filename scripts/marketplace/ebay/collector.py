@@ -26,13 +26,7 @@ from scripts.marketplace.supabase_client import (
 )
 
 
-MIN_REFERENCE_PRICE_RATIO = Decimal(
-    "0.50"
-)
-
-MAX_REFERENCE_PRICE_RATIO = Decimal(
-    "2.00"
-)
+EBAY_MARKETPLACE_ID = 1
 
 
 def _to_decimal(
@@ -59,12 +53,11 @@ def _get_reference_price(
     product_id: int,
 ) -> Decimal | None:
     """
-    Read the current reference price from
+    Read the canonical current market price from
     product_market_summary.
 
-    This remains TCGPlayer/reference-price
-    evidence and is used only as a broad
-    active-listing sanity guardrail.
+    This is currently TCGPlayer/TCGCSV-derived
+    evidence.
     """
     supabase = (
         get_supabase_client()
@@ -101,78 +94,80 @@ def _get_reference_price(
     )
 
 
-def _filter_listing_prices(
+def _get_verified_median_sale_price(
     *,
-    listings: list[dict],
-    reference_price: Decimal | None,
-) -> list[dict]:
+    product_id: int,
+) -> Decimal | None:
     """
-    Apply a deliberately broad price sanity
-    check to active listings.
+    Return the most recent verified eBay median
+    sale price available for the product.
 
-    This is not a valuation model.
+    Sold metrics are stored in daily_market_metrics
+    under the eBay marketplace.
 
-    Its purpose is only to reject listings
-    whose prices are implausible for the
-    tracked product despite otherwise
-    matching the title rules.
-
-    If no reference price exists, listings
-    are preserved rather than discarded.
+    We intentionally use the latest row containing
+    a median_sale_price rather than requiring today's
+    row to contain sold evidence.
     """
+    supabase = (
+        get_supabase_client()
+    )
+
+    response = (
+        supabase
+        .table(
+            "daily_market_metrics"
+        )
+        .select(
+            "metric_date,"
+            "median_sale_price,"
+            "sales_count"
+        )
+        .eq(
+            "product_id",
+            product_id,
+        )
+        .eq(
+            "marketplace_id",
+            EBAY_MARKETPLACE_ID,
+        )
+        .not_.is_(
+            "median_sale_price",
+            "null",
+        )
+        .order(
+            "metric_date",
+            desc=True,
+        )
+        .limit(1)
+        .execute()
+    )
+
+    rows = (
+        response.data
+        or []
+    )
+
+    if not rows:
+        return None
+
+    sales_count = (
+        rows[0].get(
+            "sales_count"
+        )
+    )
+
     if (
-        reference_price is None
-        or reference_price <= 0
+        sales_count is None
+        or int(sales_count) <= 0
     ):
-        return listings
+        return None
 
-    minimum_price = (
-        reference_price
-        * MIN_REFERENCE_PRICE_RATIO
-    )
-
-    maximum_price = (
-        reference_price
-        * MAX_REFERENCE_PRICE_RATIO
-    )
-
-    filtered: list[dict] = []
-
-    for listing in listings:
-        listing_price = (
-            _to_decimal(
-                listing.get(
-                    "listing_price"
-                )
-            )
+    return _to_decimal(
+        rows[0].get(
+            "median_sale_price"
         )
-
-        if (
-            listing_price is None
-            or listing_price <= 0
-        ):
-            continue
-
-        if (
-            listing_price
-            < minimum_price
-            or listing_price
-            > maximum_price
-        ):
-            print(
-                "  Excluding suspicious "
-                "listing price: "
-                f"${listing_price} | "
-                f"{listing.get('title')}"
-            )
-
-            continue
-
-        filtered.append(
-            listing
-        )
-
-    return filtered
+    )
 
 
 def collect_ebay_active_listings(
@@ -180,19 +175,26 @@ def collect_ebay_active_listings(
     limit_per_product: int = 50,
 ) -> dict:
     """
-    Collect active eBay listings for all
-    configured TCGMVP products.
+    Collect active eBay listings for all configured
+    TCGMVP products.
 
     Flow:
         Supabase products
         -> eBay product configuration
+        -> TCGCSV reference price
+        -> verified eBay sold median
         -> Browse API
-        -> title / product filtering
-        -> reference-price sanity filtering
+        -> title / product validation
+        -> dual-anchor price sanity filtering
         -> market_listings upsert
         -> daily listing statistics
 
-    Returns a summary of the collection run.
+    Price sanity filtering itself lives in
+    ebay/listings.py so there is one authoritative
+    filtering implementation.
+
+    A failure for one product does not stop the
+    remaining products.
     """
     products = (
         get_ebay_import_products()
@@ -242,6 +244,12 @@ def collect_ebay_active_listings(
                 )
             )
 
+            verified_median_sale_price = (
+                _get_verified_median_sale_price(
+                    product_id=product_id,
+                )
+            )
+
             if (
                 reference_price
                 is not None
@@ -249,6 +257,25 @@ def collect_ebay_active_listings(
                 print(
                     "Reference price: "
                     f"${reference_price}"
+                )
+
+            else:
+                print(
+                    "Reference price: unavailable"
+                )
+
+            if (
+                verified_median_sale_price
+                is not None
+            ):
+                print(
+                    "Verified sold median: "
+                    f"${verified_median_sale_price}"
+                )
+
+            else:
+                print(
+                    "Verified sold median: unavailable"
                 )
 
             listings = (
@@ -262,35 +289,13 @@ def collect_ebay_active_listings(
                         ]
                     ),
                     limit=limit_per_product,
-                )
-            )
-
-            raw_valid_count = (
-                len(listings)
-            )
-
-            listings = (
-                _filter_listing_prices(
-                    listings=listings,
                     reference_price=(
                         reference_price
                     ),
+                    verified_median_sale_price=(
+                        verified_median_sale_price
+                    ),
                 )
-            )
-
-            excluded_by_price = (
-                raw_valid_count
-                - len(listings)
-            )
-
-            print(
-                "Title-valid listings: "
-                f"{raw_valid_count}"
-            )
-
-            print(
-                "Price-sanity exclusions: "
-                f"{excluded_by_price}"
             )
 
             print(
@@ -409,7 +414,9 @@ def collect_ebay_active_listings(
                 "listings_processed"
             ] += processed
 
-            summary["results"].append(
+            summary[
+                "results"
+            ].append(
                 {
                     "product_id":
                         product_id,
@@ -420,11 +427,28 @@ def collect_ebay_active_listings(
                     "status":
                         "success",
 
+                    "reference_price":
+                        (
+                            str(
+                                reference_price
+                            )
+                            if reference_price
+                            is not None
+                            else None
+                        ),
+
+                    "verified_median_sale_price":
+                        (
+                            str(
+                                verified_median_sale_price
+                            )
+                            if verified_median_sale_price
+                            is not None
+                            else None
+                        ),
+
                     "listings_processed":
                         processed,
-
-                    "price_exclusions":
-                        excluded_by_price,
                 }
             )
 
