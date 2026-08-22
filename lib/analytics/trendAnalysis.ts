@@ -2,12 +2,19 @@ import type {
   MarketStatisticsResult,
 } from "@/lib/analytics/marketStatistics";
 
+import type {
+  ConfidenceLevel,
+  ConfidenceResult,
+} from "@/lib/analytics/confidence";
+
+
 export type TrendDirection =
   | "Very Bullish"
   | "Bullish"
   | "Neutral"
   | "Bearish"
   | "Very Bearish";
+
 
 export type TrendMomentum =
   | "Strong Positive"
@@ -18,37 +25,68 @@ export type TrendMomentum =
   | "Negative"
   | "Strong Negative";
 
+
 export type TrendConfidence =
-  | "High"
-  | "Medium"
-  | "Low"
-  | "Insufficient";
+  ConfidenceLevel;
+
 
 export type TrendAnalysisResult = {
+  /**
+   * Directional interpretation of the market.
+   */
   trend: TrendDirection;
+
+  /**
+   * Plain-language interpretation of recent
+   * price momentum.
+   */
   momentum: TrendMomentum;
+
+  /**
+   * Directional strength score from 0–100.
+   *
+   * Higher = more bullish.
+   *
+   * Confidence does NOT alter this score.
+   */
   strength: number;
+
+  /**
+   * Shared evidence confidence from
+   * confidence.ts.
+   */
   confidence: TrendConfidence;
+
+  /**
+   * Shared evidence-confidence score.
+   */
+  confidenceScore: number;
+
+  /**
+   * Number of verified recent sales used
+   * as confirmation evidence.
+   */
   salesTracked: number;
+
   reasons: string[];
 };
 
 
 function clampScore(
-  score: number
+  score: number,
 ): number {
   return Math.min(
     100,
     Math.max(
       0,
-      Math.round(score)
-    )
+      Math.round(score),
+    ),
   );
 }
 
 
 function getTrendLabel(
-  score: number
+  score: number,
 ): TrendDirection {
   if (score >= 80) {
     return "Very Bullish";
@@ -71,7 +109,7 @@ function getTrendLabel(
 
 
 function getMomentum(
-  change30d: number | null
+  change30d: number | null,
 ): TrendMomentum {
   if (change30d === null) {
     return "Stable";
@@ -106,49 +144,55 @@ function getMomentum(
 
 
 function getConfidenceReason(
-  confidence: TrendConfidence,
-  salesTracked: number
+  confidence: ConfidenceResult,
+  salesTracked: number,
 ): string {
-  switch (confidence) {
+  switch (confidence.confidence) {
     case "High":
       return (
-        `High trend confidence with ${salesTracked} ` +
-        "verified recent sales and sufficient price history."
+        `High-confidence market evidence supports this trend assessment ` +
+        `(${confidence.score}/95 confidence; ${salesTracked} verified recent sales).`
       );
 
     case "Medium":
       return (
-        `Moderate trend confidence with ${salesTracked} ` +
-        "verified recent sales and available price history."
+        `Moderate-confidence market evidence supports this trend assessment ` +
+        `(${confidence.score}/95 confidence).`
       );
 
     case "Low":
       return (
-        `Trend confidence is limited because only ` +
-        `${salesTracked} verified recent ${
-          salesTracked === 1
-            ? "sale is"
-            : "sales are"
-        } available.`
+        `The directional signal is supported by limited market evidence ` +
+        `(${confidence.score}/95 confidence).`
       );
 
     case "Insufficient":
       return (
-        "There is not enough market evidence " +
-        "to confirm the current trend."
+        "The directional calculation is available, but market evidence " +
+        "is insufficient to treat the trend as dependable."
       );
   }
 }
 
 
 export function calculateTrendAnalysis(
-  statistics: MarketStatisticsResult
+  statistics: MarketStatisticsResult,
+  marketConfidence: ConfidenceResult,
 ): TrendAnalysisResult {
+  /*
+   * Trend starts from neutral.
+   *
+   * 50 = neutral
+   * >50 = increasingly bullish
+   * <50 = increasingly bearish
+   */
   let score = 50;
+
 
   const positiveReasons: string[] = [];
   const neutralReasons: string[] = [];
   const cautionReasons: string[] = [];
+
 
   const {
     currentPrice,
@@ -156,88 +200,116 @@ export function calculateTrendAnalysis(
     high52Week,
     low52Week,
     salesTracked,
-    confidence,
   } = statistics;
 
 
   /*
-   * 30-day price momentum
-   *
-   * This is the primary directional signal.
-   */
+  |--------------------------------------------------------------------------
+  | 1. 30-day price momentum
+  |--------------------------------------------------------------------------
+  |
+  | Primary directional signal.
+  |
+  | Sales activity and confidence do NOT make
+  | the direction more bullish or bearish.
+  |
+  */
+
   if (change30d !== null) {
     if (change30d >= 10) {
       score += 20;
 
       positiveReasons.push(
         `Price increased ${change30d.toFixed(
-          1
-        )}% over the last 30 days, indicating strong momentum.`
+          1,
+        )}% over the last 30 days, indicating strong positive momentum.`,
       );
-    } else if (change30d >= 3) {
+    } else if (
+      change30d >= 3
+    ) {
       score += 12;
 
       positiveReasons.push(
         `Price increased ${change30d.toFixed(
-          1
-        )}% over the last 30 days.`
+          1,
+        )}% over the last 30 days.`,
       );
-    } else if (change30d >= 0.5) {
+    } else if (
+      change30d >= 0.5
+    ) {
       score += 5;
 
       positiveReasons.push(
         `Price increased modestly by ${change30d.toFixed(
-          1
-        )}% over the last 30 days.`
+          1,
+        )}% over the last 30 days.`,
       );
-    } else if (change30d > -0.5) {
+    } else if (
+      change30d > -0.5
+    ) {
       neutralReasons.push(
-        "Price remained essentially unchanged over the last 30 days."
+        "Price remained essentially unchanged over the last 30 days.",
       );
-    } else if (change30d > -3) {
+    } else if (
+      change30d > -3
+    ) {
       score -= 5;
 
       cautionReasons.push(
         `Price declined modestly by ${Math.abs(
-          change30d
-        ).toFixed(1)}% over the last 30 days.`
+          change30d,
+        ).toFixed(
+          1,
+        )}% over the last 30 days.`,
       );
-    } else if (change30d > -10) {
+    } else if (
+      change30d > -10
+    ) {
       score -= 12;
 
       cautionReasons.push(
         `Price declined ${Math.abs(
-          change30d
-        ).toFixed(1)}% over the last 30 days.`
+          change30d,
+        ).toFixed(
+          1,
+        )}% over the last 30 days.`,
       );
     } else {
       score -= 20;
 
       cautionReasons.push(
         `Price declined ${Math.abs(
-          change30d
+          change30d,
         ).toFixed(
-          1
-        )}% over the last 30 days, indicating strong negative momentum.`
+          1,
+        )}% over the last 30 days, indicating strong negative momentum.`,
       );
     }
   } else {
     cautionReasons.push(
-      "There is not enough price history to calculate 30-day momentum."
+      "There is not enough price history to calculate 30-day momentum.",
     );
   }
 
 
   /*
-   * Position within the 52-week range
-   *
-   * This is a secondary directional signal.
-   */
+  |--------------------------------------------------------------------------
+  | 2. Position within the 52-week range
+  |--------------------------------------------------------------------------
+  |
+  | Secondary directional/context signal.
+  |
+  | A product near its high is showing stronger
+  | relative price positioning than one near its low.
+  |
+  */
+
   const hasValidRange =
     currentPrice !== null &&
     high52Week !== null &&
     low52Week !== null &&
     high52Week > low52Week;
+
 
   if (hasValidRange) {
     const rangePosition =
@@ -250,33 +322,40 @@ export function calculateTrendAnalysis(
         low52Week
       );
 
+
     if (rangePosition >= 0.9) {
       score += 12;
 
       positiveReasons.push(
-        "The current price is trading near its 52-week high."
+        "The current price is trading near its 52-week high.",
       );
-    } else if (rangePosition >= 0.65) {
+    } else if (
+      rangePosition >= 0.65
+    ) {
       score += 7;
 
       positiveReasons.push(
-        "The current price is trading in the upper portion of its 52-week range."
+        "The current price is trading in the upper portion of its 52-week range.",
       );
-    } else if (rangePosition >= 0.35) {
+    } else if (
+      rangePosition >= 0.35
+    ) {
       neutralReasons.push(
-        "The current price is near the middle of its 52-week range."
+        "The current price is near the middle of its 52-week range.",
       );
-    } else if (rangePosition >= 0.1) {
+    } else if (
+      rangePosition >= 0.1
+    ) {
       score -= 7;
 
       cautionReasons.push(
-        "The current price is trading in the lower portion of its 52-week range."
+        "The current price is trading in the lower portion of its 52-week range.",
       );
     } else {
       score -= 12;
 
       cautionReasons.push(
-        "The current price is trading near its 52-week low."
+        "The current price is trading near its 52-week low.",
       );
     }
   } else if (
@@ -286,72 +365,94 @@ export function calculateTrendAnalysis(
     high52Week === low52Week
   ) {
     neutralReasons.push(
-      "The available price history does not yet provide a meaningful 52-week range."
+      "The available history does not yet provide a meaningful 52-week trading range.",
     );
   }
 
 
   /*
-   * Sales activity
-   *
-   * Sales volume confirms the reliability of the trend,
-   * but it does not make the trend inherently bullish
-   * or bearish. Therefore it does not directly modify
-   * the directional score.
-   */
+  |--------------------------------------------------------------------------
+  | 3. Transaction confirmation
+  |--------------------------------------------------------------------------
+  |
+  | Sales activity confirms how representative the
+  | observed trend may be.
+  |
+  | It intentionally does NOT change the directional
+  | score itself.
+  |
+  */
+
   if (salesTracked >= 20) {
     positiveReasons.push(
-      `${salesTracked} verified recent sales provide strong confirmation of current market behavior.`
+      `${salesTracked} verified recent sales provide deep transaction confirmation of current market behavior.`,
     );
-  } else if (salesTracked >= 10) {
+  } else if (
+    salesTracked >= 10
+  ) {
     positiveReasons.push(
-      `${salesTracked} verified recent sales provide reasonable confirmation of current market behavior.`
+      `${salesTracked} verified recent sales provide meaningful transaction confirmation.`,
     );
-  } else if (salesTracked >= 5) {
+  } else if (
+    salesTracked >= 5
+  ) {
     neutralReasons.push(
-      `${salesTracked} verified recent sales are available, though additional transactions would strengthen trend confirmation.`
+      `${salesTracked} verified recent sales are available, though additional transactions would strengthen trend confirmation.`,
     );
-  } else if (salesTracked > 0) {
+  } else if (
+    salesTracked > 0
+  ) {
     cautionReasons.push(
       `Only ${salesTracked} verified recent ${
         salesTracked === 1
           ? "sale is"
           : "sales are"
-      } available to confirm the trend.`
+      } available to confirm the trend.`,
     );
   } else {
     cautionReasons.push(
-      "No verified recent sales are available to confirm the current trend."
+      "No verified recent sales are available to confirm the current trend.",
     );
   }
 
 
   /*
-   * Data-confidence adjustment
-   *
-   * Confidence can moderately increase or reduce
-   * conviction in the directional score, but should
-   * not dominate the trend itself.
-   */
-  if (confidence === "High") {
-    score += 3;
-  } else if (confidence === "Medium") {
-    score += 1;
-  } else if (confidence === "Low") {
-    score -= 2;
-  } else if (
-    confidence === "Insufficient"
-  ) {
-    score -= 7;
-  }
-
+  |--------------------------------------------------------------------------
+  | 4. Shared Market Confidence
+  |--------------------------------------------------------------------------
+  |
+  | Confidence describes the reliability of the trend.
+  |
+  | It does NOT increase or decrease bullishness.
+  |
+  | Example:
+  |
+  | Bearish trend + High Confidence
+  |
+  | is perfectly valid and means:
+  |
+  | "The market is declining and we have strong evidence
+  | supporting that conclusion."
+  |
+  */
 
   const strength =
     clampScore(
-      score
+      score,
     );
 
 
+  const confidenceReason =
+    getConfidenceReason(
+      marketConfidence,
+      salesTracked,
+    );
+
+
+  /*
+   * Prioritize directional reasons first, then
+   * confirmation/confidence context.
+   */
   const reasons = [
     ...positiveReasons,
     ...neutralReasons,
@@ -359,20 +460,13 @@ export function calculateTrendAnalysis(
   ];
 
 
-  const confidenceReason =
-    getConfidenceReason(
-      confidence,
-      salesTracked
-    );
-
-
   if (
     !reasons.includes(
-      confidenceReason
+      confidenceReason,
     )
   ) {
     reasons.push(
-      confidenceReason
+      confidenceReason,
     );
   }
 
@@ -380,24 +474,28 @@ export function calculateTrendAnalysis(
   return {
     trend:
       getTrendLabel(
-        strength
+        strength,
       ),
 
     momentum:
       getMomentum(
-        change30d
+        change30d,
       ),
 
     strength,
 
-    confidence,
+    confidence:
+      marketConfidence.confidence,
+
+    confidenceScore:
+      marketConfidence.score,
 
     salesTracked,
 
     reasons:
       reasons.slice(
         0,
-        4
+        5,
       ),
   };
 }

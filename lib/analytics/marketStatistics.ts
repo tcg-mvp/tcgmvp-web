@@ -20,11 +20,6 @@ export type MarketStatisticsResult = {
   averageSale: number | null;
   latestSale: number | null;
   salesTracked: number;
-  confidence:
-    | "High"
-    | "Medium"
-    | "Low"
-    | "Insufficient";
 };
 
 
@@ -205,9 +200,9 @@ export function calculateMarketStatistics(
    * Only verified transactions are allowed
    * to influence sales-derived statistics.
    *
-   * Unverified records can remain visible in
-   * the evidence UI, but they are never used
-   * as a fallback analytical dataset.
+   * Unverified records may remain visible
+   * elsewhere in the evidence UI, but they
+   * are not used analytically here.
    */
   const verifiedSales =
     sales
@@ -268,9 +263,7 @@ export function calculateMarketStatistics(
   /*
    * SoldComps currently provides date-level
    * sold timestamps rather than exact sale
-   * times. When several sales occur on the
-   * same date, this represents one of the
-   * most recently observed verified sales.
+   * times.
    */
   const latestSale =
     verifiedSales.length > 0
@@ -281,44 +274,6 @@ export function calculateMarketStatistics(
 
   const salesTracked =
     verifiedSales.length;
-
-
-  let confidence:
-    MarketStatisticsResult[
-      "confidence"
-    ];
-
-
-  /*
-   * This is only a lightweight confidence
-   * label for the Market Statistics card.
-   * The authoritative platform-wide
-   * confidence score remains confidence.ts.
-   */
-  if (
-    verifiedSales.length >= 20
-  ) {
-    confidence =
-      "High";
-  } else if (
-    verifiedSales.length >= 10
-  ) {
-    confidence =
-      "High";
-  } else if (
-    verifiedSales.length >= 5
-  ) {
-    confidence =
-      "Medium";
-  } else if (
-    verifiedSales.length >= 1
-  ) {
-    confidence =
-      "Low";
-  } else {
-    confidence =
-      "Insufficient";
-  }
 
 
   return {
@@ -337,7 +292,5 @@ export function calculateMarketStatistics(
     latestSale,
 
     salesTracked,
-
-    confidence,
   };
 }

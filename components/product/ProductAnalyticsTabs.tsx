@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useState,
+} from "react";
 
 import type {
   MarketHealthResult,
@@ -14,32 +16,83 @@ import type {
   InvestmentGradeResult,
 } from "@/lib/analytics/investmentGrade";
 
+
 type AnalyticsTab =
   | "market-health"
   | "deal-score"
   | "investment-grade";
 
+
 type ProductAnalyticsTabsProps = {
-  marketHealth: MarketHealthResult;
-  dealScore: DealScoreResult | null;
-  investmentGrade: InvestmentGradeResult;
+  marketHealth:
+    MarketHealthResult;
+
+  dealScore:
+    DealScoreResult | null;
+
+  investmentGrade:
+    InvestmentGradeResult;
 };
 
-function formatPercent(value: number | null) {
+
+function formatPercent(
+  value: number | null,
+) {
   if (value === null) {
     return "N/A";
   }
 
-  return `${value.toFixed(1)}%`;
+  return `${value.toFixed(
+    1,
+  )}%`;
 }
+
+
+function formatSignedPercent(
+  value: number,
+) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(
+    1,
+  )}%`;
+}
+
+
+function getPricePositionLabel(
+  discountPercent: number,
+) {
+  if (discountPercent >= 10) {
+    return "Meaningfully Below Fair Value";
+  }
+
+  if (discountPercent >= 3) {
+    return "Below Fair Value";
+  }
+
+  if (discountPercent > -3) {
+    return "Near Fair Value";
+  }
+
+  if (discountPercent > -10) {
+    return "Above Fair Value";
+  }
+
+  return "Meaningfully Above Fair Value";
+}
+
 
 export default function ProductAnalyticsTabs({
   marketHealth,
   dealScore,
   investmentGrade,
 }: ProductAnalyticsTabsProps) {
-  const [activeTab, setActiveTab] =
-    useState<AnalyticsTab>("market-health");
+  const [
+    activeTab,
+    setActiveTab,
+  ] =
+    useState<AnalyticsTab>(
+      "market-health",
+    );
+
 
   return (
     <div className="product-analytics-tabs">
@@ -51,48 +104,76 @@ export default function ProductAnalyticsTabs({
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === "market-health"}
+          aria-selected={
+            activeTab ===
+            "market-health"
+          }
           className={
-            activeTab === "market-health"
+            activeTab ===
+            "market-health"
               ? "product-analytics-tab active"
               : "product-analytics-tab"
           }
-          onClick={() => setActiveTab("market-health")}
+          onClick={() =>
+            setActiveTab(
+              "market-health",
+            )
+          }
         >
           Market Health
         </button>
 
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "deal-score"}
-          className={
-            activeTab === "deal-score"
-              ? "product-analytics-tab active"
-              : "product-analytics-tab"
-          }
-          onClick={() => setActiveTab("deal-score")}
-        >
-          Deal Score
-        </button>
 
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === "investment-grade"}
+          aria-selected={
+            activeTab ===
+            "deal-score"
+          }
           className={
-            activeTab === "investment-grade"
+            activeTab ===
+            "deal-score"
               ? "product-analytics-tab active"
               : "product-analytics-tab"
           }
-          onClick={() => setActiveTab("investment-grade")}
+          onClick={() =>
+            setActiveTab(
+              "deal-score",
+            )
+          }
+        >
+          Deal Score
+        </button>
+
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={
+            activeTab ===
+            "investment-grade"
+          }
+          className={
+            activeTab ===
+            "investment-grade"
+              ? "product-analytics-tab active"
+              : "product-analytics-tab"
+          }
+          onClick={() =>
+            setActiveTab(
+              "investment-grade",
+            )
+          }
         >
           Investment Grade
         </button>
       </div>
 
+
       <div className="product-analytics-tab-panel">
-        {activeTab === "market-health" && (
+        {activeTab ===
+          "market-health" && (
           <div className="analytics-detail-panel">
             <div className="analytics-detail-hero">
               <div>
@@ -100,55 +181,105 @@ export default function ProductAnalyticsTabs({
                   Market Health
                 </span>
 
-                <h3>{marketHealth.label}</h3>
+                <h3>
+                  {
+                    marketHealth.label
+                  }
+                </h3>
 
                 <p>
-                  Measures liquidity, supply balance, and
-                  recent price stability across the tracked
-                  market.
+                  Measures transaction liquidity,
+                  supply balance, and realized-price
+                  stability across the tracked market.
                 </p>
               </div>
 
+
               <div className="analytics-primary-score">
-                <strong>{marketHealth.score}</strong>
-                <span>/100</span>
+                <strong>
+                  {
+                    marketHealth.score
+                  }
+                </strong>
+
+                <span>
+                  /100
+                </span>
               </div>
             </div>
 
+
             <div className="analytics-metric-grid">
               <div>
-                <span>Liquidity</span>
-                <strong>{marketHealth.liquidityScore}</strong>
-              </div>
+                <span>
+                  Liquidity
+                </span>
 
-              <div>
-                <span>Supply balance</span>
                 <strong>
-                  {marketHealth.supplyBalanceScore}
+                  {
+                    marketHealth.liquidityScore
+                  }
                 </strong>
               </div>
 
+
               <div>
-                <span>Price stability</span>
+                <span>
+                  Supply balance
+                </span>
+
                 <strong>
-                  {marketHealth.priceStabilityScore}
+                  {
+                    marketHealth.supplyBalanceScore
+                  }
                 </strong>
               </div>
 
-              <div>
-                <span>Tracked sales</span>
-                <strong>{marketHealth.salesCount}</strong>
-              </div>
 
               <div>
-                <span>Active listings</span>
+                <span>
+                  Price stability
+                </span>
+
                 <strong>
-                  {marketHealth.activeListingsCount}
+                  {
+                    marketHealth.priceStabilityScore
+                  }
                 </strong>
               </div>
 
+
               <div>
-                <span>Price variation</span>
+                <span>
+                  Verified sales
+                </span>
+
+                <strong>
+                  {
+                    marketHealth.salesCount
+                  }
+                </strong>
+              </div>
+
+
+              <div>
+                <span>
+                  Active listings
+                </span>
+
+                <strong>
+                  {
+                    marketHealth.activeListingsCount
+                  }
+                </strong>
+              </div>
+
+
+              <div>
+                <span>
+                  Price variation
+                </span>
+
                 <strong>
                   {formatPercent(
                     marketHealth.priceVariationPercent,
@@ -159,7 +290,9 @@ export default function ProductAnalyticsTabs({
           </div>
         )}
 
-        {activeTab === "deal-score" && (
+
+        {activeTab ===
+          "deal-score" && (
           <div className="analytics-detail-panel">
             {dealScore ? (
               <>
@@ -169,55 +302,70 @@ export default function ProductAnalyticsTabs({
                       Deal Score
                     </span>
 
-                    <h3>{dealScore.label}</h3>
+                    <h3>
+                      {
+                        dealScore.label
+                      }
+                    </h3>
 
                     <p>
-                      Evaluates the lowest tracked listing
-                      against recent fair market value,
-                      liquidity, and sales confidence.
+                      Measures how attractive the
+                      current market price is relative
+                      to TCGMVP estimated Fair Value.
                     </p>
                   </div>
 
+
                   <div className="analytics-primary-score">
-                    <strong>{dealScore.score}</strong>
-                    <span>/100</span>
+                    <strong>
+                      {
+                        dealScore.score
+                      }
+                    </strong>
+
+                    <span>
+                      /100
+                    </span>
                   </div>
                 </div>
 
+
                 <div className="analytics-metric-grid">
                   <div>
-                    <span>Price score</span>
-                    <strong>{dealScore.priceScore}</strong>
-                  </div>
+                    <span>
+                      Valuation score
+                    </span>
 
-                  <div>
-                    <span>Discount to value</span>
                     <strong>
-                      {dealScore.discountPercent >= 0
-                        ? "+"
-                        : ""}
-                      {dealScore.discountPercent.toFixed(1)}%
+                      {
+                        dealScore.priceScore
+                      }
                     </strong>
                   </div>
 
+
                   <div>
-                    <span>Confidence score</span>
+                    <span>
+                      Discount / premium
+                    </span>
+
                     <strong>
-                      {dealScore.confidenceScore}
+                      {formatSignedPercent(
+                        dealScore.discountPercent,
+                      )}
                     </strong>
                   </div>
 
-                  <div>
-                    <span>Liquidity score</span>
-                    <strong>
-                      {dealScore.liquidityScore}
-                    </strong>
-                  </div>
 
                   <div>
-                    <span>Confidence</span>
+                    <span>
+                      Price position
+                    </span>
+
                     <strong>
-                      {dealScore.confidenceLabel}
+                      {getPricePositionLabel(
+                        dealScore.discountPercent,
+                      )}
                     </strong>
                   </div>
                 </div>
@@ -228,18 +376,23 @@ export default function ProductAnalyticsTabs({
                   Deal Score
                 </span>
 
-                <h3>Not enough data</h3>
+                <h3>
+                  Not enough data
+                </h3>
 
                 <p>
-                  A Deal Score requires both a valid fair
-                  market value and at least one active listing.
+                  A Deal Score requires both a valid
+                  current market price and a Fair Value
+                  estimate.
                 </p>
               </div>
             )}
           </div>
         )}
 
-        {activeTab === "investment-grade" && (
+
+        {activeTab ===
+          "investment-grade" && (
           <div className="analytics-detail-panel">
             <div className="analytics-detail-hero">
               <div>
@@ -248,47 +401,76 @@ export default function ProductAnalyticsTabs({
                 </span>
 
                 <h3>
-                  {investmentGrade.grade} ·{" "}
-                  {investmentGrade.label}
+                  {
+                    investmentGrade.grade
+                  }{" "}
+                  ·{" "}
+                  {
+                    investmentGrade.label
+                  }
                 </h3>
 
                 <p>
-                  Combines underlying market quality with
-                  current deal attractiveness while limiting
-                  the influence of temporary discounts.
+                  Combines underlying market quality
+                  with current valuation opportunity
+                  while keeping risk analysis separate.
                 </p>
               </div>
 
+
               <div className="analytics-grade-score">
-                <strong>{investmentGrade.grade}</strong>
-                <span>{investmentGrade.score}/100</span>
+                <strong>
+                  {
+                    investmentGrade.grade
+                  }
+                </strong>
+
+                <span>
+                  {
+                    investmentGrade.score
+                  }
+                  /100
+                </span>
               </div>
             </div>
 
+
             <div className="analytics-metric-grid">
               <div>
-                <span>Overall score</span>
-                <strong>{investmentGrade.score}</strong>
-              </div>
+                <span>
+                  Overall score
+                </span>
 
-              <div>
-                <span>Market quality</span>
                 <strong>
-                  {investmentGrade.marketQualityScore}
+                  {
+                    investmentGrade.score
+                  }
                 </strong>
               </div>
 
+
               <div>
-                <span>Opportunity</span>
+                <span>
+                  Market quality
+                </span>
+
                 <strong>
-                  {investmentGrade.opportunityScore}
+                  {
+                    investmentGrade.marketQualityScore
+                  }
                 </strong>
               </div>
 
+
               <div>
-                <span>Risk score</span>
+                <span>
+                  Current opportunity
+                </span>
+
                 <strong>
-                  {investmentGrade.riskScore}
+                  {
+                    investmentGrade.opportunityScore
+                  }
                 </strong>
               </div>
             </div>

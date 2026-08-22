@@ -1,10 +1,17 @@
 export type InvestmentGradeInput = {
+  /**
+   * Overall market-structure quality from
+   * marketHealth.ts.
+   */
   marketHealthScore: number;
-  liquidityScore: number;
-  supplyBalanceScore: number;
-  priceStabilityScore: number;
+
+  /**
+   * Current valuation opportunity from
+   * dealScore.ts.
+   */
   dealScore: number;
 };
+
 
 export type InvestmentGrade =
   | "A+"
@@ -18,6 +25,7 @@ export type InvestmentGrade =
   | "C-"
   | "D";
 
+
 export type InvestmentGradeLabel =
   | "Exceptional"
   | "Strong"
@@ -26,34 +34,46 @@ export type InvestmentGradeLabel =
   | "Speculative"
   | "Weak";
 
+
 export type InvestmentGradeResult = {
+  /**
+   * Overall investment-quality score.
+   */
   score: number;
+
   grade: InvestmentGrade;
+
   label: InvestmentGradeLabel;
 
+  /**
+   * Structural market quality.
+   */
   marketQualityScore: number;
+
+  /**
+   * Current valuation opportunity.
+   */
   opportunityScore: number;
-  riskScore: number;
 };
 
 
 function clamp(
   value: number,
   minimum = 0,
-  maximum = 100
+  maximum = 100,
 ): number {
   return Math.min(
     Math.max(
       value,
-      minimum
+      minimum,
     ),
-    maximum
+    maximum,
   );
 }
 
 
 function getGrade(
-  score: number
+  score: number,
 ): InvestmentGrade {
   if (score >= 93) {
     return "A+";
@@ -96,7 +116,7 @@ function getGrade(
 
 
 function getLabel(
-  score: number
+  score: number,
 ): InvestmentGradeLabel {
   if (score >= 93) {
     return "Exceptional";
@@ -124,114 +144,52 @@ function getLabel(
 
 export function calculateInvestmentGrade({
   marketHealthScore,
-  liquidityScore,
-  supplyBalanceScore,
-  priceStabilityScore,
   dealScore,
 }: InvestmentGradeInput): InvestmentGradeResult {
-  const safeMarketHealthScore =
-    clamp(
-      marketHealthScore
+  const marketQualityScore =
+    Math.round(
+      clamp(
+        marketHealthScore,
+      ),
     );
 
-  const safeLiquidityScore =
-    clamp(
-      liquidityScore
-    );
 
-  const safeSupplyBalanceScore =
-    clamp(
-      supplyBalanceScore
-    );
-
-  const safePriceStabilityScore =
-    clamp(
-      priceStabilityScore
-    );
-
-  const safeDealScore =
-    clamp(
-      dealScore
+  const opportunityScore =
+    Math.round(
+      clamp(
+        dealScore,
+      ),
     );
 
 
   /*
-   * Market Quality
+   * Investment Grade answers:
    *
-   * marketHealthScore already combines:
-   * - liquidity
+   * "How strong is this product's investable
+   * market setup?"
+   *
+   * Market Quality:
+   * - transaction liquidity
    * - supply balance
    * - price stability
    *
-   * Use it directly to avoid double-counting
-   * those same components.
-   */
-  const marketQualityScore =
-    Math.round(
-      safeMarketHealthScore
-    );
-
-
-  /*
-   * Opportunity
+   * Opportunity:
+   * - current market price vs Fair Value
    *
-   * Deal Score represents how attractive the
-   * current entry appears relative to Fair Value.
-   */
-  const opportunityScore =
-    Math.round(
-      safeDealScore
-    );
-
-
-  /*
-   * Structural Risk
-   *
-   * Keep this as a separate descriptive output.
-   * It is derived directly from the underlying
-   * market-quality components.
-   *
-   * High liquidity, balanced supply, and stable
-   * pricing reduce structural market risk.
-   */
-  const riskScore =
-    Math.round(
-      clamp(
-        100 -
-          (
-            safeLiquidityScore *
-              0.35 +
-            safeSupplyBalanceScore *
-              0.30 +
-            safePriceStabilityScore *
-              0.35
-          )
-      )
-    );
-
-
-  /*
-   * Investment Grade
-   *
-   * Market quality receives the majority of the
-   * weight so a temporary discount cannot turn a
-   * weak market into an elite investment.
-   *
-   * Current opportunity still matters, but remains
-   * secondary.
+   * Risk is intentionally excluded because
+   * riskAnalysis.ts is the authoritative
+   * risk engine.
    */
   const rawScore =
-    marketQualityScore *
-      0.75 +
-    opportunityScore *
-      0.25;
+    marketQualityScore * 0.75 +
+    opportunityScore * 0.25;
 
 
   const score =
     Math.round(
       clamp(
-        rawScore
-      )
+        rawScore,
+      ),
     );
 
 
@@ -240,18 +198,16 @@ export function calculateInvestmentGrade({
 
     grade:
       getGrade(
-        score
+        score,
       ),
 
     label:
       getLabel(
-        score
+        score,
       ),
 
     marketQualityScore,
 
     opportunityScore,
-
-    riskScore,
   };
 }

@@ -53,6 +53,7 @@ import {
 } from "@/lib/analytics/priceTarget";
 
 import PriceTarget from "@/components/product/PriceTarget";
+
 import MarketConfidence from "@/components/product/MarketConfidence";
 
 import {
@@ -68,7 +69,9 @@ import ReportSection from "@/components/product/layout/ReportSection";
 import AnalyticsGrid from "@/components/product/layout/AnalyticsGrid";
 import EvidenceSection from "@/components/product/layout/EvidenceSection";
 
-import { supabase } from "@/lib/supabase";
+import {
+  supabase,
+} from "@/lib/supabase";
 
 import {
   calculateMarketData,
@@ -112,34 +115,129 @@ type MarketListing = {
 };
 
 
-function formatCurrency(value: number | null) {
+function formatCurrency(
+  value: number | null,
+) {
   if (value === null) {
     return "N/A";
   }
 
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
+  return value.toLocaleString(
+    "en-US",
+    {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    },
+  );
 }
 
 
-function formatPercent(value: number | null) {
+function formatPercent(
+  value: number | null,
+) {
   if (value === null) {
     return "N/A";
   }
 
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+  return `${value >= 0 ? "+" : ""}${value.toFixed(
+    2,
+  )}%`;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Market-data freshness
+|--------------------------------------------------------------------------
+*/
+
+function calculateDataAgeDays(
+  timestamps: Array<
+    string | null | undefined
+  >,
+): number | undefined {
+  const validTimestamps =
+    timestamps
+      .map((value) => {
+        if (!value) {
+          return null;
+        }
+
+        const timestamp =
+          new Date(
+            value,
+          ).getTime();
+
+        return Number.isFinite(
+          timestamp,
+        )
+          ? timestamp
+          : null;
+      })
+      .filter(
+        (
+          timestamp,
+        ): timestamp is number =>
+          timestamp !== null,
+      );
+
+
+  if (
+    validTimestamps.length === 0
+  ) {
+    return undefined;
+  }
+
+
+  const latestTimestamp =
+    Math.max(
+      ...validTimestamps,
+    );
+
+
+  const ageMilliseconds =
+    Date.now() -
+    latestTimestamp;
+
+
+  const ageDays =
+    Math.floor(
+      ageMilliseconds /
+      (
+        24 *
+        60 *
+        60 *
+        1000
+      ),
+    );
+
+
+  return Math.max(
+    0,
+    ageDays,
+  );
 }
 
 
 export default async function ProductDetailPage({
   params,
 }: ProductPageProps) {
-  const { slug } = await params;
+  const {
+    slug,
+  } = await params;
 
-  const { data: product, error } = await supabase
+
+  /*
+  |--------------------------------------------------------------------------
+  | Product + canonical market summary + TCGPlayer history
+  |--------------------------------------------------------------------------
+  */
+
+  const {
+    data: product,
+    error,
+  } = await supabase
     .from("products")
     .select(`
       id,
@@ -168,23 +266,42 @@ export default async function ProductDetailPage({
         current_market_price,
         change_30d_percent,
         active_listings,
-        lowest_listing_price
+        lowest_listing_price,
+        calculated_at
       )
     `)
-    .eq("slug", slug)
-    .eq("active", true)
+    .eq(
+      "slug",
+      slug,
+    )
+    .eq(
+      "active",
+      true,
+    )
     .single();
 
-  if (error || !product) {
+
+  if (
+    error ||
+    !product
+  ) {
     notFound();
   }
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Evidence UI — recent sales
+  |--------------------------------------------------------------------------
+  */
 
   const {
     data: salesData,
     error: salesError,
   } = await supabase
-    .from("market_sales")
+    .from(
+      "market_sales",
+    )
     .select(`
       id,
       marketplace,
@@ -197,40 +314,60 @@ export default async function ProductDetailPage({
       listing_url,
       is_verified
     `)
-    .eq("product_id", product.id)
-    .order("sold_at", {
-      ascending: false,
-    })
-    .limit(10);
+    .eq(
+      "product_id",
+      product.id,
+    )
+    .order(
+      "sold_at",
+      {
+        ascending: false,
+      },
+    )
+    .limit(
+      10,
+    );
+
 
   if (salesError) {
     console.error(
       "Unable to load market sales:",
-      salesError.message
+      salesError.message,
     );
   }
 
+
   const marketSales =
-    (salesData ?? []) as MarketSale[];
+    (
+      salesData ??
+      []
+    ) as MarketSale[];
 
 
   /*
-   * Only verified SoldComps transactions should
-   * influence Fair Value, Market Health, Deal Score,
-   * Confidence, and Investment Outlook.
-   *
-   * Unverified sales remain visible as evidence but
-   * are excluded from scoring.
-   */
-  const thirtyDaysAgo = new Date(
-    Date.now() - 30 * 24 * 60 * 60 * 1000
-  ).toISOString();
+  |--------------------------------------------------------------------------
+  | Analytical sold evidence
+  |--------------------------------------------------------------------------
+  */
+
+  const thirtyDaysAgo =
+    new Date(
+      Date.now() -
+      30 *
+      24 *
+      60 *
+      60 *
+      1000,
+    ).toISOString();
+
 
   const {
     data: verifiedSalesData,
     error: verifiedSalesError,
   } = await supabase
-    .from("market_sales")
+    .from(
+      "market_sales",
+    )
     .select(`
       id,
       marketplace,
@@ -243,42 +380,81 @@ export default async function ProductDetailPage({
       listing_url,
       is_verified
     `)
-    .eq("product_id", product.id)
-    .eq("marketplace", "ebay")
-    .eq("data_source", "soldcomps")
-    .eq("is_verified", true)
-    .gte("sold_at", thirtyDaysAgo)
-    .order("sold_at", {
-      ascending: false,
-    });
+    .eq(
+      "product_id",
+      product.id,
+    )
+    .eq(
+      "marketplace",
+      "ebay",
+    )
+    .eq(
+      "data_source",
+      "soldcomps",
+    )
+    .eq(
+      "is_verified",
+      true,
+    )
+    .gte(
+      "sold_at",
+      thirtyDaysAgo,
+    )
+    .order(
+      "sold_at",
+      {
+        ascending: false,
+      },
+    );
 
-  if (verifiedSalesError) {
+
+  if (
+    verifiedSalesError
+  ) {
     console.error(
       "Unable to load verified market sales:",
-      verifiedSalesError.message
+      verifiedSalesError.message,
     );
   }
 
+
   const verifiedMarketSales =
-    (verifiedSalesData ?? []) as MarketSale[];
+    (
+      verifiedSalesData ??
+      []
+    ) as MarketSale[];
+
 
   const verifiedSalePrices =
     verifiedMarketSales
-      .map((sale) =>
-        Number(sale.sale_price)
+      .map(
+        (sale) =>
+          Number(
+            sale.sale_price,
+          ),
       )
       .filter(
         (price) =>
-          Number.isFinite(price) &&
-          price > 0
+          Number.isFinite(
+            price,
+          ) &&
+          price > 0,
       );
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Active eBay evidence UI
+  |--------------------------------------------------------------------------
+  */
 
   const {
     data: listingsData,
     error: listingsError,
   } = await supabase
-    .from("market_listings")
+    .from(
+      "market_listings",
+    )
     .select(`
       id,
       marketplace,
@@ -293,176 +469,317 @@ export default async function ProductDetailPage({
       listed_at,
       last_seen
     `)
-    .eq("product_id", product.id)
-    .order("total_price", {
-      ascending: true,
-    })
-    .limit(10);
+    .eq(
+      "product_id",
+      product.id,
+    )
+    .eq(
+      "marketplace",
+      "ebay",
+    )
+    .order(
+      "total_price",
+      {
+        ascending: true,
+      },
+    )
+    .limit(
+      10,
+    );
+
 
   if (listingsError) {
     console.error(
       "Unable to load market listings:",
-      listingsError.message
+      listingsError.message,
     );
   }
 
+
   const marketListings =
-    (listingsData ?? []) as MarketListing[];
+    (
+      listingsData ??
+      []
+    ) as MarketListing[];
+
+
+  const listingPrices =
+    marketListings
+      .map(
+        (listing) => {
+          if (
+            listing.total_price !==
+            null
+          ) {
+            return Number(
+              listing.total_price,
+            );
+          }
+
+
+          if (
+            listing.shipping_price !==
+            null
+          ) {
+            return (
+              Number(
+                listing.listing_price,
+              ) +
+              Number(
+                listing.shipping_price,
+              )
+            );
+          }
+
+
+          return null;
+        },
+      )
+      .filter(
+        (
+          price,
+        ): price is number =>
+          price !== null &&
+          Number.isFinite(
+            price,
+          ) &&
+          price > 0,
+      );
 
 
   /*
-   * Only calculate delivered listing prices when
-   * shipping is actually known.
-   *
-   * Unknown shipping must never silently become $0.
-   */
-  const listingPrices = marketListings
-    .map((listing) => {
-      if (listing.total_price !== null) {
-        return Number(
-          listing.total_price
-        );
-      }
+  |--------------------------------------------------------------------------
+  | Product metadata
+  |--------------------------------------------------------------------------
+  */
 
-      if (listing.shipping_price !== null) {
-        return (
-          Number(listing.listing_price) +
-          Number(listing.shipping_price)
-        );
-      }
-
-      return null;
-    })
-    .filter(
-      (price): price is number =>
-        price !== null &&
-        Number.isFinite(price)
-    );
+  const setData =
+    Array.isArray(
+      product.sets,
+    )
+      ? product.sets[0]
+      : product.sets;
 
 
-  const setData = Array.isArray(
-    product.sets
-  )
-    ? product.sets[0]
-    : product.sets;
+  const seriesData =
+    Array.isArray(
+      setData?.series,
+    )
+      ? setData.series[0]
+      : setData?.series;
 
 
-  const seriesData = Array.isArray(
-    setData?.series
-  )
-    ? setData.series[0]
-    : setData?.series;
+  const languageData =
+    Array.isArray(
+      product.languages,
+    )
+      ? product.languages[0]
+      : product.languages;
 
 
-  const languageData = Array.isArray(
-    product.languages
-  )
-    ? product.languages[0]
-    : product.languages;
-
-
-  const productTypeData = Array.isArray(
-    product.product_types
-  )
-    ? product.product_types[0]
-    : product.product_types;
+  const productTypeData =
+    Array.isArray(
+      product.product_types,
+    )
+      ? product.product_types[0]
+      : product.product_types;
 
 
   /*
-   * TCGPlayer / TCGCSV remains the historical
-   * reference-price evidence source.
-   */
-  const priceHistory = Array.isArray(
-    product.daily_market_metrics
-  )
-    ? product.daily_market_metrics
-        .filter(
-          (item) =>
-            item.marketplace_id === 2 &&
-            item.market_price !== null
-        )
-        .map((item) => ({
-          price: Number(
-            item.market_price
-          ),
-          recorded_at:
-            item.metric_date,
-        }))
-        .sort(
-          (a, b) =>
-            new Date(
-              a.recorded_at
-            ).getTime() -
-            new Date(
-              b.recorded_at
-            ).getTime()
-        )
-    : [];
+  |--------------------------------------------------------------------------
+  | TCGPlayer / TCGCSV historical evidence
+  |--------------------------------------------------------------------------
+  */
+
+  const priceHistory =
+    Array.isArray(
+      product.daily_market_metrics,
+    )
+      ? product.daily_market_metrics
+          .filter(
+            (item) =>
+              item.marketplace_id ===
+                2 &&
+              item.market_price !==
+                null,
+          )
+          .map(
+            (item) => ({
+              price:
+                Number(
+                  item.market_price,
+                ),
+
+              recorded_at:
+                item.metric_date,
+            }),
+          )
+          .filter(
+            (item) =>
+              Number.isFinite(
+                item.price,
+              ) &&
+              item.price > 0,
+          )
+          .sort(
+            (
+              a,
+              b,
+            ) =>
+              new Date(
+                a.recorded_at,
+              ).getTime() -
+              new Date(
+                b.recorded_at,
+              ).getTime(),
+          )
+      : [];
 
 
   const historicalMarketData =
     calculateMarketData(
-      priceHistory
+      priceHistory,
     );
 
 
-  const marketSummary = Array.isArray(
-    product.product_market_summary
-  )
-    ? product.product_market_summary[0]
-    : product.product_market_summary;
-
-
-  const marketPrice =
-    marketSummary?.current_market_price !== null &&
-    marketSummary?.current_market_price !==
-      undefined
-      ? Number(
-          marketSummary.current_market_price
-        )
-      : historicalMarketData.marketPrice;
-
-
-  const change30d =
-    marketSummary?.change_30d_percent !== null &&
-    marketSummary?.change_30d_percent !==
-      undefined
-      ? Number(
-          marketSummary.change_30d_percent
-        )
-      : historicalMarketData.change30d;
+  const marketSummary =
+    Array.isArray(
+      product.product_market_summary,
+    )
+      ? product
+          .product_market_summary[0]
+      : product
+          .product_market_summary;
 
 
   /*
-   * Use the complete active-market snapshot rather
-   * than marketListings.length, because the UI only
-   * displays up to 10 listing rows.
-   */
-  const activeListings =
-    marketSummary?.active_listings !== null &&
-    marketSummary?.active_listings !==
-      undefined
+  |--------------------------------------------------------------------------
+  | Canonical reference market price
+  |--------------------------------------------------------------------------
+  */
+
+  const marketPrice =
+    marketSummary
+      ?.current_market_price !==
+        null &&
+    marketSummary
+      ?.current_market_price !==
+        undefined
       ? Number(
-          marketSummary.active_listings
+          marketSummary
+            .current_market_price,
+        )
+      : historicalMarketData
+          .marketPrice;
+
+
+  const change30d =
+    marketSummary
+      ?.change_30d_percent !==
+        null &&
+    marketSummary
+      ?.change_30d_percent !==
+        undefined
+      ? Number(
+          marketSummary
+            .change_30d_percent,
+        )
+      : historicalMarketData
+          .change30d;
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Canonical active market depth
+  |--------------------------------------------------------------------------
+  */
+
+  const activeListings =
+    marketSummary
+      ?.active_listings !==
+        null &&
+    marketSummary
+      ?.active_listings !==
+        undefined
+      ? Number(
+          marketSummary
+            .active_listings,
         )
       : marketListings.length;
 
 
-  const lowestActiveListing =
-    marketSummary?.lowest_listing_price !==
+  /*
+  |--------------------------------------------------------------------------
+  | Canonical actionable entry price
+  |--------------------------------------------------------------------------
+  */
+
+  const summaryLowestListing =
+    marketSummary
+      ?.lowest_listing_price;
+
+
+  const parsedSummaryLowestListing =
+    summaryLowestListing !==
       null &&
-    marketSummary?.lowest_listing_price !==
+    summaryLowestListing !==
       undefined
       ? Number(
-          marketSummary.lowest_listing_price
+          summaryLowestListing,
         )
       : null;
 
 
+  const lowestListingPrice =
+    parsedSummaryLowestListing !==
+      null &&
+    Number.isFinite(
+      parsedSummaryLowestListing,
+    ) &&
+    parsedSummaryLowestListing > 0
+      ? parsedSummaryLowestListing
+      : listingPrices.length > 0
+        ? Math.min(
+            ...listingPrices,
+          )
+        : null;
+
+
   /*
-   * Fair Value now uses verified realized-sale
-   * evidence rather than placeholder data.
-   */
+  |--------------------------------------------------------------------------
+  | Shared data freshness
+  |--------------------------------------------------------------------------
+  */
+
+  const latestPriceHistoryDate =
+    priceHistory.length > 0
+      ? priceHistory[
+          priceHistory.length -
+          1
+        ].recorded_at
+      : null;
+
+
+  const dataAgeDays =
+    calculateDataAgeDays([
+      marketSummary
+        ?.calculated_at,
+
+      latestPriceHistoryDate,
+
+      ...marketListings.map(
+        (listing) =>
+          listing.last_seen,
+      ),
+    ]);
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | FAIR VALUE
+  |--------------------------------------------------------------------------
+  */
+
   const fairValue =
     calculateFairValue({
       sales:
@@ -474,9 +791,11 @@ export default async function ProductDetailPage({
 
 
   /*
-   * Market Health now receives verified sold evidence
-   * plus real active eBay supply.
-   */
+  |--------------------------------------------------------------------------
+  | MARKET HEALTH
+  |--------------------------------------------------------------------------
+  */
+
   const marketHealth =
     calculateMarketHealth({
       sales:
@@ -490,57 +809,46 @@ export default async function ProductDetailPage({
     });
 
 
-  const lowestListingPrice =
-    lowestActiveListing ??
-    (
-      listingPrices.length > 0
-        ? Math.min(
-            ...listingPrices
-          )
-        : null
-    );
-
+  /*
+  |--------------------------------------------------------------------------
+  | DEAL SCORE
+  |--------------------------------------------------------------------------
+  |
+  | Valuation-only:
+  | actionable entry price vs Fair Value.
+  |
+  */
 
   const dealScore =
-    fairValue.fairValue !== null &&
-    lowestListingPrice !== null
+    fairValue.fairValue !==
+      null &&
+    lowestListingPrice !==
+      null
       ? calculateDealScore({
           fairMarketValue:
             fairValue.fairValue,
 
           listingPrice:
             lowestListingPrice,
-
-          recentSalesCount:
-            verifiedSalePrices.length,
-
-          activeListingsCount:
-            activeListings,
         })
       : null;
 
 
-  /*
-   * A neutral score is used when there is not enough
-   * data to calculate a dependable Deal Score.
-   */
   const dealScoreValue =
-    dealScore?.score ?? 50;
+    dealScore?.score ??
+    50;
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | INVESTMENT GRADE
+  |--------------------------------------------------------------------------
+  */
 
   const investmentGrade =
     calculateInvestmentGrade({
       marketHealthScore:
         marketHealth.score,
-
-      liquidityScore:
-        marketHealth.liquidityScore,
-
-      supplyBalanceScore:
-        marketHealth.supplyBalanceScore,
-
-      priceStabilityScore:
-        marketHealth.priceStabilityScore,
 
       dealScore:
         dealScoreValue,
@@ -548,22 +856,24 @@ export default async function ProductDetailPage({
 
 
   /*
-   * MarketStatistics still uses historical reference
-   * pricing here. We will connect richer sold evidence
-   * to this component separately so the analytics and
-   * display datasets are not accidentally conflated.
-   */
+  |--------------------------------------------------------------------------
+  | MARKET STATISTICS
+  |--------------------------------------------------------------------------
+  */
+
   const marketStatistics =
     calculateMarketStatistics(
       priceHistory,
-      verifiedMarketSales
+      verifiedMarketSales,
     );
 
 
   /*
-   * Confidence now receives verified realized sales,
-   * live active-listing depth, and historical pricing.
-   */
+  |--------------------------------------------------------------------------
+  | SHARED MARKET CONFIDENCE
+  |--------------------------------------------------------------------------
+  */
+
   const sharedConfidence =
     calculateConfidence({
       recentSalesCount:
@@ -576,35 +886,69 @@ export default async function ProductDetailPage({
         priceHistory.length,
 
       hasCurrentPrice:
-        marketPrice !== null &&
-        marketPrice !== undefined,
+        marketPrice !== null,
 
       hasFairValue:
-        fairValue.fairValue !== null &&
         fairValue.fairValue !==
-          undefined,
+        null,
 
-      dataAgeDays: 1,
+      dataAgeDays,
     });
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | TREND ANALYSIS
+  |--------------------------------------------------------------------------
+  */
+
   const trendAnalysis =
     calculateTrendAnalysis(
-      marketStatistics
+      marketStatistics,
+      sharedConfidence,
     );
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | RISK ANALYSIS
+  |--------------------------------------------------------------------------
+  */
 
   const riskAnalysis =
-    calculateRiskAnalysis(
-      marketStatistics,
-      trendAnalysis
-    );
+    calculateRiskAnalysis({
+      statistics:
+        marketStatistics,
 
+      trendAnalysis,
+
+      marketConfidence:
+        sharedConfidence,
+
+      fairValue:
+        fairValue.fairValue,
+
+      entryPrice:
+        lowestListingPrice,
+
+      activeListingsCount:
+        activeListings,
+    });
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | PRICE TARGET
+  |--------------------------------------------------------------------------
+  */
 
   const priceTarget =
     calculatePriceTarget({
-      currentPrice:
+      referencePrice:
         marketPrice,
+
+      entryPrice:
+        lowestListingPrice,
 
       fairValue:
         fairValue.fairValue,
@@ -615,12 +959,6 @@ export default async function ProductDetailPage({
       riskScore:
         riskAnalysis.riskScore,
 
-      marketHealthScore:
-        marketHealth.score,
-
-      investmentGradeScore:
-        investmentGrade.score,
-
       marketConfidenceScore:
         sharedConfidence.score,
 
@@ -629,10 +967,16 @@ export default async function ProductDetailPage({
     });
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | MARKET RATING
+  |--------------------------------------------------------------------------
+  */
+
   const marketRating =
     calculateMarketRating({
-      currentPrice:
-        marketPrice,
+      entryPrice:
+        lowestListingPrice,
 
       trendAnalysis,
 
@@ -642,8 +986,6 @@ export default async function ProductDetailPage({
 
       marketHealth,
 
-      investmentGrade,
-
       marketConfidenceScore:
         sharedConfidence.score,
 
@@ -652,10 +994,19 @@ export default async function ProductDetailPage({
     });
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | INVESTMENT OUTLOOK
+  |--------------------------------------------------------------------------
+  */
+
   const investmentOutlook =
     calculateInvestmentOutlook({
-      currentPrice:
+      referencePrice:
         marketPrice,
+
+      entryPrice:
+        lowestListingPrice,
 
       fairValue:
         fairValue.fairValue,
@@ -672,11 +1023,9 @@ export default async function ProductDetailPage({
       marketHealthScore:
         marketHealth.score,
 
-      investmentGradeScore:
-        investmentGrade.score,
-
       expectedReturnPercent:
-        priceTarget.potentialUpsidePercent,
+        priceTarget
+          .potentialUpsidePercent,
 
       recentSalesCount:
         verifiedSalePrices.length,
@@ -695,10 +1044,365 @@ export default async function ProductDetailPage({
     });
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | TEMPORARY ANALYTICS VALIDATION
+  |--------------------------------------------------------------------------
+  */
+
+  if (
+    process.env.NODE_ENV ===
+    "development"
+  ) {
+    console.log(
+      "\n==================================================",
+    );
+
+    console.log(
+      `TCGMVP ANALYTICS DEBUG — ${product.name}`,
+    );
+
+    console.log(
+      "==================================================",
+    );
+
+    console.log({
+      product: {
+        id:
+          product.id,
+
+        name:
+          product.name,
+      },
+
+      pricing: {
+        referenceMarketPrice:
+          marketPrice,
+
+        actionableEntryPrice:
+          lowestListingPrice,
+
+        change30d,
+
+        fairValue:
+          fairValue.fairValue,
+
+        fairValueMethodology:
+          fairValue.methodology,
+
+        priceTarget:
+          priceTarget.targetPrice,
+
+        potentialUpsidePercent:
+          priceTarget
+            .potentialUpsidePercent,
+
+        marginOfSafetyPercent:
+          priceTarget
+            .marginOfSafetyPercent,
+
+        downsideRiskPercent:
+          priceTarget
+            .downsideRiskPercent,
+      },
+
+      evidence: {
+        verifiedSalesCount:
+          verifiedSalePrices.length,
+
+        verifiedSalePrices,
+
+        activeListingsCount:
+          activeListings,
+
+        displayedListingCount:
+          marketListings.length,
+
+        deliveredListingPrices:
+          listingPrices,
+
+        priceHistoryPoints:
+          priceHistory.length,
+
+        dataAgeDays,
+      },
+
+      fairValue: {
+        fairValue:
+          fairValue.fairValue,
+
+        medianSale:
+          fairValue.medianSale,
+
+        averageSale:
+          fairValue.averageSale,
+
+        lowestSale:
+          fairValue.lowestSale,
+
+        highestSale:
+          fairValue.highestSale,
+
+        salesCount:
+          fairValue.salesCount,
+
+        methodology:
+          fairValue.methodology,
+      },
+
+      marketHealth: {
+        score:
+          marketHealth.score,
+
+        label:
+          marketHealth.label,
+
+        liquidityScore:
+          marketHealth
+            .liquidityScore,
+
+        supplyBalanceScore:
+          marketHealth
+            .supplyBalanceScore,
+
+        priceStabilityScore:
+          marketHealth
+            .priceStabilityScore,
+
+        priceVariationPercent:
+          marketHealth
+            .priceVariationPercent,
+      },
+
+      dealScore:
+        dealScore
+          ? {
+              score:
+                dealScore.score,
+
+              label:
+                dealScore.label,
+
+              discountPercent:
+                dealScore
+                  .discountPercent,
+
+              priceScore:
+                dealScore
+                  .priceScore,
+            }
+          : null,
+
+      investmentGrade: {
+        score:
+          investmentGrade.score,
+
+        grade:
+          investmentGrade.grade,
+
+        label:
+          investmentGrade.label,
+
+        marketQualityScore:
+          investmentGrade
+            .marketQualityScore,
+
+        opportunityScore:
+          investmentGrade
+            .opportunityScore,
+      },
+
+      confidence: {
+        score:
+          sharedConfidence.score,
+
+        confidence:
+          sharedConfidence
+            .confidence,
+
+        reasons:
+          sharedConfidence
+            .reasons,
+      },
+
+      trend: {
+        trend:
+          trendAnalysis.trend,
+
+        momentum:
+          trendAnalysis.momentum,
+
+        strength:
+          trendAnalysis.strength,
+
+        confidence:
+          trendAnalysis.confidence,
+
+        salesTracked:
+          trendAnalysis.salesTracked,
+
+        reasons:
+          trendAnalysis.reasons,
+      },
+
+      risk: {
+        riskScore:
+          riskAnalysis.riskScore,
+
+        overallRisk:
+          riskAnalysis.overallRisk,
+
+        volatilityRisk:
+          riskAnalysis
+            .volatilityRisk,
+
+        liquidityRisk:
+          riskAnalysis
+            .liquidityRisk,
+
+        valuationRisk:
+          riskAnalysis
+            .valuationRisk,
+
+        dataRisk:
+          riskAnalysis.dataRisk,
+
+        reasons:
+          riskAnalysis.reasons,
+      },
+
+      priceTarget: {
+        referencePrice:
+          priceTarget.referencePrice,
+
+        entryPrice:
+          priceTarget.entryPrice,
+
+        fairValue:
+          priceTarget.fairValue,
+
+        targetPrice:
+          priceTarget.targetPrice,
+
+        potentialUpsidePercent:
+          priceTarget
+            .potentialUpsidePercent,
+
+        marginOfSafetyPercent:
+          priceTarget
+            .marginOfSafetyPercent,
+
+        downsideRiskPercent:
+          priceTarget
+            .downsideRiskPercent,
+
+        targetAdjustmentPercent:
+          priceTarget
+            .targetAdjustmentPercent,
+
+        verdict:
+          priceTarget.verdict,
+
+        confidence:
+          priceTarget.confidence,
+      },
+
+      marketRating: {
+        ratingScore:
+          marketRating.ratingScore,
+
+        rating:
+          marketRating.rating,
+
+        trendScore:
+          marketRating.trendScore,
+
+        riskAdjustedScore:
+          marketRating
+            .riskAdjustedScore,
+
+        valuationScore:
+          marketRating
+            .valuationScore,
+
+        marketHealthScore:
+          marketRating
+            .marketHealthScore,
+
+        confidenceScore:
+          marketRating
+            .confidenceScore,
+
+        confidence:
+          marketRating.confidence,
+      },
+
+      investmentOutlook: {
+        overallOutlook:
+          investmentOutlook
+            .overallOutlook,
+
+        overallScore:
+          investmentOutlook
+            .overallScore,
+
+        shortTermOutlook:
+          investmentOutlook
+            .shortTermOutlook,
+
+        shortTermScore:
+          investmentOutlook
+            .shortTermScore,
+
+        longTermOutlook:
+          investmentOutlook
+            .longTermOutlook,
+
+        longTermScore:
+          investmentOutlook
+            .longTermScore,
+
+        collectorDemand:
+          investmentOutlook
+            .collectorDemand,
+
+        collectorDemandScore:
+          investmentOutlook
+            .collectorDemandScore,
+
+        supplyOutlook:
+          investmentOutlook
+            .supplyOutlook,
+
+        supplyScore:
+          investmentOutlook
+            .supplyScore,
+
+        confidence:
+          investmentOutlook
+            .confidence,
+
+        summary:
+          investmentOutlook.summary,
+      },
+    });
+
+    console.log(
+      "==================================================\n",
+    );
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Product/report presentation
+  |--------------------------------------------------------------------------
+  */
+
   const overviewName =
     product.name.replace(
       " Booster Box",
-      ""
+      "",
     );
 
 
@@ -707,18 +1411,23 @@ export default async function ProductDetailPage({
 
 
   const heroUpside =
-    priceTarget.potentialUpsidePercent;
+    priceTarget
+      .potentialUpsidePercent;
 
 
   const keySignal =
-    investmentOutlook.strengths[0] ??
-    marketRating.strengths[0] ??
+    investmentOutlook
+      .strengths[0] ??
+    marketRating
+      .strengths[0] ??
     "Market conditions are balanced";
 
 
   const primaryConcern =
-    investmentOutlook.headwinds[0] ??
-    marketRating.concerns[0] ??
+    investmentOutlook
+      .headwinds[0] ??
+    marketRating
+      .concerns[0] ??
     "No major concern identified";
 
 
@@ -734,6 +1443,7 @@ export default async function ProductDetailPage({
     <main className="site-shell products-page product-detail-page product-research-report">
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
+
 
       <header className="nav-wrap">
         <nav className="nav container">
@@ -755,6 +1465,7 @@ export default async function ProductDetailPage({
             </span>
           </Link>
 
+
           <div className="nav-links">
             <Link href="/">
               Home
@@ -772,6 +1483,7 @@ export default async function ProductDetailPage({
               Watchlist
             </span>
           </div>
+
 
           <Link
             className="button button-small button-primary"
@@ -810,13 +1522,13 @@ export default async function ProductDetailPage({
 
         marketPrice={
           formatCurrency(
-            marketPrice
+            marketPrice,
           )
         }
 
         change30d={
           formatPercent(
-            change30d
+            change30d,
           )
         }
 
@@ -839,9 +1551,11 @@ export default async function ProductDetailPage({
               true,
 
             detailTone:
-              marketRating.ratingScore >= 70
+              marketRating.ratingScore >=
+              70
                 ? "positive"
-                : marketRating.ratingScore < 40
+                : marketRating.ratingScore <
+                    40
                   ? "negative"
                   : "gold",
           },
@@ -852,16 +1566,20 @@ export default async function ProductDetailPage({
 
             value:
               formatCurrency(
-                heroFairValue
+                heroFairValue,
               ),
 
             detail:
-              heroUpside === null
+              heroUpside ===
+              null
                 ? "Upside unavailable"
-                : `${heroUpside >= 0 ? "+" : ""}${heroUpside.toFixed(1)}% target potential`,
+                : `${heroUpside >= 0 ? "+" : ""}${heroUpside.toFixed(
+                    1,
+                  )}% target potential`,
 
             detailTone:
-              heroUpside === null
+              heroUpside ===
+              null
                 ? "default"
                 : heroUpside > 0
                   ? "positive"
@@ -875,19 +1593,23 @@ export default async function ProductDetailPage({
               "Confidence",
 
             value:
-              sharedConfidence.confidence,
+              sharedConfidence
+                .confidence,
 
             detail:
-              `${sharedConfidence.score}/100 evidence score`,
+              `${sharedConfidence.score}/95 evidence score`,
 
             valueTone:
-              sharedConfidence.confidence ===
+              sharedConfidence
+                .confidence ===
               "High"
                 ? "positive"
-                : sharedConfidence.confidence ===
+                : sharedConfidence
+                      .confidence ===
                     "Medium"
                   ? "warning"
-                  : sharedConfidence.confidence ===
+                  : sharedConfidence
+                        .confidence ===
                       "Low"
                     ? "negative"
                     : "default",
@@ -915,11 +1637,13 @@ export default async function ProductDetailPage({
             }
 
             outlook={
-              investmentOutlook.overallOutlook
+              investmentOutlook
+                .overallOutlook
             }
 
             summary={
-              investmentOutlook.summary ||
+              investmentOutlook
+                .summary ||
               marketRating.summary
             }
 
@@ -932,11 +1656,13 @@ export default async function ProductDetailPage({
             }
 
             confidence={
-              sharedConfidence.confidence
+              sharedConfidence
+                .confidence
             }
 
             confidenceScore={
-              sharedConfidence.score
+              sharedConfidence
+                .score
             }
           />
         }
@@ -960,6 +1686,7 @@ export default async function ProductDetailPage({
           }
         />
 
+
         <div className="product-investment-outlook-wrapper">
           <InvestmentOutlook
             outlook={
@@ -967,6 +1694,7 @@ export default async function ProductDetailPage({
             }
           />
         </div>
+
 
         <AnalyticsGrid className="product-price-target-wrapper product-price-target-wrapper-v2">
           <PriceTarget

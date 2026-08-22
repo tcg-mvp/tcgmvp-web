@@ -14,10 +14,6 @@ import type {
   MarketHealthResult,
 } from "@/lib/analytics/marketHealth";
 
-import type {
-  InvestmentGradeResult,
-} from "@/lib/analytics/investmentGrade";
-
 
 export type MarketRatingLabel =
   | "Exceptional"
@@ -36,7 +32,14 @@ export type MarketRatingConfidence =
 
 
 export type MarketRatingInput = {
-  currentPrice: number | null;
+  /**
+   * Lowest actionable eligible active listing.
+   *
+   * Used for the valuation component because
+   * Market Rating evaluates how attractive the
+   * market is to a buyer right now.
+   */
+  entryPrice: number | null;
 
   trendAnalysis:
     TrendAnalysisResult;
@@ -49,9 +52,6 @@ export type MarketRatingInput = {
 
   marketHealth:
     MarketHealthResult;
-
-  investmentGrade:
-    InvestmentGradeResult;
 
   /**
    * Shared Market Confidence generated
@@ -80,8 +80,6 @@ export type MarketRatingResult = {
   trendScore: number;
 
   riskAdjustedScore: number;
-
-  investmentGradeScore: number;
 
   valuationScore: number;
 
@@ -179,15 +177,15 @@ function getStarRating(
 
 
 function calculateValuationScore(
-  currentPrice: number | null,
+  entryPrice: number | null,
   fairValue: number | null
 ): {
   score: number;
   differencePercent: number | null;
 } {
   if (
-    currentPrice === null ||
-    currentPrice <= 0 ||
+    entryPrice === null ||
+    entryPrice <= 0 ||
     fairValue === null ||
     fairValue <= 0
   ) {
@@ -197,24 +195,27 @@ function calculateValuationScore(
     };
   }
 
+
   const differencePercent =
     (
       (
         fairValue -
-        currentPrice
+        entryPrice
       ) /
       fairValue
     ) *
     100;
 
+
   /*
    * Positive difference:
-   * current price is below Fair Value.
+   * entry price is below Fair Value.
    *
    * Negative difference:
-   * current price is above Fair Value.
+   * entry price is above Fair Value.
    */
   let score: number;
+
 
   if (
     differencePercent >= 20
@@ -244,6 +245,7 @@ function calculateValuationScore(
     score = 15;
   }
 
+
   return {
     score,
     differencePercent,
@@ -256,7 +258,6 @@ function buildStrengths({
   riskAnalysis,
   fairValue,
   marketHealth,
-  investmentGrade,
   valuationDifferencePercent,
 }: {
   trendAnalysis:
@@ -270,9 +271,6 @@ function buildStrengths({
 
   marketHealth:
     MarketHealthResult;
-
-  investmentGrade:
-    InvestmentGradeResult;
 
   valuationDifferencePercent:
     number | null;
@@ -305,22 +303,6 @@ function buildStrengths({
 
 
   if (
-    investmentGrade.grade ===
-      "A+" ||
-    investmentGrade.grade ===
-      "A" ||
-    investmentGrade.grade ===
-      "A-" ||
-    investmentGrade.grade ===
-      "B+"
-  ) {
-    strengths.push(
-      `${investmentGrade.grade} investment grade reflects strong market quality and opportunity.`
-    );
-  }
-
-
-  if (
     marketHealth.label ===
       "Strong" ||
     marketHealth.label ===
@@ -339,7 +321,7 @@ function buildStrengths({
       3
   ) {
     strengths.push(
-      `The current price is ${valuationDifferencePercent.toFixed(
+      `The best available entry price is ${valuationDifferencePercent.toFixed(
         1
       )}% below estimated fair value.`
     );
@@ -350,7 +332,7 @@ function buildStrengths({
       -3
   ) {
     strengths.push(
-      "The current price is trading near estimated fair value."
+      "The best available entry price is trading near estimated fair value."
     );
   }
 
@@ -377,7 +359,6 @@ function buildConcerns({
   riskAnalysis,
   fairValue,
   marketHealth,
-  investmentGrade,
   valuationDifferencePercent,
 }: {
   trendAnalysis:
@@ -391,9 +372,6 @@ function buildConcerns({
 
   marketHealth:
     MarketHealthResult;
-
-  investmentGrade:
-    InvestmentGradeResult;
 
   valuationDifferencePercent:
     number | null;
@@ -439,7 +417,7 @@ function buildConcerns({
       -10
   ) {
     concerns.push(
-      `The current price is ${Math.abs(
+      `The best available entry price is ${Math.abs(
         valuationDifferencePercent
       ).toFixed(
         1
@@ -452,7 +430,7 @@ function buildConcerns({
       -3
   ) {
     concerns.push(
-      "The current price is moderately above estimated fair value."
+      "The best available entry price is moderately above estimated fair value."
     );
   }
 
@@ -470,18 +448,6 @@ function buildConcerns({
   ) {
     concerns.push(
       "Underlying market conditions remain mixed."
-    );
-  }
-
-
-  if (
-    investmentGrade.grade ===
-      "C-" ||
-    investmentGrade.grade ===
-      "D"
-  ) {
-    concerns.push(
-      `${investmentGrade.grade} investment grade indicates elevated speculation or weak market quality.`
     );
   }
 
@@ -583,12 +549,11 @@ function buildSummary(
 
 
 export function calculateMarketRating({
-  currentPrice,
+  entryPrice,
   trendAnalysis,
   riskAnalysis,
   fairValue,
   marketHealth,
-  investmentGrade,
   marketConfidenceScore,
   marketConfidence,
 }: MarketRatingInput): MarketRatingResult {
@@ -600,7 +565,9 @@ export function calculateMarketRating({
 
   /*
    * Risk scores increase as risk becomes worse.
-   * Invert before using in the Market Rating.
+   *
+   * Invert the score because a Market Rating
+   * should reward lower risk.
    */
   const riskAdjustedScore =
     roundScore(
@@ -609,28 +576,20 @@ export function calculateMarketRating({
     );
 
 
-  const investmentGradeScore =
-    roundScore(
-      investmentGrade.score
-    );
-
-
-  /*
-   * Retained for reporting and UI visibility.
-   *
-   * Market Health is not separately weighted
-   * into the final rating because it already
-   * contributes materially to Investment Grade.
-   */
   const marketHealthScore =
     roundScore(
       marketHealth.score
     );
 
 
+  /*
+   * Valuation is based on the actionable
+   * entry price rather than the broader
+   * reference market price.
+   */
   const valuation =
     calculateValuationScore(
-      currentPrice,
+      entryPrice,
       fairValue.fairValue
     );
 
@@ -642,31 +601,36 @@ export function calculateMarketRating({
 
 
   /*
-   * TCGMVP Market Rating
+   * --------------------------------------------------
+   * TCGMVP MARKET RATING
+   * --------------------------------------------------
    *
-   * Final synthesis weights:
+   * Answers:
    *
-   * Trend Analysis:        25%
-   * Risk Analysis:         25%
-   * Investment Grade:      30%
-   * Valuation:             20%
+   * "How attractive is this product's market
+   * right now?"
    *
-   * Market Health is intentionally NOT included
-   * as a separate weighted component here.
+   * Trend:          25%
+   * Market Health:  30%
+   * Risk:           25%
+   * Valuation:      20%
    *
-   * Market Health already contributes materially
-   * to Investment Grade. Weighting it again would
-   * double-count liquidity, supply balance, and
-   * price stability.
+   * Investment Grade is intentionally excluded.
    *
-   * Shared Market Confidence also remains separate.
-   * Confidence measures evidence quality and does
-   * not directly inflate or reduce the rating.
+   * Investment Grade is itself derived from
+   * Market Health and Deal Score. Including it
+   * here would double-count both market structure
+   * and valuation evidence.
+   *
+   * Confidence is also intentionally excluded
+   * from the rating score. Confidence measures
+   * how much the rating should be trusted, not
+   * whether the market itself is attractive.
    */
   const rawRatingScore =
     trendScore * 0.25 +
+    marketHealthScore * 0.30 +
     riskAdjustedScore * 0.25 +
-    investmentGradeScore * 0.30 +
     valuationScore * 0.20;
 
 
@@ -711,8 +675,6 @@ export function calculateMarketRating({
 
       marketHealth,
 
-      investmentGrade,
-
       valuationDifferencePercent:
         valuation.differencePercent,
     });
@@ -727,8 +689,6 @@ export function calculateMarketRating({
       fairValue,
 
       marketHealth,
-
-      investmentGrade,
 
       valuationDifferencePercent:
         valuation.differencePercent,
@@ -749,8 +709,6 @@ export function calculateMarketRating({
     trendScore,
 
     riskAdjustedScore,
-
-    investmentGradeScore,
 
     valuationScore,
 

@@ -2,9 +2,11 @@ import type {
   MarketRatingResult,
 } from "@/lib/analytics/marketRating";
 
+
 type MarketRatingProps = {
   rating: MarketRatingResult;
 };
+
 
 function getRatingClass(
   label: MarketRatingResult["rating"],
@@ -29,21 +31,22 @@ function getRatingClass(
   }
 }
 
+
 function getRatingInterpretation(
   label: MarketRatingResult["rating"],
 ) {
   switch (label) {
     case "Exceptional":
-      return "An exceptional market profile supported by strong fundamentals and attractive conditions.";
+      return "An exceptional market profile supported by strong momentum, healthy structure, favorable valuation, and limited risk.";
 
     case "Strong":
-      return "A strong market profile with favorable fundamentals and limited major concerns.";
+      return "A strong market profile with favorable conditions across most major analytical dimensions.";
 
     case "Favorable":
       return "A generally attractive market profile with more strengths than weaknesses.";
 
     case "Neutral":
-      return "A balanced market profile that is worth monitoring but is not currently a standout opportunity.";
+      return "A balanced market profile without a decisive current advantage.";
 
     case "Weak":
       return "A below-average market profile with meaningful risks or limited market support.";
@@ -56,8 +59,10 @@ function getRatingInterpretation(
   }
 }
 
+
 function getConfidenceDescription(
-  confidence: MarketRatingResult["confidence"],
+  confidence:
+    MarketRatingResult["confidence"],
 ) {
   switch (confidence) {
     case "High":
@@ -77,61 +82,100 @@ function getConfidenceDescription(
   }
 }
 
-function renderStars(stars: number) {
-  return Array.from({ length: 5 }, (_, index) => {
-    const starNumber = index + 1;
 
-    const starClass =
-      stars >= starNumber
-        ? "filled"
-        : stars >= starNumber - 0.5
-          ? "half"
-          : "";
+function renderStars(
+  stars: number,
+) {
+  return Array.from(
+    {
+      length: 5,
+    },
+    (
+      _,
+      index,
+    ) => {
+      const starNumber =
+        index + 1;
 
-    return (
-      <span
-        key={starNumber}
-        className={`market-rating-star ${starClass}`}
-        aria-hidden="true"
-      >
-        ★
-      </span>
-    );
-  });
+      const starClass =
+        stars >= starNumber
+          ? "filled"
+          : stars >=
+              starNumber - 0.5
+            ? "half"
+            : "";
+
+      return (
+        <span
+          key={
+            starNumber
+          }
+          className={`market-rating-star ${starClass}`}
+          aria-hidden="true"
+        >
+          ★
+        </span>
+      );
+    },
+  );
 }
+
 
 const scoreItems = [
   {
-    key: "trendScore",
-    label: "Trend",
-    icon: "↗",
+    key:
+      "trendScore",
+
+    label:
+      "Trend",
+
+    icon:
+      "↗",
   },
+
   {
-    key: "riskAdjustedScore",
-    label: "Risk adjusted",
-    icon: "◈",
+    key:
+      "marketHealthScore",
+
+    label:
+      "Market health",
+
+    icon:
+      "●",
   },
+
   {
-    key: "investmentGradeScore",
-    label: "Investment grade",
-    icon: "◆",
+    key:
+      "riskAdjustedScore",
+
+    label:
+      "Risk adjusted",
+
+    icon:
+      "◈",
   },
+
   {
-    key: "valuationScore",
-    label: "Valuation",
-    icon: "$",
-  },
-  {
-    key: "marketHealthScore",
-    label: "Market health",
-    icon: "●",
+    key:
+      "valuationScore",
+
+    label:
+      "Valuation",
+
+    icon:
+      "$",
   },
 ] as const;
+
 
 export default function MarketRating({
   rating,
 }: MarketRatingProps) {
-  const ratingClass = getRatingClass(rating.rating);
+  const ratingClass =
+    getRatingClass(
+      rating.rating,
+    );
+
 
   return (
     <section className="market-rating-card">
@@ -141,13 +185,16 @@ export default function MarketRating({
             TCGMVP Intelligence
           </span>
 
-          <h2>Market Rating</h2>
+          <h2>
+            Market Rating
+          </h2>
 
           <p>
-            A consolidated assessment of trend, risk,
-            valuation, market health, and investment quality.
+            A consolidated assessment of trend,
+            market health, risk, and valuation.
           </p>
         </div>
+
 
         <div className="market-rating-confidence">
           <span className="market-rating-confidence-label">
@@ -156,35 +203,50 @@ export default function MarketRating({
 
           <strong>
             {rating.confidenceScore}
-            <small>%</small>
+            <small>
+              /95
+            </small>
           </strong>
 
           <span className="market-rating-confidence-description">
-            {getConfidenceDescription(rating.confidence)}
+            {getConfidenceDescription(
+              rating.confidence,
+            )}
           </span>
         </div>
       </div>
+
 
       <div className="market-rating-hero">
         <div
           className={`market-rating-score-card ${ratingClass}`}
         >
           <div className="market-rating-score-value">
-            <span>{rating.ratingScore}</span>
-            <small>/100</small>
+            <span>
+              {rating.ratingScore}
+            </span>
+
+            <small>
+              /100
+            </small>
           </div>
+
 
           <div className="market-rating-score-label">
             {rating.rating}
           </div>
 
+
           <div
             className="market-rating-stars"
             aria-label={`${rating.stars} out of 5 stars`}
           >
-            {renderStars(rating.stars)}
+            {renderStars(
+              rating.stars,
+            )}
           </div>
         </div>
+
 
         <div className="market-rating-summary">
           <span className="market-rating-summary-label">
@@ -192,57 +254,102 @@ export default function MarketRating({
           </span>
 
           <h3 className={ratingClass}>
-            {getRatingInterpretation(rating.rating)}
+            {getRatingInterpretation(
+              rating.rating,
+            )}
           </h3>
 
-          <p>{rating.summary}</p>
+          <p>
+            {rating.summary}
+          </p>
         </div>
       </div>
 
+
       <div className="market-rating-breakdown">
-        {scoreItems.map((item) => (
-          <div
-            key={item.key}
-            className="market-rating-metric"
-          >
-            <div className="market-rating-metric-top">
-              <span className="market-rating-metric-icon">
-                {item.icon}
-              </span>
+        {scoreItems.map(
+          (item) => {
+            const value =
+              rating[
+                item.key
+              ];
 
-              <span className="market-rating-metric-label">
-                {item.label}
-              </span>
-            </div>
+            return (
+              <div
+                key={
+                  item.key
+                }
+                className="market-rating-metric"
+              >
+                <div className="market-rating-metric-top">
+                  <span className="market-rating-metric-icon">
+                    {
+                      item.icon
+                    }
+                  </span>
 
-            <strong>{rating[item.key]}</strong>
+                  <span className="market-rating-metric-label">
+                    {
+                      item.label
+                    }
+                  </span>
+                </div>
 
-            <div className="market-rating-metric-bar">
-              <span
-                style={{
-                  width: `${rating[item.key]}%`,
-                }}
-              />
-            </div>
-          </div>
-        ))}
+                <strong>
+                  {value}
+                </strong>
+
+                <div className="market-rating-metric-bar">
+                  <span
+                    style={{
+                      width:
+                        `${value}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          },
+        )}
       </div>
+
 
       <div className="market-rating-insights">
         <div className="market-rating-insight-column market-rating-strengths">
           <div className="market-rating-insight-heading">
-            <span>✓</span>
-            <h4>Strengths</h4>
+            <span>
+              ✓
+            </span>
+
+            <h4>
+              Strengths
+            </h4>
           </div>
 
-          {rating.strengths.length > 0 ? (
+          {rating.strengths.length >
+          0 ? (
             <ul>
-              {rating.strengths.map((strength) => (
-                <li key={strength}>
-                  <span>✓</span>
-                  <p>{strength}</p>
-                </li>
-              ))}
+              {rating.strengths.map(
+                (
+                  strength,
+                ) => (
+                  <li
+                    key={
+                      strength
+                    }
+                  >
+                    <span>
+                      ✓
+                    </span>
+
+                    <p>
+                      {
+                        strength
+                      }
+                    </p>
+                  </li>
+                ),
+              )}
             </ul>
           ) : (
             <p className="market-rating-empty">
@@ -251,20 +358,42 @@ export default function MarketRating({
           )}
         </div>
 
+
         <div className="market-rating-insight-column market-rating-concerns">
           <div className="market-rating-insight-heading">
-            <span>!</span>
-            <h4>Concerns</h4>
+            <span>
+              !
+            </span>
+
+            <h4>
+              Concerns
+            </h4>
           </div>
 
-          {rating.concerns.length > 0 ? (
+          {rating.concerns.length >
+          0 ? (
             <ul>
-              {rating.concerns.map((concern) => (
-                <li key={concern}>
-                  <span>!</span>
-                  <p>{concern}</p>
-                </li>
-              ))}
+              {rating.concerns.map(
+                (
+                  concern,
+                ) => (
+                  <li
+                    key={
+                      concern
+                    }
+                  >
+                    <span>
+                      !
+                    </span>
+
+                    <p>
+                      {
+                        concern
+                      }
+                    </p>
+                  </li>
+                ),
+              )}
             </ul>
           ) : (
             <p className="market-rating-empty">

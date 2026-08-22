@@ -37,15 +37,13 @@ type MarketSnapshotProps = {
 
   /*
    * Optional external/reference market price.
-   *
-   * Existing callers do not need to provide this.
    */
   referencePrice?: number | null;
 };
 
 
 function formatCurrency(
-  value: number | null
+  value: number | null,
 ) {
   if (value === null) {
     return "N/A";
@@ -57,7 +55,7 @@ function formatCurrency(
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 0,
-    }
+    },
   );
 }
 
@@ -72,15 +70,15 @@ export default function MarketSnapshot({
       .map(
         (sale) =>
           Number(
-            sale.sale_price
-          )
+            sale.sale_price,
+          ),
       )
       .filter(
         (price) =>
           Number.isFinite(
-            price
+            price,
           ) &&
-          price > 0
+          price > 0,
       );
 
 
@@ -89,15 +87,15 @@ export default function MarketSnapshot({
       .map(
         (listing) =>
           Number(
-            listing.listing_price
-          )
+            listing.listing_price,
+          ),
       )
       .filter(
         (price) =>
           Number.isFinite(
-            price
+            price,
           ) &&
-          price > 0
+          price > 0,
       );
 
 
@@ -112,10 +110,10 @@ export default function MarketSnapshot({
       ? salePrices.reduce(
           (
             total,
-            price
+            price,
           ) =>
             total + price,
-          0
+          0,
         ) /
         salePrices.length
       : null;
@@ -124,7 +122,7 @@ export default function MarketSnapshot({
   const lowestListing =
     listingPrices.length > 0
       ? Math.min(
-          ...listingPrices
+          ...listingPrices,
         )
       : null;
 
@@ -134,10 +132,10 @@ export default function MarketSnapshot({
       ? listingPrices.reduce(
           (
             total,
-            price
+            price,
           ) =>
             total + price,
-          0
+          0,
         ) /
         listingPrices.length
       : null;
@@ -150,6 +148,12 @@ export default function MarketSnapshot({
   const activeListingsCount =
     listingPrices.length;
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Fair Value
+  |--------------------------------------------------------------------------
+  */
 
   const fairValueResult =
     calculateFairValue({
@@ -164,6 +168,12 @@ export default function MarketSnapshot({
     fairValueResult.fairValue;
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | Market Health
+  |--------------------------------------------------------------------------
+  */
+
   const marketHealthResult =
     calculateMarketHealth({
       sales:
@@ -171,8 +181,21 @@ export default function MarketSnapshot({
 
       listings:
         listingPrices,
+
+      activeListingsCount,
     });
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Deal Score
+  |--------------------------------------------------------------------------
+  |
+  | MarketSnapshot is listing-oriented, so this
+  | evaluates the lowest visible listing against
+  | Fair Value.
+  |
+  */
 
   const dealScoreResult =
     fairMarketValue !== null &&
@@ -182,28 +205,21 @@ export default function MarketSnapshot({
 
           listingPrice:
             lowestListing,
-
-          recentSalesCount,
-
-          activeListingsCount,
         })
       : null;
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Investment Grade
+  |--------------------------------------------------------------------------
+  */
 
   const investmentGradeResult =
     dealScoreResult !== null
       ? calculateInvestmentGrade({
           marketHealthScore:
             marketHealthResult.score,
-
-          liquidityScore:
-            marketHealthResult.liquidityScore,
-
-          supplyBalanceScore:
-            marketHealthResult.supplyBalanceScore,
-
-          priceStabilityScore:
-            marketHealthResult.priceStabilityScore,
 
           dealScore:
             dealScoreResult.score,
@@ -231,6 +247,7 @@ export default function MarketSnapshot({
             </p>
           </div>
 
+
           <div className="snapshot-heading-stat">
             <strong>
               {recentSalesCount +
@@ -243,6 +260,7 @@ export default function MarketSnapshot({
           </div>
         </div>
 
+
         <div className="snapshot-grid">
           <div className="snapshot-card">
             <span>
@@ -251,10 +269,11 @@ export default function MarketSnapshot({
 
             <strong>
               {formatCurrency(
-                latestSale
+                latestSale,
               )}
             </strong>
           </div>
+
 
           <div className="snapshot-card">
             <span>
@@ -263,10 +282,11 @@ export default function MarketSnapshot({
 
             <strong>
               {formatCurrency(
-                averageSale
+                averageSale,
               )}
             </strong>
           </div>
+
 
           <div className="snapshot-card">
             <span>
@@ -275,10 +295,11 @@ export default function MarketSnapshot({
 
             <strong>
               {formatCurrency(
-                lowestListing
+                lowestListing,
               )}
             </strong>
           </div>
+
 
           <div className="snapshot-card">
             <span>
@@ -287,10 +308,11 @@ export default function MarketSnapshot({
 
             <strong>
               {formatCurrency(
-                averageListing
+                averageListing,
               )}
             </strong>
           </div>
+
 
           <div className="snapshot-card">
             <span>
@@ -301,6 +323,7 @@ export default function MarketSnapshot({
               {recentSalesCount}
             </strong>
           </div>
+
 
           <div className="snapshot-card">
             <span>
@@ -365,14 +388,6 @@ export default function MarketSnapshot({
 
           listingPrice={
             lowestListing
-          }
-
-          recentSalesCount={
-            salePrices.length
-          }
-
-          activeListingsCount={
-            listingPrices.length
           }
         />
       )}

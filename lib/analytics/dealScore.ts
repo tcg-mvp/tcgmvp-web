@@ -1,124 +1,211 @@
 export type DealScoreInput = {
+  /**
+   * TCGMVP estimated Fair Value.
+   */
   fairMarketValue: number;
+
+  /**
+   * Current market price being evaluated.
+   *
+   * On the product-level page, this should normally
+   * be the current TCGPlayer/TCGCSV market price.
+   *
+   * For a specific listing/deal evaluator, this can
+   * instead be that individual listing price.
+   */
   listingPrice: number;
-  recentSalesCount: number;
-  activeListingsCount: number;
 };
+
+export type DealScoreLabel =
+  | "Exceptional Deal"
+  | "Strong Deal"
+  | "Good Deal"
+  | "Slightly Below Market"
+  | "Fair Market Price"
+  | "Overpriced"
+  | "Poor Value";
 
 export type DealScoreResult = {
+  /**
+   * Opportunity score from 0–100.
+   *
+   * 50 represents approximately Fair Value.
+   * Higher = more attractive valuation.
+   * Lower = increasingly expensive versus Fair Value.
+   */
   score: number;
-  label: string;
+
+  label: DealScoreLabel;
+
+  /**
+   * Positive:
+   * current price is below Fair Value.
+   *
+   * Negative:
+   * current price is above Fair Value.
+   */
   discountPercent: number;
+
+  /**
+   * Retained as a named valuation component for
+   * compatibility/readability.
+   *
+   * Deal Score is intentionally valuation-only,
+   * therefore priceScore === score.
+   */
   priceScore: number;
-  confidenceScore: number;
-  liquidityScore: number;
-  confidenceLabel: "Low" | "Medium" | "High";
 };
 
-function clamp(value: number, minimum = 0, maximum = 100) {
-  return Math.min(maximum, Math.max(minimum, value));
+
+function clamp(
+  value: number,
+  minimum = 0,
+  maximum = 100,
+): number {
+  return Math.min(
+    maximum,
+    Math.max(
+      minimum,
+      value,
+    ),
+  );
 }
 
-function getConfidenceScore(salesCount: number) {
-  if (salesCount <= 0) return 0;
-  if (salesCount <= 2) return 25;
-  if (salesCount <= 5) return 50;
-  if (salesCount <= 10) return 75;
 
-  return 100;
+function roundPercent(
+  value: number,
+): number {
+  return (
+    Math.round(
+      value * 10,
+    ) / 10
+  );
 }
 
-function getConfidenceLabel(
-  salesCount: number,
-): "Low" | "Medium" | "High" {
-  if (salesCount >= 10) return "High";
-  if (salesCount >= 4) return "Medium";
 
-  return "Low";
-}
-
-function getLiquidityScore(
-  recentSalesCount: number,
-  activeListingsCount: number,
-) {
-  if (recentSalesCount <= 0) {
-    return 0;
+function getDealLabel(
+  score: number,
+): DealScoreLabel {
+  if (score >= 90) {
+    return "Exceptional Deal";
   }
 
-  const totalMarketActivity =
-    recentSalesCount + Math.max(activeListingsCount, 0);
-
-  if (totalMarketActivity === 0) {
-    return 0;
+  if (score >= 80) {
+    return "Strong Deal";
   }
 
-  const sellThroughRatio = recentSalesCount / totalMarketActivity;
+  if (score >= 70) {
+    return "Good Deal";
+  }
 
-  if (sellThroughRatio >= 0.75) return 100;
-  if (sellThroughRatio >= 0.5) return 85;
-  if (sellThroughRatio >= 0.25) return 65;
-  if (sellThroughRatio >= 0.1) return 40;
+  if (score >= 60) {
+    return "Slightly Below Market";
+  }
 
-  return 20;
-}
+  if (score >= 45) {
+    return "Fair Market Price";
+  }
 
-function getDealLabel(score: number) {
-  if (score >= 90) return "Exceptional Deal";
-  if (score >= 80) return "Strong Deal";
-  if (score >= 70) return "Good Deal";
-  if (score >= 60) return "Slightly Below Market";
-  if (score >= 45) return "Fair Market Price";
-  if (score >= 30) return "Overpriced";
+  if (score >= 30) {
+    return "Overpriced";
+  }
 
   return "Poor Value";
 }
 
+
 export function calculateDealScore({
   fairMarketValue,
   listingPrice,
-  recentSalesCount,
-  activeListingsCount,
 }: DealScoreInput): DealScoreResult | null {
+  /*
+   * Deal Score requires both a valid Fair Value
+   * and a valid price to evaluate.
+   */
   if (
-    !Number.isFinite(fairMarketValue) ||
-    !Number.isFinite(listingPrice) ||
+    !Number.isFinite(
+      fairMarketValue,
+    ) ||
+    !Number.isFinite(
+      listingPrice,
+    ) ||
     fairMarketValue <= 0 ||
     listingPrice <= 0
   ) {
     return null;
   }
 
-  const discountPercent =
-    ((fairMarketValue - listingPrice) / fairMarketValue) * 100;
 
   /*
-   * At market value = 50
-   * 5% below market = 65
-   * 10% below market = 80
-   * 15% below market = 95
+   * Valuation gap.
+   *
+   * Examples:
+   *
+   * Fair Value: $100
+   * Price:      $90
+   * Discount:   +10%
+   *
+   * Fair Value: $100
+   * Price:      $110
+   * Discount:   -10%
    */
-  const priceScore = clamp(50 + discountPercent * 3);
+  const discountPercent =
+    (
+      (
+        fairMarketValue -
+        listingPrice
+      ) /
+      fairMarketValue
+    ) *
+    100;
 
-  const confidenceScore = getConfidenceScore(recentSalesCount);
 
-  const liquidityScore = getLiquidityScore(
-    recentSalesCount,
-    activeListingsCount,
-  );
+  /*
+   * TCGMVP Deal Score v2
+   *
+   * Fair Value       = 50
+   * 5% below FV      = 65
+   * 10% below FV     = 80
+   * 15% below FV     = 95
+   *
+   * 5% above FV      = 35
+   * 10% above FV     = 20
+   * 15% above FV     = 5
+   *
+   * Scores are bounded between 0 and 100.
+   *
+   * Liquidity and confidence are intentionally
+   * excluded. Those are independent market
+   * characteristics handled by Market Health
+   * and Market Confidence.
+   */
+  const rawPriceScore =
+    50 +
+    discountPercent * 3;
 
-  const score = Math.round(
-    priceScore * 0.6 +
-      confidenceScore * 0.2 +
-      liquidityScore * 0.2,
-  );
+
+  const priceScore =
+    Math.round(
+      clamp(
+        rawPriceScore,
+      ),
+    );
+
 
   return {
-    score,
-    label: getDealLabel(score),
-    discountPercent,
-    priceScore: Math.round(priceScore),
-    confidenceScore,
-    liquidityScore,
-    confidenceLabel: getConfidenceLabel(recentSalesCount),
+    score:
+      priceScore,
+
+    label:
+      getDealLabel(
+        priceScore,
+      ),
+
+    discountPercent:
+      roundPercent(
+        discountPercent,
+      ),
+
+    priceScore,
   };
 }

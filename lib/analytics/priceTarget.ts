@@ -7,6 +7,7 @@ export type PriceTargetVerdict =
   | "Overpriced"
   | "Unrated";
 
+
 export type PriceTargetConfidence =
   | "High"
   | "Medium"
@@ -15,35 +16,43 @@ export type PriceTargetConfidence =
 
 
 export type PriceTargetInput = {
-  currentPrice: number | null;
+  /*
+   * Broader reference market price.
+   *
+   * Useful for context, historical comparisons,
+   * and market statistics.
+   *
+   * This is NOT assumed to be an actionable
+   * purchase price.
+   */
+  referencePrice: number | null;
+
+  /*
+   * Lowest eligible actionable active listing.
+   *
+   * Investor return, valuation gap, and margin
+   * of safety are measured from this price.
+   */
+  entryPrice: number | null;
 
   fairValue: number | null;
 
-  /**
+  /*
    * Expected range: 0–100.
-   * Higher means stronger positive trend.
+   *
+   * Higher means stronger positive
+   * price momentum.
    */
   trendScore: number;
 
-  /**
+  /*
    * Expected range: 0–100.
-   * Higher means greater risk.
+   *
+   * Higher means greater market risk.
    */
   riskScore: number;
 
-  /**
-   * Expected range: 0–100.
-   * Higher means healthier market structure.
-   */
-  marketHealthScore: number;
-
-  /**
-   * Expected range: 0–100.
-   * Higher means stronger investment quality.
-   */
-  investmentGradeScore: number;
-
-  /**
+  /*
    * Shared Market Confidence generated
    * by confidence.ts.
    */
@@ -55,7 +64,9 @@ export type PriceTargetInput = {
 
 
 export type PriceTargetResult = {
-  currentPrice: number | null;
+  referencePrice: number | null;
+
+  entryPrice: number | null;
 
   fairValue: number | null;
 
@@ -74,13 +85,12 @@ export type PriceTargetResult = {
     number | null;
 
   /*
-   * Retained for compatibility with the
-   * existing UI/type contract.
+   * Retained temporarily for compatibility
+   * with the existing UI.
    *
-   * Valuation is no longer applied as an
-   * additional target-price adjustment,
-   * because Fair Value is already the
-   * target model's starting point.
+   * Fair Value is already the valuation
+   * anchor, so valuation is not applied
+   * again as a target adjustment.
    */
   valuationAdjustmentPercent:
     number | null;
@@ -188,7 +198,8 @@ export function calculatePriceTarget(
   input: PriceTargetInput
 ): PriceTargetResult {
   const {
-    currentPrice,
+    referencePrice,
+    entryPrice,
     fairValue,
     marketConfidenceScore,
     marketConfidence,
@@ -209,16 +220,45 @@ export function calculatePriceTarget(
     marketConfidence;
 
 
+  /*
+   * A forward target requires:
+   *
+   * - a valid actionable entry price
+   * - a valid Fair Value anchor
+   *
+   * Reference price is contextual and is
+   * therefore not required for calculation.
+   */
   if (
-    currentPrice === null ||
+    entryPrice === null ||
     fairValue === null ||
-    currentPrice <= 0 ||
+    entryPrice <= 0 ||
     fairValue <= 0
   ) {
     return {
-      currentPrice,
+      referencePrice:
+        referencePrice !== null &&
+        referencePrice > 0
+          ? roundCurrency(
+              referencePrice
+            )
+          : null,
 
-      fairValue,
+      entryPrice:
+        entryPrice !== null &&
+        entryPrice > 0
+          ? roundCurrency(
+              entryPrice
+            )
+          : null,
+
+      fairValue:
+        fairValue !== null &&
+        fairValue > 0
+          ? roundCurrency(
+              fairValue
+            )
+          : null,
 
       targetPrice: null,
 
@@ -248,7 +288,7 @@ export function calculatePriceTarget(
       drivers: [],
 
       concerns: [
-        "A valid current price and fair value are required.",
+        "A valid actionable entry price and fair value are required.",
       ],
     };
   }
@@ -270,44 +310,26 @@ export function calculatePriceTarget(
     );
 
 
-  const marketHealthScore =
-    clamp(
-      input.marketHealthScore,
-      0,
-      100
-    );
-
-
-  const investmentGradeScore =
-    clamp(
-      input.investmentGradeScore,
-      0,
-      100
-    );
-
-
   /*
-   * Current valuation gap.
+   * Entry valuation.
    *
    * Positive:
-   * current price is below Fair Value.
+   * actionable entry price is below Fair Value.
    *
    * Negative:
-   * current price is above Fair Value.
+   * actionable entry price is above Fair Value.
    *
-   * This is used for entry-value analysis
-   * and verdict generation.
+   * This determines margin of safety and
+   * contributes to the verdict.
    *
-   * It does NOT directly increase or
-   * decrease the forward target, because
-   * Fair Value is already the target's
-   * starting valuation anchor.
+   * It does NOT modify the target because
+   * Fair Value is already the valuation anchor.
    */
   const valuationGapPercent =
     (
       (
         fairValue -
-        currentPrice
+        entryPrice
       ) /
       fairValue
     ) *
@@ -315,21 +337,40 @@ export function calculatePriceTarget(
 
 
   /*
-   * Forward target adjustments.
+   * --------------------------------------------------
+   * FORWARD PRICE MODEL
+   * --------------------------------------------------
    *
-   * Each factor is centered around 50.
+   * Fair Value is the starting point.
    *
-   * Trend:
-   * approximately ±10%
+   * Only genuinely forward-looking factors
+   * modify that valuation:
    *
-   * Market Health:
-   * approximately ±6%
+   * 1. Trend
+   * 2. Risk
    *
-   * Investment Grade:
-   * approximately ±6%
+   * Market Health is intentionally excluded
+   * because it describes current market
+   * structure rather than directional price.
    *
-   * Risk:
-   * approximately ±10%
+   * Investment Grade is intentionally excluded
+   * because it is derived from Market Health
+   * and Deal Score and would therefore
+   * double-count existing evidence.
+   *
+   * Reference Price is intentionally excluded
+   * from the target adjustment. It remains
+   * useful market context but is not treated
+   * as an executable investor entry.
+   */
+
+
+  /*
+   * Trend adjustment
+   *
+   * Score 50 = neutral
+   * Score 100 = +12%
+   * Score 0 = -12%
    */
   const trendAdjustment =
     (
@@ -339,31 +380,20 @@ export function calculatePriceTarget(
       ) /
       50
     ) *
-    0.10;
+    0.12;
 
 
-  const marketHealthAdjustment =
-    (
-      (
-        marketHealthScore -
-        50
-      ) /
-      50
-    ) *
-    0.06;
-
-
-  const investmentGradeAdjustment =
-    (
-      (
-        investmentGradeScore -
-        50
-      ) /
-      50
-    ) *
-    0.06;
-
-
+  /*
+   * Risk adjustment
+   *
+   * Score 50 = neutral
+   * Score 100 = -8%
+   * Score 0 = +8%
+   *
+   * Lower risk permits a moderately higher
+   * forward valuation while elevated risk
+   * reduces it.
+   */
   const riskAdjustment =
     -(
       (
@@ -372,25 +402,20 @@ export function calculatePriceTarget(
       ) /
       50
     ) *
-    0.10;
+    0.08;
 
 
-  /*
-   * Fair Value already captures present
-   * valuation, so the forward adjustment
-   * contains only forward-looking market,
-   * quality, and risk factors.
-   */
   const rawAdjustment =
     trendAdjustment +
-    marketHealthAdjustment +
-    investmentGradeAdjustment +
     riskAdjustment;
 
 
   /*
-   * Lower-confidence targets remain closer
-   * to present Fair Value.
+   * Confidence controls conviction.
+   *
+   * Lower-confidence forecasts remain closer
+   * to present Fair Value rather than making
+   * aggressive projections from weak evidence.
    */
   const confidenceMultiplier =
     confidence === "High"
@@ -399,7 +424,7 @@ export function calculatePriceTarget(
         ? 0.75
         : confidence === "Low"
           ? 0.45
-          : 0.20;
+          : 0;
 
 
   const adjustedTargetChange =
@@ -408,18 +433,16 @@ export function calculatePriceTarget(
 
 
   /*
-   * Safety bounds for the initial target
-   * model.
+   * Safety bounds.
    *
-   * These prevent individual analytics
-   * components from producing extreme
-   * forward valuations.
+   * The MVP target model should remain
+   * deliberately conservative.
    */
   const boundedTargetChange =
     clamp(
       adjustedTargetChange,
-      -0.18,
-      0.22
+      -0.15,
+      0.20
     );
 
 
@@ -433,19 +456,26 @@ export function calculatePriceTarget(
     );
 
 
+  /*
+   * Expected investor return from the
+   * actionable entry price to the target.
+   */
   const potentialUpsidePercent =
     roundPercent(
       (
         (
           targetPrice -
-          currentPrice
+          entryPrice
         ) /
-        currentPrice
+        entryPrice
       ) *
       100
     );
 
 
+  /*
+   * Current actionable margin of safety.
+   */
   const marginOfSafetyPercent =
     roundPercent(
       valuationGapPercent
@@ -453,9 +483,10 @@ export function calculatePriceTarget(
 
 
   /*
-   * Downside reference uses the more
-   * conservative of Fair Value and the
-   * forward target.
+   * Downside reference.
+   *
+   * Use whichever is more conservative:
+   * present Fair Value or forward target.
    */
   const downsideReference =
     Math.min(
@@ -470,10 +501,10 @@ export function calculatePriceTarget(
         0,
         (
           (
-            currentPrice -
+            entryPrice -
             downsideReference
           ) /
-          currentPrice
+          entryPrice
         ) *
         100
       )
@@ -488,11 +519,10 @@ export function calculatePriceTarget(
 
 
   /*
-   * No separate valuation adjustment is
-   * applied anymore.
+   * Deprecated analytical component.
    *
-   * Retained as zero so existing UI code
-   * does not break.
+   * Retained temporarily so the existing
+   * UI contract does not break.
    */
   const valuationAdjustmentPercent =
     0;
@@ -518,25 +548,25 @@ export function calculatePriceTarget(
     valuationGapPercent >= 10
   ) {
     drivers.push(
-      "The current price is meaningfully below estimated fair value."
+      "The best available entry price is meaningfully below estimated fair value."
     );
   } else if (
     valuationGapPercent >= 3
   ) {
     drivers.push(
-      "The current price is modestly below estimated fair value."
+      "The best available entry price is modestly below estimated fair value."
     );
   } else if (
     valuationGapPercent <= -10
   ) {
     concerns.push(
-      "The current price is meaningfully above estimated fair value."
+      "The best available entry price is meaningfully above estimated fair value."
     );
   } else if (
     valuationGapPercent <= -3
   ) {
     concerns.push(
-      "The current price is modestly above estimated fair value."
+      "The best available entry price is modestly above estimated fair value."
     );
   }
 
@@ -548,49 +578,13 @@ export function calculatePriceTarget(
     trendScore >= 65
   ) {
     drivers.push(
-      "Positive market trend supports a higher forward target."
+      "Positive price momentum supports a higher forward target."
     );
   } else if (
     trendScore <= 35
   ) {
     concerns.push(
-      "Weak market momentum limits the forward target."
-    );
-  }
-
-
-  /*
-   * Market health.
-   */
-  if (
-    marketHealthScore >= 65
-  ) {
-    drivers.push(
-      "Healthy liquidity and market structure support pricing."
-    );
-  } else if (
-    marketHealthScore <= 35
-  ) {
-    concerns.push(
-      "Weak market health reduces target reliability."
-    );
-  }
-
-
-  /*
-   * Investment quality.
-   */
-  if (
-    investmentGradeScore >= 65
-  ) {
-    drivers.push(
-      "Strong investment quality supports longer-term demand."
-    );
-  } else if (
-    investmentGradeScore <= 35
-  ) {
-    concerns.push(
-      "Low investment quality limits appreciation potential."
+      "Weak price momentum limits the forward target."
     );
   }
 
@@ -620,7 +614,7 @@ export function calculatePriceTarget(
     marginOfSafetyPercent >= 10
   ) {
     drivers.push(
-      "The current price provides a meaningful margin of safety."
+      "The actionable entry price provides a meaningful margin of safety."
     );
   }
 
@@ -636,6 +630,7 @@ export function calculatePriceTarget(
     );
   }
 
+
   if (
     confidence ===
     "Insufficient"
@@ -647,9 +642,17 @@ export function calculatePriceTarget(
 
 
   return {
-    currentPrice:
+    referencePrice:
+      referencePrice !== null &&
+      referencePrice > 0
+        ? roundCurrency(
+            referencePrice
+          )
+        : null,
+
+    entryPrice:
       roundCurrency(
-        currentPrice
+        entryPrice
       ),
 
     fairValue:

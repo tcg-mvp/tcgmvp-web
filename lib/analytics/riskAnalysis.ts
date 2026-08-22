@@ -6,6 +6,11 @@ import type {
   TrendAnalysisResult,
 } from "@/lib/analytics/trendAnalysis";
 
+import type {
+  ConfidenceResult,
+} from "@/lib/analytics/confidence";
+
+
 export type RiskLevel =
   | "Very Low"
   | "Low"
@@ -13,34 +18,74 @@ export type RiskLevel =
   | "High"
   | "Very High";
 
+
+export type RiskAnalysisInput = {
+  statistics: MarketStatisticsResult;
+
+  trendAnalysis: TrendAnalysisResult;
+
+  marketConfidence: ConfidenceResult;
+
+  /**
+   * TCGMVP estimated Fair Value.
+   */
+  fairValue: number | null;
+
+  /**
+   * Lowest actionable eligible active listing.
+   *
+   * This is used for valuation risk because it
+   * represents the price a buyer can actually
+   * enter the market at.
+   */
+  entryPrice: number | null;
+
+  activeListingsCount: number;
+};
+
+
 export type RiskAnalysisResult = {
   overallRisk: RiskLevel;
+
   riskScore: number;
 
   volatilityRisk: RiskLevel;
+
   liquidityRisk: RiskLevel;
+
   valuationRisk: RiskLevel;
+
   dataRisk: RiskLevel;
+
+  volatilityRiskScore: number;
+
+  liquidityRiskScore: number;
+
+  valuationRiskScore: number;
+
+  dataRiskScore: number;
 
   reasons: string[];
 };
 
 
 function clampScore(
-  score: number
+  score: number,
 ): number {
   return Math.min(
     100,
     Math.max(
       0,
-      Math.round(score)
-    )
+      Math.round(
+        score,
+      ),
+    ),
   );
 }
 
 
 function getRiskLevel(
-  score: number
+  score: number,
 ): RiskLevel {
   if (score <= 20) {
     return "Very Low";
@@ -62,43 +107,60 @@ function getRiskLevel(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Volatility Risk
+|--------------------------------------------------------------------------
+|
+| Uses historical/reference pricing.
+|
+| This remains separate from the actionable
+| entry price because volatility is a market
+| behavior question, not an entry valuation
+| question.
+|
+*/
+
 function calculateVolatilityRisk(
   change30d: number | null,
+
   currentPrice: number | null,
+
   high52Week: number | null,
-  low52Week: number | null
+
+  low52Week: number | null,
 ): {
   score: number;
+
   level: RiskLevel;
+
   reason: string;
 } {
   let score = 25;
 
   const reasons: string[] = [];
 
-  /*
-   * Large price movements in either direction increase
-   * short-term volatility risk.
-   */
+
   if (change30d === null) {
     score += 20;
 
     reasons.push(
-      "Insufficient 30-day price history increases uncertainty."
+      "Insufficient 30-day price history increases volatility uncertainty.",
     );
   } else {
     const absoluteChange =
       Math.abs(
-        change30d
+        change30d,
       );
+
 
     if (absoluteChange >= 20) {
       score += 45;
 
       reasons.push(
         `The price moved ${absoluteChange.toFixed(
-          1
-        )}% over 30 days, indicating very high short-term volatility.`
+          1,
+        )}% over 30 days, indicating very high short-term volatility.`,
       );
     } else if (
       absoluteChange >= 10
@@ -107,8 +169,8 @@ function calculateVolatilityRisk(
 
       reasons.push(
         `The price moved ${absoluteChange.toFixed(
-          1
-        )}% over 30 days, indicating elevated volatility.`
+          1,
+        )}% over 30 days, indicating elevated short-term volatility.`,
       );
     } else if (
       absoluteChange >= 5
@@ -117,8 +179,8 @@ function calculateVolatilityRisk(
 
       reasons.push(
         `The price moved ${absoluteChange.toFixed(
-          1
-        )}% over 30 days, indicating moderate volatility.`
+          1,
+        )}% over 30 days, indicating moderate short-term volatility.`,
       );
     } else if (
       absoluteChange >= 2
@@ -127,30 +189,28 @@ function calculateVolatilityRisk(
 
       reasons.push(
         `The price moved ${absoluteChange.toFixed(
-          1
-        )}% over 30 days, indicating relatively stable movement.`
+          1,
+        )}% over 30 days, indicating relatively stable short-term movement.`,
       );
     } else {
       score -= 10;
 
       reasons.push(
         `The price changed only ${absoluteChange.toFixed(
-          1
-        )}% over 30 days, indicating low short-term volatility.`
+          1,
+        )}% over 30 days, indicating low short-term volatility.`,
       );
     }
   }
 
-  /*
-   * A wide 52-week range suggests greater historical
-   * price instability.
-   */
+
   const hasValidRange =
     currentPrice !== null &&
     currentPrice > 0 &&
     high52Week !== null &&
     low52Week !== null &&
     high52Week > low52Week;
+
 
   if (hasValidRange) {
     const rangeWidth =
@@ -163,37 +223,28 @@ function calculateVolatilityRisk(
       ) *
       100;
 
+
     if (rangeWidth >= 50) {
       score += 25;
-
-      reasons.push(
-        "The 52-week trading range is wide relative to the current price."
-      );
     } else if (
       rangeWidth >= 30
     ) {
       score += 15;
-
-      reasons.push(
-        "The 52-week trading range indicates moderate historical volatility."
-      );
     } else if (
       rangeWidth >= 15
     ) {
       score += 5;
     } else {
       score -= 5;
-
-      reasons.push(
-        "The 52-week trading range has remained relatively narrow."
-      );
     }
   }
 
+
   const finalScore =
     clampScore(
-      score
+      score,
     );
+
 
   return {
     score:
@@ -201,90 +252,151 @@ function calculateVolatilityRisk(
 
     level:
       getRiskLevel(
-        finalScore
+        finalScore,
       ),
 
     reason:
       reasons[0] ??
-      "Available pricing data indicates moderate volatility.",
+      "Available pricing evidence indicates moderate volatility.",
   };
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Liquidity Risk
+|--------------------------------------------------------------------------
+*/
+
 function calculateLiquidityRisk(
-  salesTracked: number
+  salesTracked: number,
+
+  activeListingsCount: number,
 ): {
   score: number;
+
   level: RiskLevel;
+
   reason: string;
 } {
-  /*
-   * This remains a sales-based liquidity proxy.
-   * Market Health separately accounts for active
-   * supply through sales-to-listings balance.
-   */
-  let score = 50;
+  const safeSalesCount =
+    Math.max(
+      0,
+      salesTracked,
+    );
 
-  if (salesTracked >= 30) {
-    score -= 35;
+
+  const safeListingsCount =
+    Math.max(
+      0,
+      Math.floor(
+        activeListingsCount,
+      ),
+    );
+
+
+  let transactionScore: number;
+
+
+  if (safeSalesCount >= 30) {
+    transactionScore = 10;
   } else if (
-    salesTracked >= 20
+    safeSalesCount >= 20
   ) {
-    score -= 25;
+    transactionScore = 20;
   } else if (
-    salesTracked >= 10
+    safeSalesCount >= 10
   ) {
-    score -= 15;
+    transactionScore = 35;
   } else if (
-    salesTracked >= 5
+    safeSalesCount >= 5
   ) {
-    score -= 5;
+    transactionScore = 50;
   } else if (
-    salesTracked > 0
+    safeSalesCount >= 2
   ) {
-    score += 15;
+    transactionScore = 70;
+  } else if (
+    safeSalesCount === 1
+  ) {
+    transactionScore = 85;
   } else {
-    score += 35;
+    transactionScore = 100;
   }
+
+
+  let listingDepthScore: number;
+
+
+  if (safeListingsCount >= 30) {
+    listingDepthScore = 10;
+  } else if (
+    safeListingsCount >= 20
+  ) {
+    listingDepthScore = 20;
+  } else if (
+    safeListingsCount >= 10
+  ) {
+    listingDepthScore = 35;
+  } else if (
+    safeListingsCount >= 5
+  ) {
+    listingDepthScore = 50;
+  } else if (
+    safeListingsCount >= 2
+  ) {
+    listingDepthScore = 70;
+  } else if (
+    safeListingsCount === 1
+  ) {
+    listingDepthScore = 85;
+  } else {
+    listingDepthScore = 100;
+  }
+
 
   const finalScore =
     clampScore(
-      score
+      transactionScore *
+        0.75 +
+      listingDepthScore *
+        0.25,
     );
+
 
   let reason: string;
 
-  if (salesTracked >= 30) {
-    reason =
-      `${salesTracked} verified recent sales indicate deep transaction liquidity.`;
-  } else if (
-    salesTracked >= 20
+
+  if (
+    safeSalesCount >= 20 &&
+    safeListingsCount >= 10
   ) {
     reason =
-      `${salesTracked} verified recent sales indicate strong transaction liquidity.`;
+      `${safeSalesCount} verified recent sales and ${safeListingsCount} active listings indicate strong market liquidity.`;
   } else if (
-    salesTracked >= 10
+    safeSalesCount >= 10
   ) {
     reason =
-      `${salesTracked} verified recent sales indicate reasonable transaction liquidity.`;
+      `${safeSalesCount} verified recent sales provide meaningful transaction liquidity, with ${safeListingsCount} active listings currently observed.`;
   } else if (
-    salesTracked >= 5
+    safeSalesCount >= 5
   ) {
     reason =
-      `${salesTracked} verified recent sales provide limited but usable liquidity evidence.`;
+      `${safeSalesCount} verified recent sales provide usable but limited liquidity evidence.`;
   } else if (
-    salesTracked > 0
+    safeSalesCount > 0
   ) {
     reason =
-      `Only ${salesTracked} verified recent ${
-        salesTracked === 1
+      `Only ${safeSalesCount} verified recent ${
+        safeSalesCount === 1
           ? "sale is"
           : "sales are"
-      } available, increasing liquidity risk.`;
+      } available, increasing transaction-liquidity risk.`;
   } else {
     reason =
-      "No verified recent sales are available, creating significant liquidity uncertainty.";
+      "No verified recent sales are available, creating significant transaction-liquidity uncertainty.";
   }
+
 
   return {
     score:
@@ -292,7 +404,7 @@ function calculateLiquidityRisk(
 
     level:
       getRiskLevel(
-        finalScore
+        finalScore,
       ),
 
     reason,
@@ -300,147 +412,216 @@ function calculateLiquidityRisk(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Valuation Risk
+|--------------------------------------------------------------------------
+|
+| This uses ENTRY PRICE vs FAIR VALUE.
+|
+| It does not use the broader historical/reference
+| market price for the Fair Value comparison.
+|
+| Historical 52-week position still uses the
+| reference market price because that history
+| comes from the same pricing series.
+|
+*/
+
 function calculateValuationRisk(
-  currentPrice: number | null,
+  entryPrice: number | null,
+
+  fairValue: number | null,
+
+  referenceMarketPrice: number | null,
+
   high52Week: number | null,
-  low52Week: number | null
+
+  low52Week: number | null,
 ): {
   score: number;
+
   level: RiskLevel;
+
   reason: string;
 } {
-  let score = 45;
+  let fairValueRisk:
+    number | null =
+    null;
 
-  const hasValidRange =
-    currentPrice !== null &&
+
+  let valuationGapPercent:
+    number | null =
+    null;
+
+
+  const hasFairValueComparison =
+    entryPrice !== null &&
+    entryPrice > 0 &&
+    fairValue !== null &&
+    fairValue > 0;
+
+
+  if (hasFairValueComparison) {
+    valuationGapPercent =
+      (
+        (
+          entryPrice -
+          fairValue
+        ) /
+        fairValue
+      ) *
+      100;
+
+
+    if (valuationGapPercent >= 20) {
+      fairValueRisk = 95;
+    } else if (
+      valuationGapPercent >= 10
+    ) {
+      fairValueRisk = 80;
+    } else if (
+      valuationGapPercent >= 5
+    ) {
+      fairValueRisk = 65;
+    } else if (
+      valuationGapPercent > -5
+    ) {
+      fairValueRisk = 45;
+    } else if (
+      valuationGapPercent > -10
+    ) {
+      fairValueRisk = 35;
+    } else if (
+      valuationGapPercent > -20
+    ) {
+      fairValueRisk = 25;
+    } else {
+      fairValueRisk = 15;
+    }
+  }
+
+
+  let rangeRisk:
+    number | null =
+    null;
+
+
+  const hasValidHistoricalRange =
+    referenceMarketPrice !== null &&
+    referenceMarketPrice > 0 &&
     high52Week !== null &&
     low52Week !== null &&
     high52Week > low52Week;
 
-  if (!hasValidRange) {
-    const finalScore =
-      clampScore(
-        score + 15
+
+  if (hasValidHistoricalRange) {
+    const rangePosition =
+      (
+        referenceMarketPrice -
+        low52Week
+      ) /
+      (
+        high52Week -
+        low52Week
       );
 
-    return {
-      score:
-        finalScore,
 
-      level:
-        getRiskLevel(
-          finalScore
-        ),
-
-      reason:
-        "Insufficient range data makes the current valuation more difficult to assess.",
-    };
+    if (rangePosition >= 0.9) {
+      rangeRisk = 75;
+    } else if (
+      rangePosition >= 0.7
+    ) {
+      rangeRisk = 60;
+    } else if (
+      rangePosition >= 0.35
+    ) {
+      rangeRisk = 45;
+    } else if (
+      rangePosition >= 0.1
+    ) {
+      rangeRisk = 30;
+    } else {
+      rangeRisk = 20;
+    }
   }
 
-  const rangePosition =
-    (
-      currentPrice -
-      low52Week
-    ) /
-    (
-      high52Week -
-      low52Week
-    );
 
-  if (rangePosition >= 0.9) {
-    score += 25;
+  let score: number;
 
-    const finalScore =
-      clampScore(
-        score
-      );
 
-    return {
-      score:
-        finalScore,
-
-      level:
-        getRiskLevel(
-          finalScore
-        ),
-
-      reason:
-        "The product is trading near its 52-week high, increasing price-entry risk.",
-    };
+  if (
+    fairValueRisk !== null &&
+    rangeRisk !== null
+  ) {
+    score =
+      fairValueRisk *
+        0.75 +
+      rangeRisk *
+        0.25;
+  } else if (
+    fairValueRisk !== null
+  ) {
+    score =
+      fairValueRisk;
+  } else if (
+    rangeRisk !== null
+  ) {
+    score =
+      rangeRisk;
+  } else {
+    score =
+      65;
   }
 
-  if (rangePosition >= 0.7) {
-    score += 12;
-
-    const finalScore =
-      clampScore(
-        score
-      );
-
-    return {
-      score:
-        finalScore,
-
-      level:
-        getRiskLevel(
-          finalScore
-        ),
-
-      reason:
-        "The product is trading in the upper portion of its 52-week range.",
-    };
-  }
-
-  if (rangePosition >= 0.35) {
-    score -= 5;
-
-    const finalScore =
-      clampScore(
-        score
-      );
-
-    return {
-      score:
-        finalScore,
-
-      level:
-        getRiskLevel(
-          finalScore
-        ),
-
-      reason:
-        "The product is trading near the middle of its 52-week range.",
-    };
-  }
-
-  if (rangePosition >= 0.1) {
-    score -= 15;
-
-    const finalScore =
-      clampScore(
-        score
-      );
-
-    return {
-      score:
-        finalScore,
-
-      level:
-        getRiskLevel(
-          finalScore
-        ),
-
-      reason:
-        "The product is trading in the lower portion of its 52-week range.",
-    };
-  }
-
-  score -= 20;
 
   const finalScore =
     clampScore(
-      score
+      score,
     );
+
+
+  let reason: string;
+
+
+  if (
+    valuationGapPercent !== null
+  ) {
+    if (
+      valuationGapPercent >= 10
+    ) {
+      reason =
+        `The best available entry price is ${valuationGapPercent.toFixed(
+          1,
+        )}% above estimated Fair Value, increasing valuation risk.`;
+    } else if (
+      valuationGapPercent >= 5
+    ) {
+      reason =
+        "The best available entry price is modestly above estimated Fair Value.";
+    } else if (
+      valuationGapPercent > -5
+    ) {
+      reason =
+        "The best available entry price is trading close to estimated Fair Value.";
+    } else {
+      reason =
+        `The best available entry price is ${Math.abs(
+          valuationGapPercent,
+        ).toFixed(
+          1,
+        )}% below estimated Fair Value, reducing price-entry risk.`;
+    }
+  } else if (
+    rangeRisk !== null
+  ) {
+    reason =
+      "An actionable entry price is unavailable, so valuation risk is based on the product's position within its 52-week reference-price range.";
+  } else {
+    reason =
+      "Available evidence is insufficient to make a dependable valuation-risk assessment.";
+  }
+
 
   return {
     score:
@@ -448,50 +629,64 @@ function calculateValuationRisk(
 
     level:
       getRiskLevel(
-        finalScore
+        finalScore,
       ),
 
-    reason:
-      "The product is trading near its 52-week low, reducing price-entry risk.",
+    reason,
   };
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Data Risk
+|--------------------------------------------------------------------------
+*/
+
 function calculateDataRisk(
-  confidence:
-    MarketStatisticsResult[
-      "confidence"
-    ],
-  salesTracked: number
+  marketConfidence:
+    ConfidenceResult,
 ): {
   score: number;
+
   level: RiskLevel;
+
   reason: string;
 } {
-  let score: number;
+  const finalScore =
+    clampScore(
+      100 -
+      marketConfidence.score,
+    );
 
-  switch (confidence) {
+
+  let reason: string;
+
+
+  switch (
+    marketConfidence.confidence
+  ) {
     case "High":
-      score = 15;
+      reason =
+        `High-quality market evidence (${marketConfidence.score}/95 confidence) keeps data risk low.`;
       break;
 
     case "Medium":
-      score = 35;
+      reason =
+        `Market evidence is moderately reliable (${marketConfidence.score}/95 confidence), leaving some data uncertainty.`;
       break;
 
     case "Low":
-      score = 65;
+      reason =
+        `Market evidence confidence is low (${marketConfidence.score}/95), increasing data risk.`;
       break;
 
     case "Insufficient":
-      score = 90;
+      reason =
+        "Available market evidence is insufficient for a dependable assessment.";
       break;
   }
 
-  const finalScore =
-    clampScore(
-      score
-    );
 
   return {
     score:
@@ -499,122 +694,130 @@ function calculateDataRisk(
 
     level:
       getRiskLevel(
-        finalScore
+        finalScore,
       ),
 
-    reason:
-      confidence === "High"
-        ? `High-confidence market statistics are supported by ${salesTracked} verified recent sales and sufficient price history.`
-        : confidence === "Medium"
-          ? "Available market statistics provide moderate confidence in the analysis."
-          : confidence === "Low"
-            ? `Only ${salesTracked} verified recent ${
-                salesTracked === 1
-                  ? "sale is"
-                  : "sales are"
-              } available, increasing data risk.`
-            : "The available market statistics are insufficient for a dependable assessment.",
+    reason,
   };
 }
 
 
-export function calculateRiskAnalysis(
-  statistics:
-    MarketStatisticsResult,
+export function calculateRiskAnalysis({
+  statistics,
 
-  trendAnalysis:
-    TrendAnalysisResult
-): RiskAnalysisResult {
+  trendAnalysis,
+
+  marketConfidence,
+
+  fairValue,
+
+  entryPrice,
+
+  activeListingsCount,
+}: RiskAnalysisInput): RiskAnalysisResult {
   const {
     currentPrice,
+
     change30d,
+
     high52Week,
+
     low52Week,
+
     salesTracked,
-    confidence,
   } = statistics;
 
 
   const volatility =
     calculateVolatilityRisk(
       change30d,
+
       currentPrice,
+
       high52Week,
-      low52Week
+
+      low52Week,
     );
 
 
   const liquidity =
     calculateLiquidityRisk(
-      salesTracked
+      salesTracked,
+
+      activeListingsCount,
     );
 
 
   const valuation =
     calculateValuationRisk(
+      entryPrice,
+
+      fairValue,
+
       currentPrice,
+
       high52Week,
-      low52Week
+
+      low52Week,
     );
 
 
   const data =
     calculateDataRisk(
-      confidence,
-      salesTracked
+      marketConfidence,
     );
 
 
   /*
-   * Weighted overall risk:
+   * Weighted overall risk
    *
-   * Volatility: 30%
-   * Liquidity: 25%
-   * Valuation: 25%
+   * Volatility:   30%
+   * Liquidity:    25%
+   * Valuation:    25%
    * Data quality: 20%
    */
+
   let weightedRisk =
-    volatility.score * 0.3 +
-    liquidity.score * 0.25 +
-    valuation.score * 0.25 +
-    data.score * 0.2;
+    volatility.score *
+      0.30 +
+    liquidity.score *
+      0.25 +
+    valuation.score *
+      0.25 +
+    data.score *
+      0.20;
 
 
   /*
-   * A strongly negative trend adds a small risk premium.
-   * A positive trend does not automatically reduce risk.
+   * Negative directional momentum creates
+   * additional downside risk.
    */
+
   if (
     trendAnalysis.trend ===
     "Very Bearish"
   ) {
-    weightedRisk += 10;
+    weightedRisk +=
+      10;
   } else if (
     trendAnalysis.trend ===
     "Bearish"
   ) {
-    weightedRisk += 5;
+    weightedRisk +=
+      5;
   }
 
 
   const riskScore =
     clampScore(
-      weightedRisk
+      weightedRisk,
     );
-
-
-  const reasons = [
-    volatility.reason,
-    liquidity.reason,
-    valuation.reason,
-    data.reason,
-  ];
 
 
   return {
     overallRisk:
       getRiskLevel(
-        riskScore
+        riskScore,
       ),
 
     riskScore,
@@ -631,6 +834,26 @@ export function calculateRiskAnalysis(
     dataRisk:
       data.level,
 
-    reasons,
+    volatilityRiskScore:
+      volatility.score,
+
+    liquidityRiskScore:
+      liquidity.score,
+
+    valuationRiskScore:
+      valuation.score,
+
+    dataRiskScore:
+      data.score,
+
+    reasons: [
+      volatility.reason,
+
+      liquidity.reason,
+
+      valuation.reason,
+
+      data.reason,
+    ],
   };
 }

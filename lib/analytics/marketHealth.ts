@@ -1,15 +1,25 @@
 export type MarketHealthInput = {
+  /**
+   * Verified realized sale prices.
+   */
   sales: number[];
 
-  /*
-   * Listing prices are optional supporting evidence.
-   * The canonical active-listing count can be supplied
-   * separately from the eBay daily snapshot.
+  /**
+   * Valid active listing prices.
+   *
+   * These remain available as supporting evidence
+   * and as a fallback for listing depth when the
+   * canonical snapshot count is unavailable.
    */
   listings: number[];
 
+  /**
+   * Canonical active-listing count from the latest
+   * trusted eBay marketplace snapshot.
+   */
   activeListingsCount?: number;
 };
+
 
 export type MarketHealthLabel =
   | "Strong"
@@ -17,21 +27,38 @@ export type MarketHealthLabel =
   | "Mixed"
   | "Weak";
 
+
 export type MarketHealthResult = {
+  /**
+   * Overall market-structure score from 0–100.
+   */
   score: number;
 
   label: MarketHealthLabel;
 
+  /**
+   * Transaction depth.
+   */
   liquidityScore: number;
 
+  /**
+   * Demand/supply absorption.
+   */
   supplyBalanceScore: number;
 
+  /**
+   * Consistency of realized sale prices.
+   */
   priceStabilityScore: number;
 
   salesCount: number;
 
   activeListingsCount: number;
 
+  /**
+   * Coefficient of variation for verified
+   * realized sale prices.
+   */
   priceVariationPercent: number | null;
 };
 
@@ -39,50 +66,103 @@ export type MarketHealthResult = {
 function clamp(
   value: number,
   minimum = 0,
-  maximum = 100
-) {
+  maximum = 100,
+): number {
   return Math.min(
-    Math.max(value, minimum),
-    maximum
+    Math.max(
+      value,
+      minimum,
+    ),
+    maximum,
   );
 }
 
 
 function calculateAverage(
-  values: number[]
-) {
+  values: number[],
+): number | null {
   if (values.length === 0) {
     return null;
   }
 
   return (
     values.reduce(
-      (total, value) =>
+      (
+        total,
+        value,
+      ) =>
         total + value,
-      0
-    ) / values.length
+      0,
+    ) /
+    values.length
   );
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Liquidity
+|--------------------------------------------------------------------------
+|
+| Answers:
+|
+| "How deep is recent transaction activity?"
+|
+| This deliberately uses verified completed sales,
+| not asking-price inventory.
+|
+| Active supply is evaluated separately through
+| Supply Balance.
+|
+*/
+
 function calculateLiquidityScore(
-  salesCount: number
-) {
-  if (salesCount >= 20) return 100;
-  if (salesCount >= 15) return 85;
-  if (salesCount >= 10) return 70;
-  if (salesCount >= 5) return 50;
-  if (salesCount >= 3) return 30;
-  if (salesCount >= 1) return 15;
+  salesCount: number,
+): number {
+  if (salesCount >= 20) {
+    return 100;
+  }
+
+  if (salesCount >= 15) {
+    return 85;
+  }
+
+  if (salesCount >= 10) {
+    return 70;
+  }
+
+  if (salesCount >= 5) {
+    return 50;
+  }
+
+  if (salesCount >= 3) {
+    return 30;
+  }
+
+  if (salesCount >= 1) {
+    return 15;
+  }
 
   return 0;
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Supply Balance
+|--------------------------------------------------------------------------
+|
+| Answers:
+|
+| "How effectively is available supply being
+| absorbed by recent transaction demand?"
+|
+*/
+
 function calculateSupplyBalanceScore(
   salesCount: number,
-  activeListingsCount: number
-) {
+  activeListingsCount: number,
+): number {
   if (
     salesCount === 0 &&
     activeListingsCount === 0
@@ -90,24 +170,34 @@ function calculateSupplyBalanceScore(
     return 0;
   }
 
+
+  /*
+   * Completed sales with no active observed supply
+   * imply constrained current availability.
+   *
+   * Confidence separately determines how much
+   * trust should be placed in that observation.
+   */
   if (activeListingsCount === 0) {
     return salesCount > 0
       ? 80
       : 0;
   }
 
+
   /*
-   * Without trusted sold evidence, we know supply
-   * exists but cannot reliably judge demand/supply
-   * balance yet.
+   * Supply exists but no trusted recent demand
+   * evidence is available.
    */
   if (salesCount === 0) {
     return 15;
   }
 
+
   const salesToListingsRatio =
     salesCount /
     activeListingsCount;
+
 
   if (salesToListingsRatio >= 2) {
     return 100;
@@ -133,8 +223,24 @@ function calculateSupplyBalanceScore(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Price Stability
+|--------------------------------------------------------------------------
+|
+| Answers:
+|
+| "How consistently is this product actually
+| transacting?"
+|
+| Uses coefficient of variation:
+|
+| standard deviation / average sale price.
+|
+*/
+
 function calculatePriceStability(
-  sales: number[]
+  sales: number[],
 ): {
   score: number;
   variationPercent: number | null;
@@ -146,14 +252,17 @@ function calculatePriceStability(
           ? 40
           : 0,
 
-      variationPercent: null,
+      variationPercent:
+        null,
     };
   }
 
+
   const average =
     calculateAverage(
-      sales
+      sales,
     );
+
 
   if (
     average === null ||
@@ -165,46 +274,62 @@ function calculatePriceStability(
     };
   }
 
+
   const variance =
     sales.reduce(
-      (total, price) => {
-        return (
-          total +
-          Math.pow(
-            price - average,
-            2
-          )
-        );
-      },
-      0
-    ) / sales.length;
+      (
+        total,
+        price,
+      ) =>
+        total +
+        Math.pow(
+          price - average,
+          2,
+        ),
+      0,
+    ) /
+    sales.length;
+
 
   const standardDeviation =
     Math.sqrt(
-      variance
+      variance,
     );
+
 
   const variationPercent =
     (
       standardDeviation /
       average
-    ) * 100;
+    ) *
+    100;
+
 
   let score: number;
 
+
   if (variationPercent <= 2.5) {
     score = 100;
-  } else if (variationPercent <= 5) {
+  } else if (
+    variationPercent <= 5
+  ) {
     score = 85;
-  } else if (variationPercent <= 8) {
+  } else if (
+    variationPercent <= 8
+  ) {
     score = 70;
-  } else if (variationPercent <= 12) {
+  } else if (
+    variationPercent <= 12
+  ) {
     score = 50;
-  } else if (variationPercent <= 18) {
+  } else if (
+    variationPercent <= 18
+  ) {
     score = 30;
   } else {
     score = 15;
   }
+
 
   return {
     score,
@@ -214,7 +339,7 @@ function calculatePriceStability(
 
 
 function getMarketHealthLabel(
-  score: number
+  score: number,
 ): MarketHealthLabel {
   if (score >= 85) {
     return "Strong";
@@ -240,70 +365,90 @@ export function calculateMarketHealth({
   const validSales =
     sales.filter(
       (price) =>
-        Number.isFinite(price) &&
-        price > 0
+        Number.isFinite(
+          price,
+        ) &&
+        price > 0,
     );
+
 
   const validListings =
     listings.filter(
       (price) =>
-        Number.isFinite(price) &&
-        price > 0
+        Number.isFinite(
+          price,
+        ) &&
+        price > 0,
     );
+
 
   const salesCount =
     validSales.length;
 
+
   /*
-   * Prefer the canonical eBay snapshot count when
-   * available. The page may only display 10 listings,
-   * while the actual active market may contain more.
+   * Prefer the canonical latest marketplace
+   * snapshot rather than the number of listings
+   * rendered in the UI.
    */
   const resolvedActiveListingsCount =
     activeListingsCount !== undefined &&
     Number.isFinite(
-      activeListingsCount
+      activeListingsCount,
     ) &&
     activeListingsCount >= 0
       ? Math.floor(
-          activeListingsCount
+          activeListingsCount,
         )
       : validListings.length;
 
+
   const liquidityScore =
     calculateLiquidityScore(
-      salesCount
+      salesCount,
     );
+
 
   const supplyBalanceScore =
     calculateSupplyBalanceScore(
       salesCount,
-      resolvedActiveListingsCount
+      resolvedActiveListingsCount,
     );
+
 
   const priceStability =
     calculatePriceStability(
-      validSales
+      validSales,
     );
+
+
+  /*
+   * TCGMVP Market Health
+   *
+   * Transaction Liquidity: 40%
+   * Supply Balance:         30%
+   * Price Stability:        30%
+   */
+  const rawScore =
+    liquidityScore * 0.40 +
+    supplyBalanceScore * 0.30 +
+    priceStability.score * 0.30;
+
 
   const score =
     Math.round(
-      liquidityScore * 0.4 +
-      supplyBalanceScore * 0.3 +
-      priceStability.score * 0.3
+      clamp(
+        rawScore,
+      ),
     );
 
-  const finalScore =
-    clamp(
-      score
-    );
 
   return {
-    score: finalScore,
+    score,
 
     label:
       getMarketHealthLabel(
-        finalScore
+        score,
       ),
 
     liquidityScore,
