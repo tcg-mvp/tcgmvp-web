@@ -72,13 +72,18 @@ def _get_reference_price(
 def collect_soldcomps_sales(
     *,
     count_per_product: int = 50,
+    product_id: int | None = None,
 ) -> dict:
     """
-    Collect SoldComps eBay sold evidence for all
+    Collect SoldComps eBay sold evidence for
     configured TCGMVP products.
+
+    If product_id is provided, only that product
+    is collected.
 
     Flow:
         canonical TCGMVP products
+        -> optional product filter
         -> current reference price
         -> SoldComps search
         -> product / price validation
@@ -89,6 +94,28 @@ def collect_soldcomps_sales(
     """
     products = get_ebay_import_products()
 
+    # Optional targeted collection.
+    # This lets us seed or refresh one product
+    # without spending SoldComps requests on
+    # every configured product.
+    if product_id is not None:
+        products = [
+            product
+            for product in products
+            if int(
+                product[
+                    "tcgmvp_product_id"
+                ]
+            )
+            == product_id
+        ]
+
+        if not products:
+            raise LookupError(
+                "No active configured product "
+                f"found for product_id={product_id}."
+            )
+
     summary = {
         "products_attempted": 0,
         "products_successful": 0,
@@ -98,8 +125,10 @@ def collect_soldcomps_sales(
     }
 
     for product in products:
-        product_id = int(
-            product["tcgmvp_product_id"]
+        current_product_id = int(
+            product[
+                "tcgmvp_product_id"
+            ]
         )
 
         product_name = product["name"]
@@ -115,7 +144,7 @@ def collect_soldcomps_sales(
         )
         print(
             f"Product ID: "
-            f"{product_id}"
+            f"{current_product_id}"
         )
         print(
             f"Query: "
@@ -125,7 +154,9 @@ def collect_soldcomps_sales(
         try:
             reference_price = (
                 _get_reference_price(
-                    product_id=product_id,
+                    product_id=(
+                        current_product_id
+                    ),
                 )
             )
 
@@ -157,7 +188,9 @@ def collect_soldcomps_sales(
 
             processed = (
                 upsert_soldcomps_sales(
-                    product_id=product_id,
+                    product_id=(
+                        current_product_id
+                    ),
                     sales=sales,
                 )
             )
@@ -178,7 +211,7 @@ def collect_soldcomps_sales(
             summary["results"].append(
                 {
                     "product_id": (
-                        product_id
+                        current_product_id
                     ),
                     "name": (
                         product_name
@@ -205,7 +238,7 @@ def collect_soldcomps_sales(
             summary["results"].append(
                 {
                     "product_id": (
-                        product_id
+                        current_product_id
                     ),
                     "name": (
                         product_name

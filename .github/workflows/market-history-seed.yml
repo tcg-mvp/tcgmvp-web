@@ -1,0 +1,28 @@
+name: TCGMVP Historical Market Seed
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed-history:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Seed missing TCGCSV history
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+        run: |
+          python -m scripts.marketplace.seed_missing_history

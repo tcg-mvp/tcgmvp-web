@@ -1,17 +1,40 @@
 from __future__ import annotations
 
+import argparse
+
 from scripts.marketplace.soldcomps.collector import (
     collect_soldcomps_sales,
 )
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Collect SoldComps sales "
+            "for TCGMVP products."
+        )
+    )
+
+    parser.add_argument(
+        "--product-id",
+        type=int,
+        default=None,
+        help=(
+            "Optional TCGMVP product ID. "
+            "When provided, only that "
+            "product is collected."
+        ),
+    )
+
+    args = parser.parse_args()
+
     print(
         "Starting SoldComps sales collection...\n"
     )
 
     summary = collect_soldcomps_sales(
         count_per_product=50,
+        product_id=args.product_id,
     )
 
     print("=" * 70)

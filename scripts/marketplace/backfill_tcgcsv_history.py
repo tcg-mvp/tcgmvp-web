@@ -29,10 +29,17 @@ def date_is_complete(
     supabase = get_supabase_client()
 
     response = (
-        supabase.table("daily_market_metrics")
+        supabase
+        .table("daily_market_metrics")
         .select("product_id")
-        .eq("marketplace_id", TCGPLAYER_MARKETPLACE_ID)
-        .eq("metric_date", metric_date.isoformat())
+        .eq(
+            "marketplace_id",
+            TCGPLAYER_MARKETPLACE_ID,
+        )
+        .eq(
+            "metric_date",
+            metric_date.isoformat(),
+        )
         .execute()
     )
 
@@ -48,21 +55,72 @@ def date_is_complete(
     )
 
 
+def _filter_products(
+    *,
+    products: list[dict],
+    product_id: int | None,
+) -> list[dict]:
+    if product_id is None:
+        return products
+
+    filtered = [
+        product
+        for product in products
+        if int(
+            product["tcgmvp_product_id"]
+        )
+        == product_id
+    ]
+
+    if not filtered:
+        raise LookupError(
+            "No active historical-import product "
+            f"found for product_id={product_id}."
+        )
+
+    return filtered
+
+
 def backfill_history(
     *,
     start_date: date,
     end_date: date,
-) -> None:
-    products = get_historical_import_products()
+    product_id: int | None = None,
+) -> dict:
+    products = (
+        get_historical_import_products()
+    )
+
+    products = _filter_products(
+        products=products,
+        product_id=product_id,
+    )
 
     product_ids = [
-        int(product["tcgmvp_product_id"])
+        int(
+            product[
+                "tcgmvp_product_id"
+            ]
+        )
         for product in products
     ]
 
     print("")
-    print(f"Products found: {len(products)}")
-    print(f"Backfill range: {start_date} → {end_date}")
+    print(
+        f"Products found: "
+        f"{len(products)}"
+    )
+
+    if product_id is not None:
+        print(
+            f"Product filter: "
+            f"{product_id}"
+        )
+
+    print(
+        f"Backfill range: "
+        f"{start_date} → {end_date}"
+    )
     print("")
 
     current_date = start_date
@@ -74,7 +132,10 @@ def backfill_history(
 
     while current_date <= end_date:
         print("=" * 50)
-        print(f"Processing archive date: {current_date}")
+        print(
+            f"Processing archive date: "
+            f"{current_date}"
+        )
         print("=" * 50)
 
         if date_is_complete(
@@ -88,47 +149,69 @@ def backfill_history(
             print("")
 
             skipped_days += 1
-            current_date += timedelta(days=1)
+            current_date += timedelta(
+                days=1
+            )
             continue
 
         try:
-            observations = fetch_daily_product_prices(
-                archive_date=current_date,
-                products=products,
+            observations = (
+                fetch_daily_product_prices(
+                    archive_date=current_date,
+                    products=products,
+                )
             )
 
             print("")
             print(
-                f"Observations found: {len(observations)}"
+                "Observations found: "
+                f"{len(observations)}"
             )
 
             for observation in observations:
-                market_price = observation["market_price"]
+                market_price = (
+                    observation[
+                        "market_price"
+                    ]
+                )
 
                 if market_price is None:
                     print(
-                        f"Skipping product "
+                        "Skipping product "
                         f"{observation['tcgmvp_product_id']}: "
-                        f"market price missing."
+                        "market price missing."
                     )
                     continue
 
-                saved = save_historical_market_price(
-                    product_id=int(
-                        observation["tcgmvp_product_id"]
-                    ),
-                    marketplace_id=TCGPLAYER_MARKETPLACE_ID,
-                    metric_date=observation["archive_date"],
-                    market_price=Decimal(
-                        str(market_price)
-                    ),
+                saved = (
+                    save_historical_market_price(
+                        product_id=int(
+                            observation[
+                                "tcgmvp_product_id"
+                            ]
+                        ),
+                        marketplace_id=(
+                            TCGPLAYER_MARKETPLACE_ID
+                        ),
+                        metric_date=(
+                            observation[
+                                "archive_date"
+                            ]
+                        ),
+                        market_price=Decimal(
+                            str(
+                                market_price
+                            )
+                        ),
+                    )
                 )
 
                 print(
-                    f"  Product "
+                    "  Product "
                     f"{observation['tcgmvp_product_id']} "
                     f"→ ${market_price} "
-                    f"→ metric ID {saved['id']}"
+                    f"→ metric ID "
+                    f"{saved['id']}"
                 )
 
                 saved_metrics += 1
@@ -138,52 +221,95 @@ def backfill_history(
         except Exception as exc:
             print("")
             print(
-                f"FAILED archive date "
-                f"{current_date}: {exc}"
+                "FAILED archive date "
+                f"{current_date}: "
+                f"{exc}"
             )
 
             failed_days += 1
 
         print("")
 
-        current_date += timedelta(days=1)
+        current_date += timedelta(
+            days=1
+        )
 
     print("=" * 50)
     print("Backfill complete.")
-    print(f"Successful archive days: {successful_days}")
-    print(f"Skipped complete days: {skipped_days}")
-    print(f"Failed archive days: {failed_days}")
-    print(f"Metrics saved: {saved_metrics}")
+    print(
+        "Successful archive days: "
+        f"{successful_days}"
+    )
+    print(
+        "Skipped complete days: "
+        f"{skipped_days}"
+    )
+    print(
+        "Failed archive days: "
+        f"{failed_days}"
+    )
+    print(
+        "Metrics saved: "
+        f"{saved_metrics}"
+    )
     print("=" * 50)
+
+    return {
+        "products_found": len(products),
+        "successful_days": successful_days,
+        "skipped_days": skipped_days,
+        "failed_days": failed_days,
+        "saved_metrics": saved_metrics,
+    }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Backfill historical TCGCSV market prices."
+        description=(
+            "Backfill historical TCGCSV "
+            "market prices."
+        )
     )
 
     parser.add_argument(
         "start_date",
         type=date.fromisoformat,
-        help="Start date in YYYY-MM-DD format.",
+        help=(
+            "Start date in YYYY-MM-DD format."
+        ),
     )
 
     parser.add_argument(
         "end_date",
         type=date.fromisoformat,
-        help="End date in YYYY-MM-DD format.",
+        help=(
+            "End date in YYYY-MM-DD format."
+        ),
+    )
+
+    parser.add_argument(
+        "--product-id",
+        type=int,
+        default=None,
+        help=(
+            "Optional TCGMVP product ID. "
+            "When provided, only that product "
+            "is backfilled."
+        ),
     )
 
     args = parser.parse_args()
 
     if args.end_date < args.start_date:
         parser.error(
-            "end_date must be on or after start_date."
+            "end_date must be on or after "
+            "start_date."
         )
 
     backfill_history(
         start_date=args.start_date,
         end_date=args.end_date,
+        product_id=args.product_id,
     )
 
 

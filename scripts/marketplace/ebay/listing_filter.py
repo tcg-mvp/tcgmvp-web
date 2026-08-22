@@ -19,6 +19,10 @@ EXCLUDED_TITLE_PHRASES = (
     "proxy",
     "replica",
     "custom",
+    "half booster box",
+    "half booster",
+    "18 pack",
+    "18 packs",
 
     # Non-standard / wrong sealed-product formats.
     "mini pack",

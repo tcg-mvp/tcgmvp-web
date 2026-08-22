@@ -2,10 +2,114 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 
 from scripts.marketplace.supabase_client import (
     get_supabase_client,
 )
+
+
+EBAY_MARKETPLACE_ID = 1
+
+
+def _today() -> str:
+    return (
+        datetime.now(UTC)
+        .date()
+        .isoformat()
+    )
+
+
+def _serialize_decimal(
+    value: Decimal | None,
+) -> str | None:
+    if value is None:
+        return None
+
+    return str(value)
+
+
+def _save_partial_daily_metric(
+    *,
+    product_id: int,
+    marketplace_id: int,
+    metric_date: str,
+    fields: dict[str, Any],
+) -> dict:
+    """
+    Update only the supplied fields when today's
+    daily metric already exists.
+
+    If no row exists yet, create it.
+
+    This prevents one metric writer from nulling
+    fields written by another metric writer.
+    """
+    supabase = get_supabase_client()
+
+    existing_response = (
+        supabase
+        .table("daily_market_metrics")
+        .select("id")
+        .eq("product_id", product_id)
+        .eq(
+            "marketplace_id",
+            marketplace_id,
+        )
+        .eq(
+            "metric_date",
+            metric_date,
+        )
+        .limit(1)
+        .execute()
+    )
+
+    existing_rows = (
+        existing_response.data
+        or []
+    )
+
+    if existing_rows:
+        row_id = int(
+            existing_rows[0]["id"]
+        )
+
+        response = (
+            supabase
+            .table("daily_market_metrics")
+            .update(fields)
+            .eq("id", row_id)
+            .execute()
+        )
+
+    else:
+        record = {
+            "product_id":
+                product_id,
+
+            "marketplace_id":
+                marketplace_id,
+
+            "metric_date":
+                metric_date,
+
+            **fields,
+        }
+
+        response = (
+            supabase
+            .table("daily_market_metrics")
+            .insert(record)
+            .execute()
+        )
+
+    if not response.data:
+        raise RuntimeError(
+            "Supabase did not return the "
+            "saved daily market metric."
+        )
+
+    return response.data[0]
 
 
 def save_market_price(
@@ -14,46 +118,19 @@ def save_market_price(
     marketplace_id: int,
     market_price: Decimal,
 ) -> dict:
-    supabase = get_supabase_client()
-
-    metric_date = (
-        datetime.now(UTC)
-        .date()
-        .isoformat()
+    """
+    Save today's current market price without
+    overwriting other fields on the same daily row.
+    """
+    return _save_partial_daily_metric(
+        product_id=product_id,
+        marketplace_id=marketplace_id,
+        metric_date=_today(),
+        fields={
+            "market_price":
+                str(market_price),
+        },
     )
-
-    record = {
-        "product_id": product_id,
-        "marketplace_id": marketplace_id,
-        "metric_date": metric_date,
-        "market_price": str(
-            market_price
-        ),
-        "sales_count": 0,
-        "sales_volume": 0,
-    }
-
-    response = (
-        supabase
-        .table("daily_market_metrics")
-        .upsert(
-            record,
-            on_conflict=(
-                "product_id,"
-                "marketplace_id,"
-                "metric_date"
-            ),
-        )
-        .execute()
-    )
-
-    if not response.data:
-        raise RuntimeError(
-            "Supabase did not return the saved "
-            "market metric."
-        )
-
-    return response.data[0]
 
 
 def save_historical_market_price(
@@ -63,40 +140,19 @@ def save_historical_market_price(
     metric_date: str,
     market_price: Decimal,
 ) -> dict:
-    supabase = get_supabase_client()
-
-    record = {
-        "product_id": product_id,
-        "marketplace_id": marketplace_id,
-        "metric_date": metric_date,
-        "market_price": str(
-            market_price
-        ),
-        "sales_count": 0,
-        "sales_volume": 0,
-    }
-
-    response = (
-        supabase
-        .table("daily_market_metrics")
-        .upsert(
-            record,
-            on_conflict=(
-                "product_id,"
-                "marketplace_id,"
-                "metric_date"
-            ),
-        )
-        .execute()
+    """
+    Save one historical market-price observation
+    without overwriting unrelated daily metrics.
+    """
+    return _save_partial_daily_metric(
+        product_id=product_id,
+        marketplace_id=marketplace_id,
+        metric_date=metric_date,
+        fields={
+            "market_price":
+                str(market_price),
+        },
     )
-
-    if not response.data:
-        raise RuntimeError(
-            "Supabase did not return the saved "
-            "historical market metric."
-        )
-
-    return response.data[0]
 
 
 def save_ebay_listing_metrics(
@@ -116,104 +172,68 @@ def save_ebay_listing_metrics(
     highest_delivered_price: Decimal | None,
 ) -> dict:
     """
-    Save active eBay listing statistics into today's
-    eBay daily_market_metrics row.
+    Save active eBay listing statistics into
+    today's eBay daily metric.
 
-    This updates only active-listing fields and leaves
-    sold-market fields untouched.
+    Only active-listing fields are updated.
+    Existing sold-market fields are preserved.
     """
-    supabase = get_supabase_client()
+    return _save_partial_daily_metric(
+        product_id=product_id,
+        marketplace_id=(
+            EBAY_MARKETPLACE_ID
+        ),
+        metric_date=_today(),
+        fields={
+            "active_listing_count":
+                active_listing_count,
 
-    metric_date = (
-        datetime.now(UTC)
-        .date()
-        .isoformat()
+            "lowest_listing_price":
+                _serialize_decimal(
+                    lowest_listing_price
+                ),
+
+            "unique_seller_count":
+                unique_seller_count,
+
+            "known_shipping_count":
+                known_shipping_count,
+
+            "unknown_shipping_count":
+                unknown_shipping_count,
+
+            "best_offer_count":
+                best_offer_count,
+
+            "median_listing_price":
+                _serialize_decimal(
+                    median_listing_price
+                ),
+
+            "highest_listing_price":
+                _serialize_decimal(
+                    highest_listing_price
+                ),
+
+            "delivered_price_sample_size":
+                delivered_price_sample_size,
+
+            "lowest_delivered_price":
+                _serialize_decimal(
+                    lowest_delivered_price
+                ),
+
+            "median_delivered_price":
+                _serialize_decimal(
+                    median_delivered_price
+                ),
+
+            "highest_delivered_price":
+                _serialize_decimal(
+                    highest_delivered_price
+                ),
+        },
     )
-
-    def serialize_decimal(
-        value: Decimal | None,
-    ) -> str | None:
-        if value is None:
-            return None
-
-        return str(value)
-
-    record = {
-        "product_id": product_id,
-        "marketplace_id": 1,
-        "metric_date": metric_date,
-
-        "active_listing_count": (
-            active_listing_count
-        ),
-        "lowest_listing_price": (
-            serialize_decimal(
-                lowest_listing_price
-            )
-        ),
-        "unique_seller_count": (
-            unique_seller_count
-        ),
-        "known_shipping_count": (
-            known_shipping_count
-        ),
-        "unknown_shipping_count": (
-            unknown_shipping_count
-        ),
-        "best_offer_count": (
-            best_offer_count
-        ),
-        "median_listing_price": (
-            serialize_decimal(
-                median_listing_price
-            )
-        ),
-        "highest_listing_price": (
-            serialize_decimal(
-                highest_listing_price
-            )
-        ),
-        "delivered_price_sample_size": (
-            delivered_price_sample_size
-        ),
-        "lowest_delivered_price": (
-            serialize_decimal(
-                lowest_delivered_price
-            )
-        ),
-        "median_delivered_price": (
-            serialize_decimal(
-                median_delivered_price
-            )
-        ),
-        "highest_delivered_price": (
-            serialize_decimal(
-                highest_delivered_price
-            )
-        ),
-    }
-
-    response = (
-        supabase
-        .table("daily_market_metrics")
-        .upsert(
-            record,
-            on_conflict=(
-                "product_id,"
-                "marketplace_id,"
-                "metric_date"
-            ),
-        )
-        .execute()
-    )
-
-    if not response.data:
-        raise RuntimeError(
-            "Supabase did not return the saved "
-            "eBay listing metric."
-        )
-
-    return response.data[0]
 
 
 def save_ebay_sold_metrics(
@@ -228,74 +248,42 @@ def save_ebay_sold_metrics(
 ) -> dict:
     """
     Save rolling verified eBay sold statistics into
-    today's eBay daily_market_metrics row.
+    today's eBay daily metric.
 
-    This updates only sold-market fields and leaves
-    active-listing fields untouched.
+    Only sold-market fields are updated.
+    Existing active-listing fields are preserved.
     """
-    supabase = get_supabase_client()
+    return _save_partial_daily_metric(
+        product_id=product_id,
+        marketplace_id=(
+            EBAY_MARKETPLACE_ID
+        ),
+        metric_date=_today(),
+        fields={
+            "average_sale_price":
+                _serialize_decimal(
+                    average_sale_price
+                ),
 
-    metric_date = (
-        datetime.now(UTC)
-        .date()
-        .isoformat()
+            "median_sale_price":
+                _serialize_decimal(
+                    median_sale_price
+                ),
+
+            "low_sale_price":
+                _serialize_decimal(
+                    low_sale_price
+                ),
+
+            "high_sale_price":
+                _serialize_decimal(
+                    high_sale_price
+                ),
+
+            "sales_count":
+                sales_count,
+
+            "sales_volume":
+                sales_volume,
+        },
     )
-
-    def serialize_decimal(
-        value: Decimal | None,
-    ) -> str | None:
-        if value is None:
-            return None
-
-        return str(value)
-
-    record = {
-        "product_id": product_id,
-        "marketplace_id": 1,
-        "metric_date": metric_date,
-
-        "average_sale_price": (
-            serialize_decimal(
-                average_sale_price
-            )
-        ),
-        "median_sale_price": (
-            serialize_decimal(
-                median_sale_price
-            )
-        ),
-        "low_sale_price": (
-            serialize_decimal(
-                low_sale_price
-            )
-        ),
-        "high_sale_price": (
-            serialize_decimal(
-                high_sale_price
-            )
-        ),
-        "sales_count": sales_count,
-        "sales_volume": sales_volume,
-    }
-
-    response = (
-        supabase
-        .table("daily_market_metrics")
-        .upsert(
-            record,
-            on_conflict=(
-                "product_id,"
-                "marketplace_id,"
-                "metric_date"
-            ),
-        )
-        .execute()
-    )
-
-    if not response.data:
-        raise RuntimeError(
-            "Supabase did not return the saved "
-            "eBay sold metric."
-        )
-
-    return response.data[0]
