@@ -55,6 +55,11 @@ def prepare_soldcomps_sale_row(
         sale.get("price_is_exact")
     )
 
+    currency = (
+        sale.get("currency")
+        or ""
+    ).upper()
+
     normalized_title = (
         sale.get("title") or ""
     ).lower()
@@ -80,11 +85,25 @@ def prepare_soldcomps_sale_row(
         for phrase in condition_warning_phrases
     )
 
+    # A sale is considered verified only when:
+    #
+    # - the sold price is exact
+    # - the currency is USD
+    # - the title does not imply multiple boxes
+    # - the title does not contain material
+    #   condition warnings
+    #
+    # Non-USD sales are still stored as raw
+    # evidence, but they do not influence
+    # verified sold statistics or Fair Value.
+    
     is_verified = (
         exact_price
+        and currency == "USD"
         and not ambiguous_quantity
         and not has_condition_warning
     )
+
     row = {
         "product_id": product_id,
         "marketplace": "ebay",
@@ -93,7 +112,7 @@ def prepare_soldcomps_sale_row(
         "sale_price": sale["sale_price"],
         "shipping_price": sale["shipping_price"],
         "total_price": sale["total_price"],
-        "currency": sale["currency"],
+        "currency": currency,
         "sale_type": sale["sale_type"],
         "sold_at": _normalize_sold_at(
             sale["sold_at"]

@@ -26,7 +26,13 @@ RETRYABLE_STATUS_CODES = {
     503,
     504,
 }
-
+class SoldCompsQuotaExhaustedError(
+    RuntimeError
+):
+    """
+    Raised when the SoldComps account has
+    exhausted its monthly/API usage quota.
+    """
 
 def get_soldcomps_api_key() -> str:
     api_key = os.getenv(
@@ -178,7 +184,7 @@ def search_sold_listings(
                 response
             )
         ):
-            raise RuntimeError(
+            raise SoldCompsQuotaExhaustedError(
                 "SoldComps monthly/API quota "
                 "appears to be exhausted.\n"
                 f"Status: "

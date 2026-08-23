@@ -117,6 +117,7 @@ def fetch_sold_booster_box_sales(
     query: str,
     product_keywords: tuple[str, ...],
     reference_price: Decimal,
+    sold_after: str | None = None,
     count: int = 50,
     page: int = 1,
 ) -> list[dict[str, Any]]:
@@ -125,9 +126,12 @@ def fetch_sold_booster_box_sales(
     completed eBay sales.
 
     Collection strategy:
-    - Search a rolling 30-day period.
+    - sold_after may be supplied by the collector
+      for incremental retrieval.
+    - If sold_after is omitted, fall back to a
+      rolling 30-day window.
     - Request up to 200 raw results per page.
-    - Fetch up to 5 pages.
+    - Fetch up to 5 pages when needed.
     - Deduplicate by eBay item ID.
     - Apply TCGMVP booster-box matching rules.
     - Reject bundles with other sealed products.
@@ -136,8 +140,7 @@ def fetch_sold_booster_box_sales(
     - Preserve unknown shipping as None.
 
     count and page remain in the signature for
-    compatibility with existing test/collector calls.
-    Multi-page retrieval is controlled internally.
+    compatibility with existing calls.
     """
     del count
     del page
@@ -147,10 +150,11 @@ def fetch_sold_booster_box_sales(
             "reference_price must be greater than 0."
         )
 
-    sold_after = (
-        datetime.now(UTC)
-        - timedelta(days=30)
-    ).date().isoformat()
+    if sold_after is None:
+        sold_after = (
+            datetime.now(UTC)
+            - timedelta(days=30)
+        ).date().isoformat()
 
     payload = search_all_sold_listings(
         keyword=query,
