@@ -1,20 +1,27 @@
 export type DealScoreInput = {
   /**
    * TCGMVP estimated Fair Value.
+   *
+   * Null means there is not enough realized-sale
+   * evidence to produce a transaction-supported
+   * valuation.
    */
-  fairMarketValue: number;
+  fairMarketValue:
+    number | null;
 
   /**
-   * Current market price being evaluated.
+   * Current actionable price being evaluated.
    *
    * On the product-level page, this should normally
-   * be the current TCGPlayer/TCGCSV market price.
+   * be the best available actionable entry price.
    *
    * For a specific listing/deal evaluator, this can
    * instead be that individual listing price.
    */
-  listingPrice: number;
+  listingPrice:
+    number | null;
 };
+
 
 export type DealScoreLabel =
   | "Exceptional Deal"
@@ -24,6 +31,7 @@ export type DealScoreLabel =
   | "Fair Market Price"
   | "Overpriced"
   | "Poor Value";
+
 
 export type DealScoreResult = {
   /**
@@ -47,9 +55,6 @@ export type DealScoreResult = {
   discountPercent: number;
 
   /**
-   * Retained as a named valuation component for
-   * compatibility/readability.
-   *
    * Deal Score is intentionally valuation-only,
    * therefore priceScore === score.
    */
@@ -119,10 +124,18 @@ export function calculateDealScore({
   listingPrice,
 }: DealScoreInput): DealScoreResult | null {
   /*
-   * Deal Score requires both a valid Fair Value
-   * and a valid price to evaluate.
+   * Deal Score requires both:
+   *
+   * - a transaction-supported TCGMVP Fair Value
+   * - a valid actionable entry price
+   *
+   * If either is unavailable, returning null is
+   * more accurate than manufacturing a valuation
+   * score from incomplete evidence.
    */
   if (
+    fairMarketValue === null ||
+    listingPrice === null ||
     !Number.isFinite(
       fairMarketValue,
     ) ||
@@ -174,10 +187,8 @@ export function calculateDealScore({
    *
    * Scores are bounded between 0 and 100.
    *
-   * Liquidity and confidence are intentionally
-   * excluded. Those are independent market
-   * characteristics handled by Market Health
-   * and Market Confidence.
+   * Liquidity and confidence remain intentionally
+   * separate market characteristics.
    */
   const rawPriceScore =
     50 +

@@ -902,11 +902,6 @@ export default async function ProductDetailPage({
       : null;
 
 
-  const dealScoreValue =
-    dealScore?.score ??
-    50;
-
-
   /*
   |--------------------------------------------------------------------------
   | INVESTMENT GRADE
@@ -914,13 +909,18 @@ export default async function ProductDetailPage({
   */
 
   const investmentGrade =
-    calculateInvestmentGrade({
-      marketHealthScore:
-        marketHealth.score,
+    marketHealth.score !==
+      null &&
+    dealScore !==
+      null
+      ? calculateInvestmentGrade({
+          marketHealthScore:
+            marketHealth.score,
 
-      dealScore:
-        dealScoreValue,
-    });
+          dealScore:
+            dealScore.score,
+        })
+      : null;
 
 
   /*
@@ -1068,6 +1068,16 @@ export default async function ProductDetailPage({
   |--------------------------------------------------------------------------
   */
 
+  /*
+   * calculateInvestmentOutlook already returns an
+   * unrated / unknown result when transaction-supported
+   * Fair Value is unavailable.
+   *
+   * marketHealth.score is also unavailable in that
+   * same zero-sale state, so the numeric fallback below
+   * is only a type-safe placeholder for the calculator
+   * input and is not presented as observed Market Health.
+   */
   const investmentOutlook =
     calculateInvestmentOutlook({
       referencePrice:
@@ -1089,7 +1099,8 @@ export default async function ProductDetailPage({
         riskAnalysis.riskScore,
 
       marketHealthScore:
-        marketHealth.score,
+        marketHealth.score ??
+        0,
 
       expectedReturnPercent:
         priceTarget
@@ -1261,24 +1272,27 @@ export default async function ProductDetailPage({
             }
           : null,
 
-      investmentGrade: {
-        score:
-          investmentGrade.score,
+      investmentGrade:
+        investmentGrade
+          ? {
+              score:
+                investmentGrade.score,
 
-        grade:
-          investmentGrade.grade,
+              grade:
+                investmentGrade.grade,
 
-        label:
-          investmentGrade.label,
+              label:
+                investmentGrade.label,
 
-        marketQualityScore:
-          investmentGrade
-            .marketQualityScore,
+              marketQualityScore:
+                investmentGrade
+                  .marketQualityScore,
 
-        opportunityScore:
-          investmentGrade
-            .opportunityScore,
-      },
+              opportunityScore:
+                investmentGrade
+                  .opportunityScore,
+            }
+          : null,
 
       confidence: {
         score:

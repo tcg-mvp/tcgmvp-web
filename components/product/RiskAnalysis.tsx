@@ -3,11 +3,15 @@ import type {
   RiskLevel,
 } from "@/lib/analytics/riskAnalysis";
 
+
 type RiskAnalysisProps = {
   analysis: RiskAnalysisResult;
 };
 
-function getRiskClassName(risk: RiskLevel): string {
+
+function getRiskClassName(
+  risk: RiskLevel,
+): string {
   switch (risk) {
     case "Very Low":
     case "Low":
@@ -22,7 +26,10 @@ function getRiskClassName(risk: RiskLevel): string {
   }
 }
 
-function getRiskSymbol(risk: RiskLevel): string {
+
+function getRiskSymbol(
+  risk: RiskLevel,
+): string {
   switch (risk) {
     case "Very Low":
       return "✓";
@@ -41,18 +48,43 @@ function getRiskSymbol(risk: RiskLevel): string {
   }
 }
 
+
 type RiskMetricProps = {
   label: string;
-  value: RiskLevel;
+  value: RiskLevel | null;
   description: string;
 };
+
 
 function RiskMetric({
   label,
   value,
   description,
 }: RiskMetricProps) {
-  const riskClassName = getRiskClassName(value);
+  if (value === null) {
+    return (
+      <article className="risk-analysis-metric-card">
+        <span className="risk-analysis-card-label">
+          {label}
+        </span>
+
+        <strong>
+          N/A
+        </strong>
+
+        <p>
+          {description}
+        </p>
+      </article>
+    );
+  }
+
+
+  const riskClassName =
+    getRiskClassName(
+      value,
+    );
+
 
   return (
     <article className="risk-analysis-metric-card">
@@ -64,10 +96,13 @@ function RiskMetric({
         {value}
       </strong>
 
-      <p>{description}</p>
+      <p>
+        {description}
+      </p>
     </article>
   );
 }
+
 
 export default function RiskAnalysis({
   analysis,
@@ -82,8 +117,12 @@ export default function RiskAnalysis({
     reasons,
   } = analysis;
 
+
   const overallRiskClassName =
-    getRiskClassName(overallRisk);
+    getRiskClassName(
+      overallRisk,
+    );
+
 
   return (
     <section className="risk-analysis">
@@ -103,13 +142,18 @@ export default function RiskAnalysis({
           </p>
         </div>
 
+
         <div
           className={`risk-analysis-status ${overallRiskClassName}`}
         >
           <span
             className={`risk-analysis-symbol ${overallRiskClassName}`}
           >
-            <span>{getRiskSymbol(overallRisk)}</span>
+            <span>
+              {getRiskSymbol(
+                overallRisk,
+              )}
+            </span>
           </span>
 
           <div className="risk-analysis-status-content">
@@ -117,7 +161,9 @@ export default function RiskAnalysis({
               Overall Risk
             </span>
 
-            <strong>{overallRisk}</strong>
+            <strong>
+              {overallRisk}
+            </strong>
 
             <span className="risk-analysis-status-score">
               Risk Score: {riskScore}/100
@@ -125,6 +171,7 @@ export default function RiskAnalysis({
           </div>
         </div>
       </div>
+
 
       <div className="risk-analysis-grid">
         <article className="risk-analysis-score-card">
@@ -142,7 +189,9 @@ export default function RiskAnalysis({
 
             <strong className="risk-analysis-score">
               {riskScore}
-              <span>/100</span>
+              <span>
+                /100
+              </span>
             </strong>
           </div>
 
@@ -156,46 +205,92 @@ export default function RiskAnalysis({
           >
             <div
               className={`risk-analysis-progress-fill ${overallRiskClassName}`}
-              style={{ width: `${riskScore}%` }}
+              style={{
+                width:
+                  `${riskScore}%`,
+              }}
             />
           </div>
         </article>
 
+
         <RiskMetric
           label="Volatility Risk"
-          value={volatilityRisk}
+          value={
+            volatilityRisk
+          }
           description="Measures recent price movement and the width of the yearly trading range."
         />
 
+
         <RiskMetric
           label="Liquidity Risk"
-          value={liquidityRisk}
-          description="Reflects whether enough recent sales exist to support market demand."
+          value={
+            liquidityRisk
+          }
+          description={
+            liquidityRisk === null
+              ? (
+                  "Unavailable because verified recent sales are not yet available."
+                )
+              : (
+                  "Reflects whether enough recent sales exist to support market demand."
+                )
+          }
         />
+
 
         <RiskMetric
           label="Valuation Risk"
-          value={valuationRisk}
-          description="Measures how elevated the current price is within its 52-week range."
+          value={
+            valuationRisk
+          }
+          description={
+            valuationRisk === null
+              ? (
+                  "Unavailable because dependable valuation evidence is not yet available."
+                )
+              : (
+                  "Measures how elevated the current price is relative to available valuation evidence."
+                )
+          }
         />
+
 
         <RiskMetric
           label="Data Risk"
-          value={dataRisk}
+          value={
+            dataRisk
+          }
           description="Reflects the amount and quality of data supporting the assessment."
         />
       </div>
 
+
       <div className="risk-analysis-reasons">
-        <h3>What is driving this risk assessment?</h3>
+        <h3>
+          What is driving this risk assessment?
+        </h3>
 
         <ul>
-          {reasons.map((reason, index) => (
-            <li key={`${reason}-${index}`}>
-              <span aria-hidden="true">•</span>
-              <p>{reason}</p>
-            </li>
-          ))}
+          {reasons.map(
+            (
+              reason,
+              index,
+            ) => (
+              <li
+                key={`${reason}-${index}`}
+              >
+                <span aria-hidden="true">
+                  •
+                </span>
+
+                <p>
+                  {reason}
+                </p>
+              </li>
+            ),
+          )}
         </ul>
       </div>
     </section>

@@ -7,6 +7,9 @@ export type FairValueInput = {
   /**
    * External/current reference price,
    * currently derived from TCGPlayer/TCGCSV.
+   *
+   * This is supporting valuation evidence,
+   * not TCGMVP Fair Value by itself.
    */
   referencePrice: number | null;
 };
@@ -105,7 +108,7 @@ export function calculateFairValue({
 }: FairValueInput): FairValueResult {
   /*
    * Only valid positive verified sale prices
-   * may influence Fair Value.
+   * may influence TCGMVP Fair Value.
    */
   const validSales =
     sales.filter(
@@ -168,19 +171,15 @@ export function calculateFairValue({
 
 
   /*
-  |--------------------------------------------------------------------------
-  | Strong realized-sale evidence
-  |--------------------------------------------------------------------------
-  |
-  | Five or more verified transactions provide
-  | enough realized-market evidence for the median
-  | sale price to stand on its own.
-  |
-  | Median is intentionally preferred over average
-  | because it is more resistant to unusual sales.
-  |
-  */
-
+   * Strong realized-sale evidence.
+   *
+   * Five or more verified transactions provide
+   * enough realized-market evidence for the
+   * median sale price to stand on its own.
+   *
+   * Median is preferred over average because
+   * it is resistant to unusual transactions.
+   */
   if (
     salesCount >= 5 &&
     medianSale !== null
@@ -194,16 +193,12 @@ export function calculateFairValue({
 
 
   /*
-  |--------------------------------------------------------------------------
-  | Moderate realized-sale evidence
-  |--------------------------------------------------------------------------
-  |
-  | With 2–4 verified sales, realized evidence
-  | remains dominant while the external reference
-  | price provides stabilization.
-  |
-  */
-
+   * Moderate realized-sale evidence.
+   *
+   * With 2–4 verified sales, realized evidence
+   * remains dominant while the external reference
+   * price provides stabilization.
+   */
   else if (
     salesCount >= 2 &&
     medianSale !== null &&
@@ -219,15 +214,12 @@ export function calculateFairValue({
 
 
   /*
-  |--------------------------------------------------------------------------
-  | Limited realized-sale evidence
-  |--------------------------------------------------------------------------
-  |
-  | A single transaction is useful evidence but
-  | should not outweigh a broader reference source.
-  |
-  */
-
+   * Limited realized-sale evidence.
+   *
+   * One verified transaction provides useful
+   * evidence, but the broader reference source
+   * remains the dominant stabilizing input.
+   */
   else if (
     salesCount === 1 &&
     medianSale !== null &&
@@ -243,33 +235,13 @@ export function calculateFairValue({
 
 
   /*
-  |--------------------------------------------------------------------------
-  | Reference-only valuation
-  |--------------------------------------------------------------------------
-  */
-
-  else if (
-    validReferencePrice !== null
-  ) {
-    fairValue =
-      validReferencePrice;
-
-    methodology =
-      "reference_only";
-  }
-
-
-  /*
-  |--------------------------------------------------------------------------
-  | Sold evidence without a reference price
-  |--------------------------------------------------------------------------
-  |
-  | If reference pricing is unavailable, verified
-  | realized-market evidence may still provide a
-  | usable valuation estimate.
-  |
-  */
-
+   * Realized-sale evidence without a reference
+   * market price.
+   *
+   * Verified transactions may still provide a
+   * usable estimate even when TCGPlayer/TCGCSV
+   * reference pricing is unavailable.
+   */
   else if (
     medianSale !== null
   ) {
@@ -280,6 +252,25 @@ export function calculateFairValue({
       salesCount >= 5
         ? "sold_median"
         : "blended_low";
+  }
+
+
+  /*
+   * No verified realized-sale evidence.
+   *
+   * A TCGPlayer/TCGCSV price remains useful as
+   * an external reference market price, but it
+   * must not be presented as TCGMVP Fair Value.
+   *
+   * Fair Value therefore remains unavailable
+   * until at least one verified transaction exists.
+   */
+  else {
+    fairValue =
+      null;
+
+    methodology =
+      "insufficient";
   }
 
 

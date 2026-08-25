@@ -215,16 +215,17 @@ export default function MarketSnapshot({
   |--------------------------------------------------------------------------
   */
 
-  const investmentGradeResult =
-    dealScoreResult !== null
-      ? calculateInvestmentGrade({
-          marketHealthScore:
-            marketHealthResult.score,
+const investmentGradeResult =
+  dealScoreResult !== null &&
+  marketHealthResult.score !== null
+    ? calculateInvestmentGrade({
+        marketHealthScore:
+          marketHealthResult.score,
 
-          dealScore:
-            dealScoreResult.score,
-        })
-      : null;
+        dealScore:
+          dealScoreResult.score,
+      })
+    : null;
 
 
   return (

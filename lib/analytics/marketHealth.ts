@@ -25,31 +25,42 @@ export type MarketHealthLabel =
   | "Strong"
   | "Healthy"
   | "Mixed"
-  | "Weak";
+  | "Weak"
+  | "Unavailable";
 
 
 export type MarketHealthResult = {
   /**
    * Overall market-structure score from 0–100.
+   *
+   * Null means there is not enough verified
+   * transaction evidence to calculate Market Health.
    */
-  score: number;
+  score: number | null;
 
   label: MarketHealthLabel;
 
   /**
    * Transaction depth.
+   *
+   * Null when no verified transaction evidence exists.
    */
-  liquidityScore: number;
+  liquidityScore: number | null;
 
   /**
    * Demand/supply absorption.
+   *
+   * Requires realized demand evidence, so this is
+   * null when there are no verified sales.
    */
-  supplyBalanceScore: number;
+  supplyBalanceScore: number | null;
 
   /**
    * Consistency of realized sale prices.
+   *
+   * Null when no verified transaction evidence exists.
    */
-  priceStabilityScore: number;
+  priceStabilityScore: number | null;
 
   salesCount: number;
 
@@ -99,23 +110,6 @@ function calculateAverage(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Liquidity
-|--------------------------------------------------------------------------
-|
-| Answers:
-|
-| "How deep is recent transaction activity?"
-|
-| This deliberately uses verified completed sales,
-| not asking-price inventory.
-|
-| Active supply is evaluated separately through
-| Supply Balance.
-|
-*/
-
 function calculateLiquidityScore(
   salesCount: number,
 ): number {
@@ -139,58 +133,16 @@ function calculateLiquidityScore(
     return 30;
   }
 
-  if (salesCount >= 1) {
-    return 15;
-  }
-
-  return 0;
+  return 15;
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| Supply Balance
-|--------------------------------------------------------------------------
-|
-| Answers:
-|
-| "How effectively is available supply being
-| absorbed by recent transaction demand?"
-|
-*/
 
 function calculateSupplyBalanceScore(
   salesCount: number,
   activeListingsCount: number,
 ): number {
-  if (
-    salesCount === 0 &&
-    activeListingsCount === 0
-  ) {
-    return 0;
-  }
-
-
-  /*
-   * Completed sales with no active observed supply
-   * imply constrained current availability.
-   *
-   * Confidence separately determines how much
-   * trust should be placed in that observation.
-   */
   if (activeListingsCount === 0) {
-    return salesCount > 0
-      ? 80
-      : 0;
-  }
-
-
-  /*
-   * Supply exists but no trusted recent demand
-   * evidence is available.
-   */
-  if (salesCount === 0) {
-    return 15;
+    return 80;
   }
 
 
@@ -223,37 +175,16 @@ function calculateSupplyBalanceScore(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Price Stability
-|--------------------------------------------------------------------------
-|
-| Answers:
-|
-| "How consistently is this product actually
-| transacting?"
-|
-| Uses coefficient of variation:
-|
-| standard deviation / average sale price.
-|
-*/
-
 function calculatePriceStability(
   sales: number[],
 ): {
   score: number;
   variationPercent: number | null;
 } {
-  if (sales.length < 2) {
+  if (sales.length === 1) {
     return {
-      score:
-        sales.length === 1
-          ? 40
-          : 0,
-
-      variationPercent:
-        null,
+      score: 40,
+      variationPercent: null,
     };
   }
 
@@ -386,7 +317,7 @@ export function calculateMarketHealth({
     validSales.length;
 
 
-  /*
+  /**
    * Prefer the canonical latest marketplace
    * snapshot rather than the number of listings
    * rendered in the UI.
@@ -401,6 +332,51 @@ export function calculateMarketHealth({
           activeListingsCount,
         )
       : validListings.length;
+
+
+  /**
+   * No verified realized-sale evidence.
+   *
+   * Market Health is fundamentally a
+   * transaction-market assessment:
+   *
+   * - Liquidity requires completed transactions.
+   * - Supply Balance requires observed demand
+   *   relative to visible supply.
+   * - Price Stability requires realized prices.
+   *
+   * Active listings remain useful evidence and are
+   * preserved, but they cannot independently prove
+   * whether the transaction market is healthy.
+   *
+   * Missing evidence therefore returns unavailable
+   * rather than an artificial zero or weak score.
+   */
+  if (salesCount === 0) {
+    return {
+      score: null,
+
+      label:
+        "Unavailable",
+
+      liquidityScore:
+        null,
+
+      supplyBalanceScore:
+        null,
+
+      priceStabilityScore:
+        null,
+
+      salesCount,
+
+      activeListingsCount:
+        resolvedActiveListingsCount,
+
+      priceVariationPercent:
+        null,
+    };
+  }
 
 
   const liquidityScore =
@@ -422,12 +398,20 @@ export function calculateMarketHealth({
     );
 
 
-  /*
+  /**
    * TCGMVP Market Health
    *
    * Transaction Liquidity: 40%
    * Supply Balance:         30%
    * Price Stability:        30%
+   *
+   * Once at least one verified transaction exists,
+   * the engine can produce a preliminary structural
+   * assessment.
+   *
+   * Shared Market Confidence remains responsible
+   * for communicating how strongly that assessment
+   * should be trusted.
    */
   const rawScore =
     liquidityScore * 0.40 +

@@ -51,17 +51,27 @@ export type RiskAnalysisResult = {
 
   volatilityRisk: RiskLevel;
 
-  liquidityRisk: RiskLevel;
+  /**
+   * Null means transaction-liquidity risk cannot
+   * currently be measured because verified recent
+   * sales evidence is unavailable.
+   */
+  liquidityRisk: RiskLevel | null;
 
-  valuationRisk: RiskLevel;
+  /**
+   * Null means neither transaction-supported
+   * valuation nor sufficient historical range
+   * evidence is available.
+   */
+  valuationRisk: RiskLevel | null;
 
   dataRisk: RiskLevel;
 
   volatilityRiskScore: number;
 
-  liquidityRiskScore: number;
+  liquidityRiskScore: number | null;
 
-  valuationRiskScore: number;
+  valuationRiskScore: number | null;
 
   dataRiskScore: number;
 
@@ -107,19 +117,17 @@ function getRiskLevel(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Volatility Risk
-|--------------------------------------------------------------------------
-|
-| Uses historical/reference pricing.
-|
-| This remains separate from the actionable
-| entry price because volatility is a market
-| behavior question, not an entry valuation
-| question.
-|
-*/
+// -----------------------------------------------------------------------------
+// Volatility Risk
+// -----------------------------------------------------------------------------
+//
+// Uses historical/reference pricing.
+//
+// This remains separate from the actionable
+// entry price because volatility is a market
+// behavior question, not an entry valuation
+// question.
+//
 
 function calculateVolatilityRisk(
   change30d: number | null,
@@ -262,20 +270,26 @@ function calculateVolatilityRisk(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Liquidity Risk
-|--------------------------------------------------------------------------
-*/
+// -----------------------------------------------------------------------------
+// Liquidity Risk
+// -----------------------------------------------------------------------------
+//
+// Transaction liquidity requires verified
+// realized-sale evidence.
+//
+// Active listings describe visible supply,
+// but they cannot independently prove that
+// buyers are actually transacting.
+//
 
 function calculateLiquidityRisk(
   salesTracked: number,
 
   activeListingsCount: number,
 ): {
-  score: number;
+  score: number | null;
 
-  level: RiskLevel;
+  level: RiskLevel | null;
 
   reason: string;
 } {
@@ -293,6 +307,20 @@ function calculateLiquidityRisk(
         activeListingsCount,
       ),
     );
+
+
+  if (safeSalesCount === 0) {
+    return {
+      score:
+        null,
+
+      level:
+        null,
+
+      reason:
+        "No verified recent sales are available, so transaction-liquidity risk cannot currently be measured.",
+    };
+  }
 
 
   let transactionScore: number;
@@ -316,12 +344,8 @@ function calculateLiquidityRisk(
     safeSalesCount >= 2
   ) {
     transactionScore = 70;
-  } else if (
-    safeSalesCount === 1
-  ) {
-    transactionScore = 85;
   } else {
-    transactionScore = 100;
+    transactionScore = 85;
   }
 
 
@@ -383,18 +407,13 @@ function calculateLiquidityRisk(
   ) {
     reason =
       `${safeSalesCount} verified recent sales provide usable but limited liquidity evidence.`;
-  } else if (
-    safeSalesCount > 0
-  ) {
+  } else {
     reason =
       `Only ${safeSalesCount} verified recent ${
         safeSalesCount === 1
           ? "sale is"
           : "sales are"
       } available, increasing transaction-liquidity risk.`;
-  } else {
-    reason =
-      "No verified recent sales are available, creating significant transaction-liquidity uncertainty.";
   }
 
 
@@ -412,21 +431,20 @@ function calculateLiquidityRisk(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Valuation Risk
-|--------------------------------------------------------------------------
-|
-| This uses ENTRY PRICE vs FAIR VALUE.
-|
-| It does not use the broader historical/reference
-| market price for the Fair Value comparison.
-|
-| Historical 52-week position still uses the
-| reference market price because that history
-| comes from the same pricing series.
-|
-*/
+// -----------------------------------------------------------------------------
+// Valuation Risk
+// -----------------------------------------------------------------------------
+//
+// Primary valuation evidence:
+// actionable entry price vs transaction-supported
+// TCGMVP Fair Value.
+//
+// Historical 52-week position remains a secondary
+// independent valuation-risk signal.
+//
+// Missing Fair Value does not automatically imply
+// elevated valuation risk.
+//
 
 function calculateValuationRisk(
   entryPrice: number | null,
@@ -439,9 +457,9 @@ function calculateValuationRisk(
 
   low52Week: number | null,
 ): {
-  score: number;
+  score: number | null;
 
-  level: RiskLevel;
+  level: RiskLevel | null;
 
   reason: string;
 } {
@@ -547,7 +565,9 @@ function calculateValuationRisk(
   }
 
 
-  let score: number;
+  let score:
+    number | null =
+    null;
 
 
   if (
@@ -569,9 +589,20 @@ function calculateValuationRisk(
   ) {
     score =
       rangeRisk;
-  } else {
-    score =
-      65;
+  }
+
+
+  if (score === null) {
+    return {
+      score:
+        null,
+
+      level:
+        null,
+
+      reason:
+        "Available evidence is insufficient to make a dependable valuation-risk assessment.",
+    };
   }
 
 
@@ -612,14 +643,9 @@ function calculateValuationRisk(
           1,
         )}% below estimated Fair Value, reducing price-entry risk.`;
     }
-  } else if (
-    rangeRisk !== null
-  ) {
-    reason =
-      "An actionable entry price is unavailable, so valuation risk is based on the product's position within its 52-week reference-price range.";
   } else {
     reason =
-      "Available evidence is insufficient to make a dependable valuation-risk assessment.";
+      "Transaction-supported Fair Value is unavailable, so valuation risk is based only on the product's position within its 52-week reference-price range.";
   }
 
 
@@ -637,11 +663,9 @@ function calculateValuationRisk(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Data Risk
-|--------------------------------------------------------------------------
-*/
+// -----------------------------------------------------------------------------
+// Data Risk
+// -----------------------------------------------------------------------------
 
 function calculateDataRisk(
   marketConfidence:
@@ -768,30 +792,71 @@ export function calculateRiskAnalysis({
     );
 
 
-  /*
-   * Weighted overall risk
-   *
-   * Volatility:   30%
-   * Liquidity:    25%
-   * Valuation:    25%
-   * Data quality: 20%
-   */
+  // Standard risk weights.
+  //
+  // Volatility:   30%
+  // Liquidity:    25%
+  // Valuation:    25%
+  // Data quality: 20%
+  //
+  // If a component cannot be measured, its weight
+  // is removed and the remaining available weights
+  // are normalized back to 100%.
+
+  const volatilityWeight =
+    0.30;
+
+
+  const liquidityWeight =
+    liquidity.score === null
+      ? 0
+      : 0.25;
+
+
+  const valuationWeight =
+    valuation.score === null
+      ? 0
+      : 0.25;
+
+
+  const dataWeight =
+    0.20;
+
+
+  const totalAvailableWeight =
+    volatilityWeight +
+    liquidityWeight +
+    valuationWeight +
+    dataWeight;
+
+
+  const weightedRiskNumerator =
+    volatility.score *
+      volatilityWeight +
+    (
+      liquidity.score === null
+        ? 0
+        : liquidity.score *
+          liquidityWeight
+    ) +
+    (
+      valuation.score === null
+        ? 0
+        : valuation.score *
+          valuationWeight
+    ) +
+    data.score *
+      dataWeight;
+
 
   let weightedRisk =
-    volatility.score *
-      0.30 +
-    liquidity.score *
-      0.25 +
-    valuation.score *
-      0.25 +
-    data.score *
-      0.20;
+    weightedRiskNumerator /
+    totalAvailableWeight;
 
 
-  /*
-   * Negative directional momentum creates
-   * additional downside risk.
-   */
+  // Negative directional momentum creates
+  // additional downside risk after the available
+  // risk components have been normalized.
 
   if (
     trendAnalysis.trend ===
