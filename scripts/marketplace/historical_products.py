@@ -11,7 +11,6 @@ def get_historical_import_products() -> list[dict]:
     products_response = (
         supabase.table("products")
         .select("id,name")
-        .eq("active", True)
         .eq("active_for_import", True)
         .order("id")
         .execute()

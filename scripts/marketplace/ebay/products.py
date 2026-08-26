@@ -36,10 +36,6 @@ def get_ebay_import_products() -> list[dict]:
             "slug"
         )
         .eq(
-            "active",
-            True,
-        )
-        .eq(
             "active_for_import",
             True,
         )
