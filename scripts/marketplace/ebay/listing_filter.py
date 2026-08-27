@@ -64,6 +64,8 @@ NON_ENGLISH_PHRASES = (
     "german",
     "french",
     "italian",
+    "portuguese",
+    "brazilian",
 )
 
 
