@@ -67,6 +67,36 @@ NON_ENGLISH_PHRASES = (
 )
 
 
+def _normalize_matching_text(
+    value: str,
+) -> str:
+    """
+    Normalize listing text for keyword matching.
+
+    This intentionally makes common punctuation
+    variations equivalent for product matching.
+
+    Examples:
+        "Sword & Shield"
+        "Sword-Shield"
+        "Sword / Shield"
+        "Sword Shield"
+
+    all normalize to:
+        "sword shield"
+    """
+    normalized = (
+        value.lower()
+        .replace("&", " ")
+        .replace("-", " ")
+        .replace("/", " ")
+    )
+
+    return " ".join(
+        normalized.split()
+    )
+
+
 def is_valid_booster_box_listing(
     *,
     title: str,
@@ -74,7 +104,9 @@ def is_valid_booster_box_listing(
     product_keywords: tuple[str, ...],
 ) -> bool:
     normalized_title = (
-        title.lower().strip()
+        _normalize_matching_text(
+            title
+        )
     )
 
     normalized_condition = (
@@ -84,10 +116,17 @@ def is_valid_booster_box_listing(
     )
 
     # Exact tracked product keywords
-    # must be present.
+    # must be present after basic punctuation
+    # normalization.
     for keyword in product_keywords:
+        normalized_keyword = (
+            _normalize_matching_text(
+                keyword
+            )
+        )
+
         if (
-            keyword.lower()
+            normalized_keyword
             not in normalized_title
         ):
             return False
@@ -103,7 +142,10 @@ def is_valid_booster_box_listing(
 
     # Known bad / misleading listing patterns.
     if any(
-        phrase in normalized_title
+        _normalize_matching_text(
+            phrase
+        )
+        in normalized_title
         for phrase
         in EXCLUDED_TITLE_PHRASES
     ):
@@ -111,7 +153,10 @@ def is_valid_booster_box_listing(
 
     # Reject non-English product listings.
     if any(
-        phrase in normalized_title
+        _normalize_matching_text(
+            phrase
+        )
+        in normalized_title
         for phrase
         in NON_ENGLISH_PHRASES
     ):
@@ -124,7 +169,10 @@ def is_valid_booster_box_listing(
     # because it refers to a protective case
     # around a single box.
     if any(
-        phrase in normalized_title
+        _normalize_matching_text(
+            phrase
+        )
+        in normalized_title
         for phrase
         in CASE_EXCLUSION_PHRASES
     ):

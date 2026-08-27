@@ -151,19 +151,19 @@ function getConfidenceReason(
     case "High":
       return (
         `High-confidence market evidence supports this trend assessment ` +
-        `(${confidence.score}/95 confidence; ${salesTracked} verified recent sales).`
+        `(${confidence.score}/100 confidence; ${salesTracked} verified recent sales).`
       );
 
     case "Medium":
       return (
         `Moderate-confidence market evidence supports this trend assessment ` +
-        `(${confidence.score}/95 confidence).`
+        `(${confidence.score}/100 confidence).`
       );
 
     case "Low":
       return (
         `The directional signal is supported by limited market evidence ` +
-        `(${confidence.score}/95 confidence).`
+        `(${confidence.score}/100 confidence).`
       );
 
     case "Insufficient":
