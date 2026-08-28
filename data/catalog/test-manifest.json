@@ -1,0 +1,22 @@
+{
+  "products": [
+    {
+      "set_name": "Example Set",
+      "set_slug": "example-set",
+      "set_code": "TEST01",
+      "series_id": 3,
+      "release_date": "2026-01-01",
+      "overview": "Example product used to test the TCGMVP catalog manifest preflight system.",
+      "product_name": "Example Set Booster Box",
+      "product_slug": "example-set-booster-box-english",
+      "image_filename": "example-set-booster-box.png",
+      "tcgplayer_id": "999999999",
+      "tcgcsv_group_id": "999999999",
+      "ebay_query": "Pokemon Example Set Booster Box",
+      "keywords": [
+        "example set",
+        "booster box"
+      ]
+    }
+  ]
+}

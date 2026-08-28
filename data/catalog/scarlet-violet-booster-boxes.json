@@ -1,0 +1,185 @@
+{
+  "products": [
+    {
+      "set_name": "Scarlet & Violet Base Set",
+      "set_slug": "scarlet-violet-base-set",
+      "set_code": "SV01",
+      "series_id": 3,
+      "release_date": "2023-03-31",
+      "overview": "Released in March 2023, Scarlet & Violet Base Set launched the Scarlet & Violet era of the Pokémon TCG. The expansion introduced the modern Pokémon ex mechanic, Terastallized Pokémon ex, and the Paldea region's first partners alongside Koraidon ex and Miraidon ex.",
+      "product_name": "Scarlet & Violet Booster Box",
+      "product_slug": "scarlet-violet-base-booster-box-english",
+      "image_filename": "scarlet-violet-base-booster-box.png",
+      "tcgplayer_id": "476452",
+      "tcgcsv_group_id": "22873",
+      "ebay_query": "Pokemon Scarlet Violet Base Set Booster Box",
+      "keywords": [
+        "scarlet violet",
+        "base set",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Paldea Evolved",
+      "set_slug": "paldea-evolved",
+      "set_code": "SV02",
+      "series_id": 3,
+      "release_date": "2023-06-09",
+      "overview": "Released in June 2023, Paldea Evolved is the second main Scarlet & Violet-era Pokémon TCG expansion. The set features evolved first partners Meowscarada ex, Skeledirge ex, and Quaquaval ex, along with Chien-Pao ex, Ting-Lu ex, and a broad selection of illustration rare cards.",
+      "product_name": "Paldea Evolved Booster Box",
+      "product_slug": "paldea-evolved-booster-box-english",
+      "image_filename": "paldea-evolved-booster-box.png",
+      "tcgplayer_id": "493975",
+      "tcgcsv_group_id": "23120",
+      "ebay_query": "Pokemon Paldea Evolved Booster Box",
+      "keywords": [
+        "paldea evolved",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Obsidian Flames",
+      "set_slug": "obsidian-flames",
+      "set_code": "SV03",
+      "series_id": 3,
+      "release_date": "2023-08-11",
+      "overview": "Released in August 2023, Obsidian Flames is the third main Scarlet & Violet-era Pokémon TCG expansion. The set is headlined by a Darkness-type Tera Charizard ex and further develops the Terastal mechanic with type-shifted Pokémon ex.",
+      "product_name": "Obsidian Flames Booster Box",
+      "product_slug": "obsidian-flames-booster-box-english",
+      "image_filename": "obsidian-flames-booster-box.png",
+      "tcgplayer_id": "501257",
+      "tcgcsv_group_id": "23228",
+      "ebay_query": "Pokemon Obsidian Flames Booster Box",
+      "keywords": [
+        "obsidian flames",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Paradox Rift",
+      "set_slug": "paradox-rift",
+      "set_code": "SV04",
+      "series_id": 3,
+      "release_date": "2023-11-03",
+      "overview": "Released in November 2023, Paradox Rift is the fourth main Scarlet & Violet-era Pokémon TCG expansion. The set introduced Ancient and Future Pokémon to the English TCG, featuring cards such as Roaring Moon ex, Iron Valiant ex, Iron Hands ex, and Garchomp ex.",
+      "product_name": "Paradox Rift Booster Box",
+      "product_slug": "paradox-rift-booster-box-english",
+      "image_filename": "paradox-rift-booster-box.png",
+      "tcgplayer_id": "512821",
+      "tcgcsv_group_id": "23286",
+      "ebay_query": "Pokemon Paradox Rift Booster Box",
+      "keywords": [
+        "paradox rift",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Temporal Forces",
+      "set_slug": "temporal-forces",
+      "set_code": "SV05",
+      "series_id": 3,
+      "release_date": "2024-03-22",
+      "overview": "Released in March 2024, Temporal Forces is the fifth main Scarlet & Violet-era Pokémon TCG expansion. The set expands the Ancient and Future Pokémon lineup with Walking Wake ex, Raging Bolt ex, Iron Leaves ex, and Iron Crown ex while bringing ACE SPEC cards back to the game.",
+      "product_name": "Temporal Forces Booster Box",
+      "product_slug": "temporal-forces-booster-box-english",
+      "image_filename": "temporal-forces-booster-box.png",
+      "tcgplayer_id": "536225",
+      "tcgcsv_group_id": "23381",
+      "ebay_query": "Pokemon Temporal Forces Booster Box",
+      "keywords": [
+        "temporal forces",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Twilight Masquerade",
+      "set_slug": "twilight-masquerade",
+      "set_code": "SV06",
+      "series_id": 3,
+      "release_date": "2024-05-24",
+      "overview": "Released in May 2024, Twilight Masquerade is the sixth main Scarlet & Violet-era Pokémon TCG expansion. Set in Kitakami, the expansion centers on Ogerpon and its masks while featuring additional Pokémon ex, ACE SPEC cards, and special illustration rares.",
+      "product_name": "Twilight Masquerade Booster Box",
+      "product_slug": "twilight-masquerade-booster-box-english",
+      "image_filename": "twilight-masquerade-booster-box.png",
+      "tcgplayer_id": "543846",
+      "tcgcsv_group_id": "23473",
+      "ebay_query": "Pokemon Twilight Masquerade Booster Box",
+      "keywords": [
+        "twilight masquerade",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Stellar Crown",
+      "set_slug": "stellar-crown",
+      "set_code": "SV07",
+      "series_id": 3,
+      "release_date": "2024-09-13",
+      "overview": "Released in September 2024, Stellar Crown is the seventh main Scarlet & Violet-era Pokémon TCG expansion. The set spotlights Terapagos and introduces Stellar Tera Pokémon ex, with Cinderace ex, Lapras ex, Galvantula ex, and Hydrapple ex among its featured cards.",
+      "product_name": "Stellar Crown Booster Box",
+      "product_slug": "stellar-crown-booster-box-english",
+      "image_filename": "stellar-crown-booster-box.png",
+      "tcgplayer_id": "557354",
+      "tcgcsv_group_id": "23537",
+      "ebay_query": "Pokemon Stellar Crown Booster Box",
+      "keywords": [
+        "stellar crown",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Surging Sparks",
+      "set_slug": "surging-sparks",
+      "set_code": "SV08",
+      "series_id": 3,
+      "release_date": "2024-11-08",
+      "overview": "Released in November 2024, Surging Sparks is the eighth main Scarlet & Violet-era Pokémon TCG expansion. The set is headlined by Stellar Tera Pikachu ex and also features Alolan Exeggutor ex, Archaludon ex, Latias ex, and additional ACE SPEC cards.",
+      "product_name": "Surging Sparks Booster Box",
+      "product_slug": "surging-sparks-booster-box-english",
+      "image_filename": "surging-sparks-booster-box.png",
+      "tcgplayer_id": "565606",
+      "tcgcsv_group_id": "23651",
+      "ebay_query": "Pokemon Surging Sparks Booster Box",
+      "keywords": [
+        "surging sparks",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Journey Together",
+      "set_slug": "journey-together",
+      "set_code": "SV09",
+      "series_id": 3,
+      "release_date": "2025-03-28",
+      "overview": "Released in March 2025, Journey Together is the ninth main Scarlet & Violet-era Pokémon TCG expansion. The set emphasizes the bonds between Trainers and their Pokémon, featuring Trainer's Pokémon such as N's Zoroark ex, Lillie's Clefairy ex, Iono's Bellibolt ex, and Hop's Zacian ex.",
+      "product_name": "Journey Together Booster Box",
+      "product_slug": "journey-together-booster-box-english",
+      "image_filename": "journey-together-booster-box.png",
+      "tcgplayer_id": "610931",
+      "tcgcsv_group_id": "24073",
+      "ebay_query": "Pokemon Journey Together Booster Box",
+      "keywords": [
+        "journey together",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Destined Rivals",
+      "set_slug": "destined-rivals",
+      "set_code": "SV10",
+      "series_id": 3,
+      "release_date": "2025-05-30",
+      "overview": "Released in May 2025, Destined Rivals is the tenth main Scarlet & Violet-era Pokémon TCG expansion. The set pits heroic Trainers against Team Rocket and features cards including Team Rocket's Mewtwo ex, Cynthia's Garchomp ex, Ethan's Ho-Oh ex, and Arven's Mabosstiff ex.",
+      "product_name": "Destined Rivals Booster Box",
+      "product_slug": "destined-rivals-booster-box-english",
+      "image_filename": "destined-rivals-booster-box.png",
+      "tcgplayer_id": "624679",
+      "tcgcsv_group_id": "24269",
+      "ebay_query": "Pokemon Destined Rivals Booster Box",
+      "keywords": [
+        "destined rivals",
+        "booster box"
+      ]
+    }
+  ]
+}
