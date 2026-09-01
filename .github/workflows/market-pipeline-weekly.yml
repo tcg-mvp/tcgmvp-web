@@ -2,7 +2,7 @@ name: TCGMVP Weekly SoldComps Pipeline
 
 on:
   schedule:
-    - cron: "0 4 * * 1"
+    - cron: "0 6 * * 1"
 
   workflow_dispatch:
 
@@ -34,4 +34,4 @@ jobs:
           EBAY_ENVIRONMENT: production
 
         run: |
-          python -m scripts.marketplace.run_market_pipeline
+          python -m scripts.marketplace.run_market_pipeline --skip-tcgcsv --skip-ebay
