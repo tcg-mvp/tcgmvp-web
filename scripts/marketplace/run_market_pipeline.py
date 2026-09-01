@@ -4,7 +4,7 @@ import argparse
 import sys
 import time
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Callable
 
 from scripts.marketplace.ebay.collector import (
     collect_ebay_active_listings,
@@ -15,6 +15,12 @@ from scripts.marketplace.historical_products import (
 from scripts.marketplace.market_summary_calculator import (
     update_calculated_market_summary,
 )
+from scripts.marketplace.pipeline_logging import (
+    finish_pipeline_run,
+    finish_pipeline_step,
+    start_pipeline_run,
+    start_pipeline_step,
+)
 from scripts.marketplace.soldcomps.collector import (
     collect_soldcomps_sales,
 )
@@ -24,10 +30,7 @@ from scripts.marketplace.update_sold_metrics import (
 from scripts.marketplace.update_tcgcsv_prices import (
     update_tcgcsv_prices,
 )
-from scripts.marketplace.pipeline_logging import (
-    finish_pipeline_run,
-    start_pipeline_run,
-)
+
 
 def _print_header(
     title: str,
@@ -53,14 +56,237 @@ def _format_duration(
     )
 
 
+def _build_error_summary(
+    result: dict[str, Any],
+) -> str | None:
+    direct_error = result.get("error")
+
+    if direct_error:
+        return str(direct_error)
+
+    summary = result.get("summary")
+
+    if not isinstance(summary, dict):
+        return None
+
+    failures: list[str] = []
+
+    for item in summary.get(
+        "results",
+        [],
+    ):
+        if item.get("status") != "failed":
+            continue
+
+        name = (
+            item.get("name")
+            or item.get("product_name")
+            or item.get("product_id")
+            or "Unknown product"
+        )
+
+        error = (
+            item.get("error")
+            or "Unknown error"
+        )
+
+        failures.append(
+            f"{name}: {error}"
+        )
+
+        if len(failures) >= 3:
+            break
+
+    if not failures:
+        return None
+
+    return " | ".join(
+        failures
+    )
+
+
+def _get_records_processed(
+    *,
+    step_name: str,
+    summary: dict[str, Any],
+) -> int:
+    if step_name == "ebay":
+        return int(
+            summary.get(
+                "listings_processed",
+                0,
+            )
+            or 0
+        )
+
+    if step_name == "soldcomps":
+        return int(
+            summary.get(
+                "sales_processed",
+                0,
+            )
+            or 0
+        )
+
+    return 0
+
+
+def _execute_logged_step(
+    *,
+    run_id: int,
+    step_name: str,
+    runner: Callable[
+        [],
+        dict[str, Any],
+    ],
+) -> dict[str, Any]:
+    step_id = start_pipeline_step(
+        run_id=run_id,
+        step_name=step_name,
+    )
+
+    started_at = (
+        time.perf_counter()
+    )
+
+    try:
+        result = runner()
+
+    except Exception as exc:
+        duration = (
+            time.perf_counter()
+            - started_at
+        )
+
+        finish_pipeline_step(
+            step_id=step_id,
+            status="failed",
+            duration_seconds=duration,
+            error_summary=str(exc),
+            details={
+                "error": str(exc),
+            },
+        )
+
+        print("")
+        print(
+            f"{step_name} failed "
+            "unexpectedly:"
+        )
+        print(exc)
+
+        return {
+            "step": step_name,
+            "success": False,
+            "duration_seconds": (
+                duration
+            ),
+            "error": str(exc),
+        }
+
+    duration = float(
+        result.get(
+            "duration_seconds",
+            (
+                time.perf_counter()
+                - started_at
+            ),
+        )
+    )
+
+    summary = result.get(
+        "summary",
+        {},
+    )
+
+    if not isinstance(
+        summary,
+        dict,
+    ):
+        summary = {}
+
+    status = (
+        "success"
+        if result.get("success")
+        else "failed"
+    )
+
+    finish_pipeline_step(
+        step_id=step_id,
+        status=status,
+        duration_seconds=duration,
+        products_attempted=int(
+            summary.get(
+                "products_attempted",
+                0,
+            )
+            or 0
+        ),
+        products_successful=int(
+            summary.get(
+                "products_successful",
+                0,
+            )
+            or 0
+        ),
+        products_failed=int(
+            summary.get(
+                "products_failed",
+                0,
+            )
+            or 0
+        ),
+        records_processed=(
+            _get_records_processed(
+                step_name=step_name,
+                summary=summary,
+            )
+        ),
+        error_summary=(
+            _build_error_summary(
+                result
+            )
+        ),
+        details=summary,
+    )
+
+    return result
+
+
+def _record_skipped_step(
+    *,
+    run_id: int,
+    step_name: str,
+    reason: str,
+) -> None:
+    step_id = start_pipeline_step(
+        run_id=run_id,
+        step_name=step_name,
+    )
+
+    finish_pipeline_step(
+        step_id=step_id,
+        status="skipped",
+        duration_seconds=0,
+        error_summary=None,
+        details={
+            "reason": reason,
+        },
+    )
+
+
 def run_tcgcsv_update() -> dict[str, Any]:
     _print_header(
         "STEP 1 — TCGCSV market prices"
     )
 
-    started_at = time.perf_counter()
+    started_at = (
+        time.perf_counter()
+    )
 
-    summary = update_tcgcsv_prices()
+    summary = (
+        update_tcgcsv_prices()
+    )
 
     duration = (
         time.perf_counter()
@@ -92,8 +318,13 @@ def run_tcgcsv_update() -> dict[str, Any]:
         print("")
         print("Failures:")
 
-        for result in summary["results"]:
-            if result["status"] == "failed":
+        for result in summary[
+            "results"
+        ]:
+            if (
+                result["status"]
+                == "failed"
+            ):
                 print(
                     f"- {result['name']}: "
                     f"{result['error']}"
@@ -102,7 +333,10 @@ def run_tcgcsv_update() -> dict[str, Any]:
     return {
         "step": "tcgcsv",
         "success": (
-            summary["products_failed"] == 0
+            summary[
+                "products_failed"
+            ]
+            == 0
         ),
         "duration_seconds": duration,
         "summary": summary,
@@ -114,10 +348,14 @@ def run_ebay_collection() -> dict[str, Any]:
         "STEP 2 — eBay active listings"
     )
 
-    started_at = time.perf_counter()
+    started_at = (
+        time.perf_counter()
+    )
 
-    summary = collect_ebay_active_listings(
-        limit_per_product=50,
+    summary = (
+        collect_ebay_active_listings(
+            limit_per_product=50,
+        )
     )
 
     duration = (
@@ -155,8 +393,13 @@ def run_ebay_collection() -> dict[str, Any]:
         print("")
         print("Failures:")
 
-        for result in summary["results"]:
-            if result["status"] == "failed":
+        for result in summary[
+            "results"
+        ]:
+            if (
+                result["status"]
+                == "failed"
+            ):
                 print(
                     f"- {result['name']}: "
                     f"{result['error']}"
@@ -165,7 +408,10 @@ def run_ebay_collection() -> dict[str, Any]:
     return {
         "step": "ebay",
         "success": (
-            summary["products_failed"] == 0
+            summary[
+                "products_failed"
+            ]
+            == 0
         ),
         "duration_seconds": duration,
         "summary": summary,
@@ -177,10 +423,14 @@ def run_soldcomps_collection() -> dict[str, Any]:
         "STEP 3 — SoldComps completed sales"
     )
 
-    started_at = time.perf_counter()
+    started_at = (
+        time.perf_counter()
+    )
 
-    summary = collect_soldcomps_sales(
-        count_per_product=50,
+    summary = (
+        collect_soldcomps_sales(
+            count_per_product=50,
+        )
     )
 
     duration = (
@@ -218,8 +468,13 @@ def run_soldcomps_collection() -> dict[str, Any]:
         print("")
         print("Failures:")
 
-        for result in summary["results"]:
-            if result["status"] == "failed":
+        for result in summary[
+            "results"
+        ]:
+            if (
+                result["status"]
+                == "failed"
+            ):
                 print(
                     f"- {result['name']}: "
                     f"{result['error']}"
@@ -228,7 +483,10 @@ def run_soldcomps_collection() -> dict[str, Any]:
     return {
         "step": "soldcomps",
         "success": (
-            summary["products_failed"] == 0
+            summary[
+                "products_failed"
+            ]
+            == 0
         ),
         "duration_seconds": duration,
         "summary": summary,
@@ -240,9 +498,13 @@ def run_sold_metrics_update() -> dict[str, Any]:
         "STEP 4 — Verified 30-day sold metrics"
     )
 
-    started_at = time.perf_counter()
+    started_at = (
+        time.perf_counter()
+    )
 
-    summary = update_sold_metrics()
+    summary = (
+        update_sold_metrics()
+    )
 
     duration = (
         time.perf_counter()
@@ -274,8 +536,13 @@ def run_sold_metrics_update() -> dict[str, Any]:
         print("")
         print("Failures:")
 
-        for result in summary["results"]:
-            if result["status"] == "failed":
+        for result in summary[
+            "results"
+        ]:
+            if (
+                result["status"]
+                == "failed"
+            ):
                 print(
                     f"- {result['name']}: "
                     f"{result['error']}"
@@ -284,7 +551,10 @@ def run_sold_metrics_update() -> dict[str, Any]:
     return {
         "step": "sold_metrics",
         "success": (
-            summary["products_failed"] == 0
+            summary[
+                "products_failed"
+            ]
+            == 0
         ),
         "duration_seconds": duration,
         "summary": summary,
@@ -296,26 +566,37 @@ def run_market_summary_updates() -> dict[str, Any]:
         "STEP 5 — Product market summaries"
     )
 
-    started_at = time.perf_counter()
+    started_at = (
+        time.perf_counter()
+    )
 
-    products = get_historical_import_products()
+    products = (
+        get_historical_import_products()
+    )
 
     successes = 0
     failures = 0
 
-    results: list[dict[str, Any]] = []
+    results: list[
+        dict[str, Any]
+    ] = []
 
     print(
-        f"Products found: {len(products)}"
+        f"Products found: "
+        f"{len(products)}"
     )
     print("")
 
     for product in products:
         product_id = int(
-            product["tcgmvp_product_id"]
+            product[
+                "tcgmvp_product_id"
+            ]
         )
 
-        product_name = product["name"]
+        product_name = (
+            product["name"]
+        )
 
         print(
             f"Updating {product_name} "
@@ -331,32 +612,56 @@ def run_market_summary_updates() -> dict[str, Any]:
 
             print(
                 "  Current: "
-                f"${summary.get('current_market_price')}"
+                f"${
+                    summary.get(
+                        'current_market_price'
+                    )
+                }"
             )
 
             print(
                 "  7D: "
-                f"{summary.get('change_7d_percent')}%"
+                f"{
+                    summary.get(
+                        'change_7d_percent'
+                    )
+                }%"
             )
 
             print(
                 "  30D: "
-                f"{summary.get('change_30d_percent')}%"
+                f"{
+                    summary.get(
+                        'change_30d_percent'
+                    )
+                }%"
             )
 
             print(
                 "  90D: "
-                f"{summary.get('change_90d_percent')}%"
+                f"{
+                    summary.get(
+                        'change_90d_percent'
+                    )
+                }%"
             )
 
             print(
                 "  Active listings: "
-                f"{summary.get('active_listings')}"
+                f"{
+                    summary.get(
+                        'active_listings'
+                    )
+                }"
             )
 
             print(
                 "  Lowest listing: "
-                f"${summary.get('lowest_listing_price')}"
+                f"${
+                    summary.get(
+                        'lowest_listing_price'
+                    )
+                }"
             )
 
             print("  SUCCESS")
@@ -366,9 +671,15 @@ def run_market_summary_updates() -> dict[str, Any]:
 
             results.append(
                 {
-                    "product_id": product_id,
-                    "name": product_name,
-                    "status": "success",
+                    "product_id": (
+                        product_id
+                    ),
+                    "name": (
+                        product_name
+                    ),
+                    "status": (
+                        "success"
+                    ),
                 }
             )
 
@@ -382,8 +693,12 @@ def run_market_summary_updates() -> dict[str, Any]:
 
             results.append(
                 {
-                    "product_id": product_id,
-                    "name": product_name,
+                    "product_id": (
+                        product_id
+                    ),
+                    "name": (
+                        product_name
+                    ),
                     "status": "failed",
                     "error": str(exc),
                 }
@@ -411,12 +726,20 @@ def run_market_summary_updates() -> dict[str, Any]:
 
     return {
         "step": "market_summaries",
-        "success": failures == 0,
+        "success": (
+            failures == 0
+        ),
         "duration_seconds": duration,
         "summary": {
-            "products_attempted": len(products),
-            "products_successful": successes,
-            "products_failed": failures,
+            "products_attempted": (
+                len(products)
+            ),
+            "products_successful": (
+                successes
+            ),
+            "products_failed": (
+                failures
+            ),
             "results": results,
         },
     }
@@ -476,15 +799,21 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
     run_id = start_pipeline_run(
-        pipeline_name="market_pipeline"
+        pipeline_name=(
+            "market_pipeline"
+        )
     )
+
     pipeline_started_at = (
         time.perf_counter()
     )
 
     run_timestamp = (
-        datetime.now(UTC).isoformat()
+        datetime.now(
+            UTC
+        ).isoformat()
     )
 
     _print_header(
@@ -492,123 +821,134 @@ def main() -> None:
     )
 
     print(
+        f"Run ID: {run_id}"
+    )
+
+    print(
         f"Started: {run_timestamp}"
     )
 
-    results: list[dict[str, Any]] = []
+    results: list[
+        dict[str, Any]
+    ] = []
 
-    fatal_error: Exception | None = None
+    fatal_error: (
+        Exception | None
+    ) = None
 
     try:
-        if not args.skip_tcgcsv:
-            try:
-                results.append(
-                    run_tcgcsv_update()
-                )
+        if args.skip_tcgcsv:
+            _record_skipped_step(
+                run_id=run_id,
+                step_name="tcgcsv",
+                reason=(
+                    "--skip-tcgcsv "
+                    "was supplied"
+                ),
+            )
 
-            except Exception as exc:
-                print("")
-                print(
-                    "TCGCSV update "
-                    "failed unexpectedly:"
+        else:
+            results.append(
+                _execute_logged_step(
+                    run_id=run_id,
+                    step_name="tcgcsv",
+                    runner=(
+                        run_tcgcsv_update
+                    ),
                 )
-                print(exc)
+            )
 
-                results.append(
-                    {
-                        "step": "tcgcsv",
-                        "success": False,
-                        "error": str(exc),
-                    }
-                )
+        if args.skip_ebay:
+            _record_skipped_step(
+                run_id=run_id,
+                step_name="ebay",
+                reason=(
+                    "--skip-ebay "
+                    "was supplied"
+                ),
+            )
 
-        if not args.skip_ebay:
-            try:
-                results.append(
-                    run_ebay_collection()
+        else:
+            results.append(
+                _execute_logged_step(
+                    run_id=run_id,
+                    step_name="ebay",
+                    runner=(
+                        run_ebay_collection
+                    ),
                 )
+            )
 
-            except Exception as exc:
-                print("")
-                print(
-                    "eBay collection "
-                    "failed unexpectedly:"
-                )
-                print(exc)
+        if args.skip_soldcomps:
+            _record_skipped_step(
+                run_id=run_id,
+                step_name="soldcomps",
+                reason=(
+                    "--skip-soldcomps "
+                    "was supplied"
+                ),
+            )
 
-                results.append(
-                    {
-                        "step": "ebay",
-                        "success": False,
-                        "error": str(exc),
-                    }
+        else:
+            results.append(
+                _execute_logged_step(
+                    run_id=run_id,
+                    step_name="soldcomps",
+                    runner=(
+                        run_soldcomps_collection
+                    ),
                 )
+            )
 
-        if not args.skip_soldcomps:
-            try:
-                results.append(
-                    run_soldcomps_collection()
-                )
+        if args.skip_sold_metrics:
+            _record_skipped_step(
+                run_id=run_id,
+                step_name=(
+                    "sold_metrics"
+                ),
+                reason=(
+                    "--skip-sold-metrics "
+                    "was supplied"
+                ),
+            )
 
-            except Exception as exc:
-                print("")
-                print(
-                    "SoldComps collection "
-                    "failed unexpectedly:"
+        else:
+            results.append(
+                _execute_logged_step(
+                    run_id=run_id,
+                    step_name=(
+                        "sold_metrics"
+                    ),
+                    runner=(
+                        run_sold_metrics_update
+                    ),
                 )
-                print(exc)
+            )
 
-                results.append(
-                    {
-                        "step": "soldcomps",
-                        "success": False,
-                        "error": str(exc),
-                    }
-                )
+        if args.skip_summaries:
+            _record_skipped_step(
+                run_id=run_id,
+                step_name=(
+                    "market_summaries"
+                ),
+                reason=(
+                    "--skip-summaries "
+                    "was supplied"
+                ),
+            )
 
-        if not args.skip_sold_metrics:
-            try:
-                results.append(
-                    run_sold_metrics_update()
+        else:
+            results.append(
+                _execute_logged_step(
+                    run_id=run_id,
+                    step_name=(
+                        "market_summaries"
+                    ),
+                    runner=(
+                        run_market_summary_updates
+                    ),
                 )
-
-            except Exception as exc:
-                print("")
-                print(
-                    "Sold-metrics update "
-                    "failed unexpectedly:"
-                )
-                print(exc)
-
-                results.append(
-                    {
-                        "step": "sold_metrics",
-                        "success": False,
-                        "error": str(exc),
-                    }
-                )
-
-        if not args.skip_summaries:
-            try:
-                results.append(
-                    run_market_summary_updates()
-                )
-
-            except Exception as exc:
-                print("")
-                print(
-                    "Market-summary update "
-                    "failed unexpectedly:"
-                )
-                print(exc)
-
-                results.append(
-                    {
-                        "step": "market_summaries",
-                        "success": False,
-                        "error": str(exc),
-                    }
-                )
+            )
 
     except Exception as exc:
         fatal_error = exc
@@ -649,12 +989,12 @@ def main() -> None:
     print("")
 
     print(
-        f"Steps successful: "
+        "Steps successful: "
         f"{successful_steps}"
     )
 
     print(
-        f"Steps failed: "
+        "Steps failed: "
         f"{failed_steps}"
     )
 
@@ -665,8 +1005,13 @@ def main() -> None:
 
     print(
         "Completed: "
-        f"{datetime.now(UTC).isoformat()}"
+        f"{
+            datetime.now(
+                UTC
+            ).isoformat()
+        }"
     )
+
     pipeline_status = (
         "success"
         if (
@@ -679,14 +1024,26 @@ def main() -> None:
     finish_pipeline_run(
         run_id=run_id,
         status=pipeline_status,
-        steps_successful=successful_steps,
-        steps_failed=failed_steps,
-        duration_seconds=total_duration,
+        steps_successful=(
+            successful_steps
+        ),
+        steps_failed=(
+            failed_steps
+        ),
+        duration_seconds=(
+            total_duration
+        ),
         details={
             "results": results,
-            "skip_tcgcsv": args.skip_tcgcsv,
-            "skip_ebay": args.skip_ebay,
-            "skip_soldcomps": args.skip_soldcomps,
+            "skip_tcgcsv": (
+                args.skip_tcgcsv
+            ),
+            "skip_ebay": (
+                args.skip_ebay
+            ),
+            "skip_soldcomps": (
+                args.skip_soldcomps
+            ),
             "skip_sold_metrics": (
                 args.skip_sold_metrics
             ),
@@ -695,12 +1052,15 @@ def main() -> None:
             ),
         },
     )
+
     if fatal_error is not None:
         print("")
         print(
             "Fatal pipeline error:"
         )
-        print(fatal_error)
+        print(
+            fatal_error
+        )
 
         sys.exit(1)
 
