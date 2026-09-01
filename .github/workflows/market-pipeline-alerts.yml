@@ -8,6 +8,26 @@ on:
     types:
       - completed
 
+  workflow_dispatch:
+    inputs:
+      test_conclusion:
+        description: "Simulated pipeline result"
+        required: true
+        default: "failure"
+        type: choice
+        options:
+          - failure
+          - success
+
+      test_workflow_name:
+        description: "Simulated workflow name"
+        required: true
+        default: "TCGMVP Daily Market Pipeline"
+        type: choice
+        options:
+          - TCGMVP Daily Market Pipeline
+          - TCGMVP Weekly SoldComps Pipeline
+
 permissions:
   contents: read
   issues: write
@@ -21,23 +41,55 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const workflowName =
-              context.payload.workflow_run.name;
+            const isManualTest =
+              context.eventName === "workflow_dispatch";
 
-            const conclusion =
-              context.payload.workflow_run.conclusion;
+            let workflowName;
+            let conclusion;
+            let runUrl;
+            let runId;
+            let branch;
+            let createdAt;
 
-            const runUrl =
-              context.payload.workflow_run.html_url;
+            if (isManualTest) {
+              workflowName =
+                "${{ inputs.test_workflow_name }}";
 
-            const runId =
-              context.payload.workflow_run.id;
+              conclusion =
+                "${{ inputs.test_conclusion }}";
 
-            const branch =
-              context.payload.workflow_run.head_branch;
+              runUrl =
+                `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
-            const createdAt =
-              context.payload.workflow_run.created_at;
+              runId =
+                context.runId;
+
+              branch =
+                context.ref
+                  ? context.ref.replace("refs/heads/", "")
+                  : "manual-test";
+
+              createdAt =
+                new Date().toISOString();
+            } else {
+              workflowName =
+                context.payload.workflow_run.name;
+
+              conclusion =
+                context.payload.workflow_run.conclusion;
+
+              runUrl =
+                context.payload.workflow_run.html_url;
+
+              runId =
+                context.payload.workflow_run.id;
+
+              branch =
+                context.payload.workflow_run.head_branch;
+
+              createdAt =
+                context.payload.workflow_run.created_at;
+            }
 
             const title =
               `[Pipeline Alert] ${workflowName}`;
@@ -47,6 +99,29 @@ jobs:
 
             const repo =
               context.repo.repo;
+
+            try {
+              await github.rest.issues.createLabel({
+                owner,
+                repo,
+                name: "pipeline-alert",
+                description:
+                  "Automated TCGMVP market pipeline alert",
+                color: "B60205",
+              });
+
+              console.log(
+                "Created pipeline-alert label."
+              );
+            } catch (error) {
+              if (error.status !== 422) {
+                throw error;
+              }
+
+              console.log(
+                "pipeline-alert label already exists."
+              );
+            }
 
             const issues =
               await github.rest.issues.listForRepo({
@@ -67,7 +142,8 @@ jobs:
                 await github.rest.issues.createComment({
                   owner,
                   repo,
-                  issue_number: existingIssue.number,
+                  issue_number:
+                    existingIssue.number,
                   body:
                     `✅ Pipeline recovered successfully.\n\n` +
                     `Workflow: **${workflowName}**\n` +
@@ -79,14 +155,19 @@ jobs:
                 await github.rest.issues.update({
                   owner,
                   repo,
-                  issue_number: existingIssue.number,
+                  issue_number:
+                    existingIssue.number,
                   state: "closed",
                 });
-              }
 
-              console.log(
-                `${workflowName} succeeded.`
-              );
+                console.log(
+                  `Closed recovered alert issue #${existingIssue.number}.`
+                );
+              } else {
+                console.log(
+                  `${workflowName} succeeded and no open alert exists.`
+                );
+              }
 
               return;
             }
@@ -98,7 +179,8 @@ jobs:
               `**Conclusion:** ${conclusion}\n` +
               `**Run ID:** ${runId}\n` +
               `**Branch:** ${branch}\n` +
-              `**Started:** ${createdAt}\n\n` +
+              `**Started:** ${createdAt}\n` +
+              `**Manual Test:** ${isManualTest ? "Yes" : "No"}\n\n` +
               `### Investigation\n\n` +
               `1. Open the failed GitHub Actions run.\n` +
               `2. Review the failed pipeline step.\n` +
@@ -111,7 +193,8 @@ jobs:
               await github.rest.issues.createComment({
                 owner,
                 repo,
-                issue_number: existingIssue.number,
+                issue_number:
+                  existingIssue.number,
                 body:
                   `🚨 Another pipeline failure occurred.\n\n` +
                   body,
@@ -124,14 +207,17 @@ jobs:
               return;
             }
 
-            await github.rest.issues.create({
-              owner,
-              repo,
-              title,
-              body,
-              labels: ["pipeline-alert"],
-            });
+            const newIssue =
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                labels: [
+                  "pipeline-alert"
+                ],
+              });
 
             console.log(
-              `Created pipeline alert issue for ${workflowName}.`
+              `Created pipeline alert issue #${newIssue.data.number}.`
             );
