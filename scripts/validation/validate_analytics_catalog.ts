@@ -157,6 +157,11 @@ type ProductValidationResult = {
 
     crossSourceComparisons:
       number;
+    realizedSalesDiagnosis:
+      string;
+
+    realizedSalesReason:
+      string;      
 
     soldMedianPrice:
       number | null;
@@ -2041,6 +2046,14 @@ async function validateProduct(
         crossSourceAgreement
           .comparisonsAvailable,
 
+      realizedSalesDiagnosis:
+        crossSourceAgreement
+          .realizedSalesDiagnosis,
+
+      realizedSalesReason:
+        crossSourceAgreement
+          .realizedSalesReason,
+
       soldMedianPrice:
         crossSourceAgreement
           .soldMedianPrice,
@@ -2206,7 +2219,9 @@ async function main(): Promise<void> {
       console.log(
         `Cross-Source: ${snapshot.crossSourceScore === null ? "N/A" : `${snapshot.crossSourceScore}/100`} | ${snapshot.crossSourceAgreement} | ${snapshot.crossSourceSignals} signal(s)`,
       );
-
+      console.log(
+        `Realized Sales: ${snapshot.realizedSalesDiagnosis}`,
+      );
 
       console.log(
         `Confidence: ${snapshot.confidence} (${snapshot.confidenceScore})`,
@@ -2381,7 +2396,70 @@ async function main(): Promise<void> {
           .crossSourceAgreement ===
         "Unavailable",
     );
+  const confirmsBoth =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .realizedSalesDiagnosis ===
+        "Confirms Both",
+    );
 
+
+  const confirmsReference =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .realizedSalesDiagnosis ===
+        "Confirms Reference",
+    );
+
+
+  const confirmsActiveMarket =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .realizedSalesDiagnosis ===
+        "Confirms Active Market",
+    );
+
+
+  const betweenMarkets =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .realizedSalesDiagnosis ===
+        "Between Markets",
+    );
+
+
+  const independentDivergence =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .realizedSalesDiagnosis ===
+        "Independent Divergence",
+    );
+
+
+  const realizedSalesUnavailable =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .realizedSalesDiagnosis ===
+        "Unavailable",
+    );
 
   const reviewProducts =
     results.filter(
@@ -2460,8 +2538,35 @@ async function main(): Promise<void> {
     `Unavailable: ${unavailableAgreement.length}`,
   );
 
-
   console.log("");
+
+  console.log(
+    "Realized-Sales Confirmation:",
+  );
+
+  console.log(
+    `Confirms Both: ${confirmsBoth.length}`,
+  );
+
+  console.log(
+    `Confirms Reference: ${confirmsReference.length}`,
+  );
+
+  console.log(
+    `Confirms Active Market: ${confirmsActiveMarket.length}`,
+  );
+
+  console.log(
+    `Between Markets: ${betweenMarkets.length}`,
+  );
+
+  console.log(
+    `Independent Divergence: ${independentDivergence.length}`,
+  );
+
+  console.log(
+    `Unavailable: ${realizedSalesUnavailable.length}`,
+  );
 
 
   console.log(

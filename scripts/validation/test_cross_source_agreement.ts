@@ -28,6 +28,7 @@ function runTest(
   test: () => void,
 ): boolean {
   console.log("");
+
   console.log(
     `TEST: ${name}`,
   );
@@ -95,13 +96,187 @@ const tests = [
         assert(
           result.signalsAvailable ===
             3,
-          "Expected all three signals.",
+          "Expected three signals.",
         );
 
         assert(
           result.comparisonsAvailable ===
             3,
           "Expected three comparisons.",
+        );
+
+        assert(
+          result.realizedSalesDiagnosis ===
+            "Confirms Both",
+          "Realized sales should confirm both markets.",
+        );
+      },
+    ),
+
+
+  () =>
+    runTest(
+      "Realized sales confirm TCGPlayer reference",
+      () => {
+        const result =
+          calculateCrossSourceAgreement({
+            referencePrice:
+              500,
+
+            soldMedianPrice:
+              505,
+
+            activeMedianPrice:
+              700,
+          });
+
+
+        assert(
+          result.realizedSalesDiagnosis ===
+            "Confirms Reference",
+          "Sold evidence should confirm the reference market.",
+        );
+
+        assert(
+          result.referenceVsSoldPercent !==
+            null &&
+            result.referenceVsSoldPercent <=
+              10,
+          "Sold median should be close to reference.",
+        );
+
+        assert(
+          result.soldVsActivePercent !==
+            null &&
+            result.soldVsActivePercent >
+              10,
+          "Sold median should diverge from active asks.",
+        );
+      },
+    ),
+
+
+  () =>
+    runTest(
+      "Realized sales confirm active eBay market",
+      () => {
+        const result =
+          calculateCrossSourceAgreement({
+            referencePrice:
+              500,
+
+            soldMedianPrice:
+              695,
+
+            activeMedianPrice:
+              700,
+          });
+
+
+        assert(
+          result.realizedSalesDiagnosis ===
+            "Confirms Active Market",
+          "Sold evidence should confirm active eBay pricing.",
+        );
+
+        assert(
+          result.soldVsActivePercent !==
+            null &&
+            result.soldVsActivePercent <=
+              10,
+          "Sold median should be close to active market.",
+        );
+
+        assert(
+          result.referenceVsSoldPercent !==
+            null &&
+            result.referenceVsSoldPercent >
+              10,
+          "Sold median should diverge from reference pricing.",
+        );
+      },
+    ),
+
+
+  () =>
+    runTest(
+      "Realized sales fall between competing markets",
+      () => {
+        const result =
+          calculateCrossSourceAgreement({
+            referencePrice:
+              500,
+
+            soldMedianPrice:
+              600,
+
+            activeMedianPrice:
+              700,
+          });
+
+
+        assert(
+          result.realizedSalesDiagnosis ===
+            "Between Markets",
+          "Sold evidence should be classified between the two markets.",
+        );
+
+        assert(
+          result.referenceVsSoldPercent !==
+            null &&
+            result.referenceVsSoldPercent >
+              10,
+          "Sold median should not closely confirm reference.",
+        );
+
+        assert(
+          result.soldVsActivePercent !==
+            null &&
+            result.soldVsActivePercent >
+              10,
+          "Sold median should not closely confirm active asks.",
+        );
+      },
+    ),
+
+
+  () =>
+    runTest(
+      "Realized sales diverge independently",
+      () => {
+        const result =
+          calculateCrossSourceAgreement({
+            referencePrice:
+              500,
+
+            soldMedianPrice:
+              700,
+
+            activeMedianPrice:
+              520,
+          });
+
+
+        assert(
+          result.realizedSalesDiagnosis ===
+            "Independent Divergence",
+          "Sold evidence outside both comparison markets should be independently divergent.",
+        );
+
+        assert(
+          result.referenceVsSoldPercent !==
+            null &&
+            result.referenceVsSoldPercent >
+              10,
+          "Sold median should diverge from reference.",
+        );
+
+        assert(
+          result.soldVsActivePercent !==
+            null &&
+            result.soldVsActivePercent >
+              10,
+          "Sold median should diverge from active market.",
         );
       },
     ),
@@ -138,6 +313,12 @@ const tests = [
               20,
           "Reference versus sold divergence should exceed 20%.",
         );
+
+        assert(
+          result.realizedSalesDiagnosis ===
+            "Confirms Active Market",
+          "Realized sales should identify the active market as better supported.",
+        );
       },
     ),
 
@@ -164,15 +345,13 @@ const tests = [
             null &&
             result.soldVsActivePercent >
               30,
-          "Active market should show substantial divergence from sales.",
+          "Active market should substantially diverge from realized sales.",
         );
 
         assert(
-          result.score !==
-            null &&
-            result.score <
-              85,
-          "Large active-market divergence should prevent Strong agreement.",
+          result.realizedSalesDiagnosis ===
+            "Confirms Reference",
+          "Realized sales should confirm reference pricing.",
         );
       },
     ),
@@ -198,25 +377,31 @@ const tests = [
         assert(
           result.score !==
             null,
-          "Two available signals should produce an agreement score.",
+          "Two signals should produce an agreement score.",
         );
 
         assert(
           result.agreement ===
             "Strong",
-          "Closely aligned available signals should still show Strong agreement.",
+          "Available signals should show Strong agreement.",
         );
 
         assert(
           result.signalsAvailable ===
             2,
-          "Expected two available signals.",
+          "Expected two signals.",
         );
 
         assert(
           result.comparisonsAvailable ===
             1,
-          "Two signals should produce one pairwise comparison.",
+          "Two signals should produce one comparison.",
+        );
+
+        assert(
+          result.realizedSalesDiagnosis ===
+            "Unavailable",
+          "Realized-sales diagnosis must remain unavailable without sold evidence.",
         );
       },
     ),
@@ -252,15 +437,9 @@ const tests = [
         );
 
         assert(
-          result.signalsAvailable ===
-            1,
-          "Expected one market signal.",
-        );
-
-        assert(
-          result.comparisonsAvailable ===
-            0,
-          "Expected zero comparisons.",
+          result.realizedSalesDiagnosis ===
+            "Unavailable",
+          "Realized-sales diagnosis should also be unavailable.",
         );
       },
     ),
@@ -300,12 +479,19 @@ const tests = [
             0,
           "Expected zero signals.",
         );
+
+        assert(
+          result.realizedSalesDiagnosis ===
+            "Unavailable",
+          "Realized-sales diagnosis should be unavailable.",
+        );
       },
     ),
 ];
 
 
 console.log("");
+
 console.log(
   "=".repeat(
     78,
@@ -339,6 +525,7 @@ for (
 
 
 console.log("");
+
 console.log(
   "=".repeat(
     78,

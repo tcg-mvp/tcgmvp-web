@@ -6,6 +6,15 @@ export type CrossSourceAgreementLabel =
   | "Unavailable";
 
 
+export type RealizedSalesDiagnosis =
+  | "Confirms Both"
+  | "Confirms Reference"
+  | "Confirms Active Market"
+  | "Between Markets"
+  | "Independent Divergence"
+  | "Unavailable";
+
+
 export type CrossSourceAgreementInput = {
   /**
    * Canonical TCGPlayer / TCGCSV market price.
@@ -20,9 +29,8 @@ export type CrossSourceAgreementInput = {
   /**
    * Median current eBay active listing price.
    *
-   * This should represent the center of the
-   * active asking market, NOT the lowest
-   * actionable listing.
+   * This represents the center of the active
+   * asking market, NOT actionable entry price.
    */
   activeMedianPrice: number | null;
 };
@@ -52,19 +60,24 @@ export type CrossSourceAgreementResult = {
   soldVsActivePercent:
     number | null;
 
-  /**
-   * Number of valid market signals available.
-   *
-   * 1 = insufficient for agreement analysis
-   * 2 = one usable comparison
-   * 3 = full comparison set
-   */
-  signalsAvailable: number;
+  signalsAvailable:
+    number;
+
+  comparisonsAvailable:
+    number;
 
   /**
-   * Number of pairwise comparisons actually used.
+   * Interpretation of which market is supported
+   * by verified realized-sale evidence.
+   *
+   * This does NOT independently change the
+   * agreement score.
    */
-  comparisonsAvailable: number;
+  realizedSalesDiagnosis:
+    RealizedSalesDiagnosis;
+
+  realizedSalesReason:
+    string;
 
   reasons: string[];
 };
@@ -110,17 +123,8 @@ function roundScore(
 
 
 /**
- * Symmetric percentage difference.
- *
- * This avoids denominator bias from choosing
- * one price as the baseline.
- *
- * Example:
- *
- * $100 vs $110
- *
- * difference =
- * 10 / 105 = 9.5%
+ * Symmetric percentage difference prevents
+ * denominator bias.
  */
 function calculateDifferencePercent(
   first: number,
@@ -157,18 +161,6 @@ function calculateDifferencePercent(
 function scoreDifference(
   differencePercent: number,
 ): number {
-  /*
-   * Cross-market agreement bands.
-   *
-   * <= 5%   Excellent agreement
-   * <= 10%  Strong agreement
-   * <= 15%  Good agreement
-   * <= 20%  Moderate divergence
-   * <= 30%  Weak agreement
-   * <= 40%  Significant divergence
-   * > 40%   Severe divergence
-   */
-
   if (
     differencePercent <= 5
   ) {
@@ -225,6 +217,204 @@ function getAgreementLabel(
   }
 
   return "Divergent";
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Realized-sales confirmation
+|--------------------------------------------------------------------------
+|
+| Verified completed sales are treated as the
+| strongest evidence of where buyers and sellers
+| actually met.
+|
+| This diagnostic does not modify the agreement
+| score. It explains divergence.
+|
+*/
+
+function diagnoseRealizedSales({
+  referencePrice,
+  soldMedianPrice,
+  activeMedianPrice,
+  referenceVsSoldPercent,
+  soldVsActivePercent,
+}: {
+  referencePrice:
+    number | null;
+
+  soldMedianPrice:
+    number | null;
+
+  activeMedianPrice:
+    number | null;
+
+  referenceVsSoldPercent:
+    number | null;
+
+  soldVsActivePercent:
+    number | null;
+}): {
+  diagnosis:
+    RealizedSalesDiagnosis;
+
+  reason:
+    string;
+} {
+  /*
+   * No realized transaction evidence.
+   */
+  if (
+    soldMedianPrice === null
+  ) {
+    return {
+      diagnosis:
+        "Unavailable",
+
+      reason:
+        "Verified realized-sale evidence is unavailable, so TCGMVP cannot determine which market-price signal is better supported by completed transactions.",
+    };
+  }
+
+
+  /*
+   * Realized sales require at least one
+   * comparison market for confirmation.
+   */
+  if (
+    referencePrice === null &&
+    activeMedianPrice === null
+  ) {
+    return {
+      diagnosis:
+        "Unavailable",
+
+      reason:
+        "Verified realized sales are available, but no independent comparison market is available.",
+    };
+  }
+
+
+  const confirmsReference =
+    referenceVsSoldPercent !==
+      null &&
+    referenceVsSoldPercent <=
+      10;
+
+
+  const confirmsActive =
+    soldVsActivePercent !==
+      null &&
+    soldVsActivePercent <=
+      10;
+
+
+  /*
+   * Realized sales closely agree with both
+   * the reference and active markets.
+   */
+  if (
+    confirmsReference &&
+    confirmsActive
+  ) {
+    return {
+      diagnosis:
+        "Confirms Both",
+
+      reason:
+        "Verified realized sales closely agree with both TCGPlayer reference pricing and the active eBay market.",
+    };
+  }
+
+
+  /*
+   * Realized sales agree with TCGPlayer but
+   * active asking prices are materially apart.
+   */
+  if (
+    confirmsReference &&
+    !confirmsActive
+  ) {
+    return {
+      diagnosis:
+        "Confirms Reference",
+
+      reason:
+        "Verified realized sales align more closely with TCGPlayer reference pricing than with current eBay asking prices, suggesting active asks may be elevated or lagging realized buyer behavior.",
+    };
+  }
+
+
+  /*
+   * Realized sales agree with active asks while
+   * TCGPlayer is materially apart.
+   */
+  if (
+    confirmsActive &&
+    !confirmsReference
+  ) {
+    return {
+      diagnosis:
+        "Confirms Active Market",
+
+      reason:
+        "Verified realized sales align more closely with the active eBay market than with TCGPlayer reference pricing, suggesting the reference market may be lagging current transaction behavior.",
+    };
+  }
+
+
+  /*
+   * When all three signals exist, determine
+   * whether realized sales sit between the two
+   * competing market-price signals.
+   */
+  if (
+    referencePrice !== null &&
+    activeMedianPrice !== null
+  ) {
+    const lowerMarketPrice =
+      Math.min(
+        referencePrice,
+        activeMedianPrice,
+      );
+
+
+    const higherMarketPrice =
+      Math.max(
+        referencePrice,
+        activeMedianPrice,
+      );
+
+
+    if (
+      soldMedianPrice >=
+        lowerMarketPrice &&
+      soldMedianPrice <=
+        higherMarketPrice
+    ) {
+      return {
+        diagnosis:
+          "Between Markets",
+
+        reason:
+          "Verified realized sales fall between TCGPlayer reference pricing and the active eBay market, so completed transactions do not clearly confirm either market signal.",
+      };
+    }
+  }
+
+
+  /*
+   * Realized sales materially disagree with
+   * the available comparison markets.
+   */
+  return {
+    diagnosis:
+      "Independent Divergence",
+
+    reason:
+      "Verified realized sales materially diverge from the available comparison-market pricing, indicating broader price disagreement that requires review.",
+  };
 }
 
 
@@ -300,6 +490,23 @@ export function calculateCrossSourceAgreement({
       : null;
 
 
+  const realizedSales =
+    diagnoseRealizedSales({
+      referencePrice:
+        validReferencePrice,
+
+      soldMedianPrice:
+        validSoldMedianPrice,
+
+      activeMedianPrice:
+        validActiveMedianPrice,
+
+      referenceVsSoldPercent,
+
+      soldVsActivePercent,
+    });
+
+
   const comparisons: Array<{
     score: number;
     weight: number;
@@ -307,8 +514,7 @@ export function calculateCrossSourceAgreement({
 
 
   /*
-   * TCGPlayer reference vs realized eBay sales
-   * is the strongest cross-market comparison.
+   * TCGPlayer versus realized eBay transactions.
    */
   if (
     referenceVsSoldPercent !==
@@ -327,7 +533,7 @@ export function calculateCrossSourceAgreement({
 
 
   /*
-   * TCGPlayer reference vs active eBay asks.
+   * TCGPlayer versus active eBay asks.
    */
   if (
     referenceVsActivePercent !==
@@ -346,10 +552,7 @@ export function calculateCrossSourceAgreement({
 
 
   /*
-   * Realized eBay sales vs active eBay asks.
-   *
-   * Useful confirmation, but lower weight
-   * because both signals come from eBay.
+   * Realized eBay sales versus active eBay asks.
    */
   if (
     soldVsActivePercent !==
@@ -406,6 +609,13 @@ export function calculateCrossSourceAgreement({
 
       comparisonsAvailable,
 
+      realizedSalesDiagnosis:
+        realizedSales
+          .diagnosis,
+
+      realizedSalesReason:
+        realizedSales.reason,
+
       reasons: [
         "At least two valid market-price signals are required to evaluate cross-source agreement.",
       ],
@@ -414,11 +624,9 @@ export function calculateCrossSourceAgreement({
 
 
   /*
-   * Normalize weights across whichever
-   * comparisons are actually available.
+   * Missing evidence is not disagreement.
    *
-   * Missing evidence is therefore NOT treated
-   * as disagreement.
+   * Normalize weights across available comparisons.
    */
   const totalWeight =
     comparisons.reduce(
@@ -555,6 +763,13 @@ export function calculateCrossSourceAgreement({
     signalsAvailable,
 
     comparisonsAvailable,
+
+    realizedSalesDiagnosis:
+      realizedSales
+        .diagnosis,
+
+    realizedSalesReason:
+      realizedSales.reason,
 
     reasons:
       reasons.slice(
