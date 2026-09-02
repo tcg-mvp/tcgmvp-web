@@ -60,6 +60,10 @@ import {
   calculateConfidence,
 } from "@/lib/analytics/confidence";
 
+import {
+  calculateCrossSourceAgreement,
+} from "@/lib/analytics/crossSourceAgreement";
+
 import ProductAnalyticsTabs from "@/components/product/ProductAnalyticsTabs";
 import ProductTabs from "@/components/product/ProductTabs";
 import MarketIntelligenceSummary from "@/components/ui/MarketIntelligenceSummary";
@@ -719,7 +723,93 @@ export default async function ProductDetailPage({
       : product
           .product_market_summary;
 
+/*
+|--------------------------------------------------------------------------
+| Latest eBay market-price evidence
+|--------------------------------------------------------------------------
+|
+| marketplace_id 1 = eBay
+|
+| Median listing price represents the center
+| of the active asking market and must remain
+| separate from lowest_listing_price, which
+| represents actionable entry price.
+|--------------------------------------------------------------------------
+*/
 
+const {
+  data: ebayMetricsData,
+  error: ebayMetricsError,
+} = await supabase
+  .from(
+    "daily_market_metrics",
+  )
+  .select(`
+    metric_date,
+    median_listing_price
+  `)
+  .eq(
+    "product_id",
+    product.id,
+  )
+  .eq(
+    "marketplace_id",
+    1,
+  )
+  .not(
+    "median_listing_price",
+    "is",
+    null,
+  )
+  .order(
+    "metric_date",
+    {
+      ascending: false,
+    },
+  )
+  .limit(
+    1,
+  );
+
+
+if (
+  ebayMetricsError
+) {
+  console.error(
+    "Unable to load latest eBay market metrics:",
+    ebayMetricsError.message,
+  );
+}
+
+
+const latestEbayMetrics =
+  ebayMetricsData?.[0] ??
+  null;
+
+
+const parsedEbayMedianListing =
+  latestEbayMetrics
+    ?.median_listing_price !==
+      null &&
+  latestEbayMetrics
+    ?.median_listing_price !==
+      undefined
+    ? Number(
+        latestEbayMetrics
+          .median_listing_price,
+      )
+    : null;
+
+
+const ebayMedianListingPrice =
+  parsedEbayMedianListing !==
+    null &&
+  Number.isFinite(
+    parsedEbayMedianListing,
+  ) &&
+  parsedEbayMedianListing > 0
+    ? parsedEbayMedianListing
+    : null;
   /*
   |--------------------------------------------------------------------------
   | Canonical reference market price
@@ -856,7 +946,30 @@ export default async function ProductDetailPage({
       referencePrice:
         marketPrice,
     });
+/*
+|--------------------------------------------------------------------------
+| CROSS-SOURCE AGREEMENT
+|--------------------------------------------------------------------------
+|
+| Independent market signals:
+|
+| 1. TCGPlayer / TCGCSV reference price
+| 2. Median verified eBay completed-sale price
+| 3. Median active eBay listing price
+|
+*/
 
+const crossSourceAgreement =
+  calculateCrossSourceAgreement({
+    referencePrice:
+      marketPrice,
+
+    soldMedianPrice:
+      fairValue.medianSale,
+
+    activeMedianPrice:
+      ebayMedianListingPrice,
+  });
 
   /*
   |--------------------------------------------------------------------------
@@ -961,6 +1074,13 @@ export default async function ProductDetailPage({
         null,
 
       dataAgeDays,
+      crossSourceAgreementScore:
+        crossSourceAgreement
+          .score,
+
+      crossSourceComparisons:
+        crossSourceAgreement
+          .comparisonsAvailable,
     });
 
 
@@ -1228,7 +1348,46 @@ export default async function ProductDetailPage({
         methodology:
           fairValue.methodology,
       },
+      crossSourceAgreement: {
+        score:
+          crossSourceAgreement.score,
 
+        agreement:
+          crossSourceAgreement
+            .agreement,
+
+        referencePrice:
+          crossSourceAgreement
+            .referencePrice,
+
+        soldMedianPrice:
+          crossSourceAgreement
+            .soldMedianPrice,
+
+        activeMedianPrice:
+          crossSourceAgreement
+            .activeMedianPrice,
+
+        referenceVsSoldPercent:
+          crossSourceAgreement
+            .referenceVsSoldPercent,
+
+        referenceVsActivePercent:
+          crossSourceAgreement
+            .referenceVsActivePercent,
+
+        soldVsActivePercent:
+          crossSourceAgreement
+            .soldVsActivePercent,
+
+        signalsAvailable:
+          crossSourceAgreement
+            .signalsAvailable,
+
+        comparisonsAvailable:
+          crossSourceAgreement
+            .comparisonsAvailable,
+      },
       marketHealth: {
         score:
           marketHealth.score,

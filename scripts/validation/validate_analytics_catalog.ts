@@ -26,6 +26,10 @@ import {
 } from "@/lib/analytics/confidence";
 
 import {
+  calculateCrossSourceAgreement,
+} from "@/lib/analytics/crossSourceAgreement";
+
+import {
   calculateTrendAnalysis,
 } from "@/lib/analytics/trendAnalysis";
 
@@ -142,6 +146,24 @@ type ProductValidationResult = {
     historyPoints:
       number;
 
+    crossSourceScore:
+      number | null;
+
+    crossSourceAgreement:
+      string;
+
+    crossSourceSignals:
+      number;
+
+    crossSourceComparisons:
+      number;
+
+    soldMedianPrice:
+      number | null;
+
+    activeMedianPrice:
+      number | null;
+
     confidenceScore:
       number;
 
@@ -226,6 +248,15 @@ type HistoryRow = {
 };
 
 
+type EbayMetricRow = {
+  metric_date:
+    string;
+
+  median_listing_price:
+    number | string | null;
+};
+
+
 type SummaryRow = {
   current_market_price:
     number | string | null;
@@ -248,6 +279,7 @@ function printHeader(
   title: string,
 ): void {
   console.log("");
+
   console.log(
     "=".repeat(
       78,
@@ -675,6 +707,60 @@ async function getPriceHistory(
 }
 
 
+async function getLatestEbayMetric(
+  productId: number,
+): Promise<
+  EbayMetricRow | null
+> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      "daily_market_metrics",
+    )
+    .select(`
+      metric_date,
+      median_listing_price
+    `)
+    .eq(
+      "product_id",
+      productId,
+    )
+    .eq(
+      "marketplace_id",
+      1,
+    )
+    .not(
+      "median_listing_price",
+      "is",
+      null,
+    )
+    .order(
+      "metric_date",
+      {
+        ascending: false,
+      },
+    )
+    .limit(
+      1,
+    );
+
+
+  if (error) {
+    throw new Error(
+      `Unable to load latest eBay metric: ${error.message}`,
+    );
+  }
+
+
+  return (
+    data?.[0] ??
+    null
+  ) as EbayMetricRow | null;
+}
+
+
 async function getVerifiedSales(
   productId: number,
 ): Promise<
@@ -699,11 +785,11 @@ async function getVerifiedSales(
       "market_sales",
     )
     .select(`
-    total_price,
-    sale_price,
-    shipping_price,
-    sold_at,
-    is_verified
+      total_price,
+      sale_price,
+      shipping_price,
+      sold_at,
+      is_verified
     `)
     .eq(
       "product_id",
@@ -868,6 +954,7 @@ async function validateProduct(
     rawHistory,
     verifiedSales,
     listings,
+    latestEbayMetric,
   ] =
     await Promise.all([
       getMarketSummary(
@@ -883,6 +970,10 @@ async function validateProduct(
       ),
 
       getCurrentListings(
+        product.id,
+      ),
+
+      getLatestEbayMetric(
         product.id,
       ),
     ]);
@@ -1049,6 +1140,31 @@ async function validateProduct(
         : null;
 
 
+  const parsedEbayMedianListing =
+    latestEbayMetric
+      ?.median_listing_price !==
+        null &&
+    latestEbayMetric
+      ?.median_listing_price !==
+        undefined
+      ? Number(
+          latestEbayMetric
+            .median_listing_price,
+        )
+      : null;
+
+
+  const ebayMedianListingPrice =
+    parsedEbayMedianListing !==
+      null &&
+    Number.isFinite(
+      parsedEbayMedianListing,
+    ) &&
+    parsedEbayMedianListing > 0
+      ? parsedEbayMedianListing
+      : null;
+
+
   const verifiedSalePrices =
     verifiedSales
       .map(
@@ -1086,6 +1202,9 @@ async function validateProduct(
 
       latestPriceDate,
 
+      latestEbayMetric
+        ?.metric_date,
+
       ...listings.map(
         (
           listing,
@@ -1102,6 +1221,19 @@ async function validateProduct(
 
       referencePrice:
         marketPrice,
+    });
+
+
+  const crossSourceAgreement =
+    calculateCrossSourceAgreement({
+      referencePrice:
+        marketPrice,
+
+      soldMedianPrice:
+        fairValue.medianSale,
+
+      activeMedianPrice:
+        ebayMedianListingPrice,
     });
 
 
@@ -1174,6 +1306,14 @@ async function validateProduct(
         null,
 
       dataAgeDays,
+
+      crossSourceAgreementScore:
+        crossSourceAgreement
+          .score,
+
+      crossSourceComparisons:
+        crossSourceAgreement
+          .comparisonsAvailable,
     });
 
 
@@ -1299,12 +1439,80 @@ async function validateProduct(
   */
 
 
+  if (
+    crossSourceAgreement
+      .score !== null
+  ) {
+    checkScore(
+      findings,
+      "Cross-Source Agreement bounds",
+      crossSourceAgreement.score,
+    );
+  }
+
+
+  if (
+    crossSourceAgreement
+      .signalsAvailable < 2
+  ) {
+    if (
+      crossSourceAgreement
+        .score === null &&
+      crossSourceAgreement
+        .agreement ===
+        "Unavailable"
+    ) {
+      addFinding(
+        findings,
+        "PASS",
+        "Cross-source availability handling",
+        "Fewer than two signals correctly produces unavailable agreement.",
+      );
+    } else {
+      addFinding(
+        findings,
+        "FAIL",
+        "Cross-source availability handling",
+        "Fewer than two signals should not produce an agreement score.",
+      );
+    }
+  }
+
+
+  if (
+    crossSourceAgreement
+      .signalsAvailable >= 2
+  ) {
+    if (
+      crossSourceAgreement
+        .score !== null &&
+      crossSourceAgreement
+        .comparisonsAvailable >
+        0
+    ) {
+      addFinding(
+        findings,
+        "PASS",
+        "Cross-source comparison availability",
+        `${crossSourceAgreement.signalsAvailable} signals produced ${crossSourceAgreement.comparisonsAvailable} usable comparison(s).`,
+      );
+    } else {
+      addFinding(
+        findings,
+        "FAIL",
+        "Cross-source comparison availability",
+        "Two or more valid signals should produce an agreement score.",
+      );
+    }
+  }
+
+
   checkScore(
     findings,
     "Confidence bounds",
     sharedConfidence.score,
     0,
-    95,
+    100,
   );
 
 
@@ -1631,6 +1839,7 @@ async function validateProduct(
       priceTarget
         .targetAdjustmentPercent;
 
+
     if (
       Number.isFinite(
         adjustment,
@@ -1663,6 +1872,21 @@ async function validateProduct(
   | These are REVIEW signals rather than hard failures.
   |--------------------------------------------------------------------------
   */
+
+
+  if (
+    crossSourceAgreement
+      .score !== null &&
+    crossSourceAgreement
+      .score < 40
+  ) {
+    addFinding(
+      findings,
+      "WARN",
+      "Material cross-source divergence",
+      `Cross-source agreement is ${crossSourceAgreement.score}/100 (${crossSourceAgreement.agreement}). Review TCGPlayer, completed-sale, and active-market pricing.`,
+    );
+  }
 
 
   if (
@@ -1722,7 +1946,7 @@ async function validateProduct(
       findings,
       "WARN",
       "Exceptional rating with low confidence",
-      `Rating is ${marketRating.ratingScore}/100 while evidence confidence is only ${sharedConfidence.score}/95.`,
+      `Rating is ${marketRating.ratingScore}/100 while evidence confidence is only ${sharedConfidence.score}/100.`,
     );
   }
 
@@ -1800,6 +2024,30 @@ async function validateProduct(
 
       historyPoints:
         priceHistory.length,
+
+      crossSourceScore:
+        crossSourceAgreement
+          .score,
+
+      crossSourceAgreement:
+        crossSourceAgreement
+          .agreement,
+
+      crossSourceSignals:
+        crossSourceAgreement
+          .signalsAvailable,
+
+      crossSourceComparisons:
+        crossSourceAgreement
+          .comparisonsAvailable,
+
+      soldMedianPrice:
+        crossSourceAgreement
+          .soldMedianPrice,
+
+      activeMedianPrice:
+        crossSourceAgreement
+          .activeMedianPrice,
 
       confidenceScore:
         sharedConfidence.score,
@@ -1882,6 +2130,7 @@ async function main(): Promise<void> {
 
 
     console.log("");
+
     console.log(
       "-".repeat(
         78,
@@ -1953,25 +2202,36 @@ async function main(): Promise<void> {
         `Evidence: ${snapshot.verifiedSales} sales | ${snapshot.activeListings} listings | ${snapshot.historyPoints} history points`,
       );
 
+
+      console.log(
+        `Cross-Source: ${snapshot.crossSourceScore === null ? "N/A" : `${snapshot.crossSourceScore}/100`} | ${snapshot.crossSourceAgreement} | ${snapshot.crossSourceSignals} signal(s)`,
+      );
+
+
       console.log(
         `Confidence: ${snapshot.confidence} (${snapshot.confidenceScore})`,
       );
+
 
       console.log(
         `Trend: ${snapshot.trend} (${snapshot.trendScore})`,
       );
 
+
       console.log(
         `Risk: ${snapshot.risk} (${snapshot.riskScore})`,
       );
+
 
       console.log(
         `Market Rating: ${snapshot.marketRating} (${snapshot.marketRatingScore})`,
       );
 
+
       console.log(
         `Price Target: ${snapshot.priceTarget === null ? "N/A" : `$${snapshot.priceTarget}`} | ${snapshot.priceTargetVerdict}`,
       );
+
 
       console.log(
         `Outlook: ${snapshot.outlook} (${snapshot.outlookScore})`,
@@ -2068,6 +2328,61 @@ async function main(): Promise<void> {
     );
 
 
+  const strongAgreement =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .crossSourceAgreement ===
+        "Strong",
+    );
+
+
+  const moderateAgreement =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .crossSourceAgreement ===
+        "Moderate",
+    );
+
+
+  const weakAgreement =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .crossSourceAgreement ===
+        "Weak",
+    );
+
+
+  const divergentAgreement =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .crossSourceAgreement ===
+        "Divergent",
+    );
+
+
+  const unavailableAgreement =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .crossSourceAgreement ===
+        "Unavailable",
+    );
+
+
   const reviewProducts =
     results.filter(
       (
@@ -2094,29 +2409,70 @@ async function main(): Promise<void> {
     `Products analyzed: ${results.length}`,
   );
 
+
   console.log(
     `Execution failures: ${executionFailures}`,
   );
 
+
   console.log("");
+
 
   console.log(
     `Products with verified sales: ${evidenceRich.length}`,
   );
 
+
   console.log(
     `Products with zero verified sales: ${zeroSales.length}`,
   );
 
+
   console.log("");
+
+
+  console.log(
+    "Cross-Source Agreement:",
+  );
+
+
+  console.log(
+    `Strong: ${strongAgreement.length}`,
+  );
+
+
+  console.log(
+    `Moderate: ${moderateAgreement.length}`,
+  );
+
+
+  console.log(
+    `Weak: ${weakAgreement.length}`,
+  );
+
+
+  console.log(
+    `Divergent: ${divergentAgreement.length}`,
+  );
+
+
+  console.log(
+    `Unavailable: ${unavailableAgreement.length}`,
+  );
+
+
+  console.log("");
+
 
   console.log(
     `Validation failures: ${failures.length}`,
   );
 
+
   console.log(
     `Validation warnings: ${warnings.length}`,
   );
+
 
   console.log(
     `Products requiring review: ${reviewProducts.length}`,
@@ -2127,9 +2483,11 @@ async function main(): Promise<void> {
     reviewProducts.length > 0
   ) {
     console.log("");
+
     console.log(
       "Products requiring review:",
     );
+
 
     for (
       const result of
@@ -2144,6 +2502,7 @@ async function main(): Promise<void> {
             "FAIL",
         ).length;
 
+
       const productWarnings =
         result.findings.filter(
           (
@@ -2152,6 +2511,7 @@ async function main(): Promise<void> {
             finding.severity ===
             "WARN",
         ).length;
+
 
       console.log(
         `- ${result.productName}: ${productFailures} failure(s), ${productWarnings} warning(s)`,
