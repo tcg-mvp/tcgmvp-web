@@ -30,6 +30,14 @@ import {
 } from "@/lib/analytics/crossSourceAgreement";
 
 import {
+  calculateSourceRecency,
+} from "@/lib/analytics/sourceRecency";
+
+import {
+  calculateSourceEvidenceQuality,
+} from "@/lib/analytics/sourceEvidenceQuality";
+
+import {
   calculateTrendAnalysis,
 } from "@/lib/analytics/trendAnalysis";
 
@@ -157,11 +165,45 @@ type ProductValidationResult = {
 
     crossSourceComparisons:
       number;
+
     realizedSalesDiagnosis:
       string;
 
     realizedSalesReason:
-      string;      
+      string;
+
+    sourceRecencyScore:
+      number | null;
+
+    sourceRecencyLabel:
+      string;
+
+    evidenceQualityScore:
+      number;
+
+    evidenceQualityLabel:
+      string;
+
+    salesDepthScore:
+      number;
+
+    listingDepthScore:
+      number;
+
+    historyDepthScore:
+      number;
+
+    crossSourceDepthScore:
+      number;
+
+    referenceAgeDays:
+      number | null;
+
+    soldAgeDays:
+      number | null;
+
+    activeAgeDays:
+      number | null;
 
     soldMedianPrice:
       number | null;
@@ -365,6 +407,7 @@ function checkScore(
       return;
     }
 
+
     addFinding(
       findings,
       "FAIL",
@@ -433,10 +476,12 @@ function calculateDataAgeDays(
             return null;
           }
 
+
           const timestamp =
             new Date(
               value,
             ).getTime();
+
 
           return Number.isFinite(
             timestamp,
@@ -1085,6 +1130,7 @@ async function validateProduct(
             );
           }
 
+
           if (
             listing.shipping_price !==
             null
@@ -1098,6 +1144,7 @@ async function validateProduct(
               )
             );
           }
+
 
           return null;
         },
@@ -1191,6 +1238,39 @@ async function validateProduct(
       );
 
 
+  const latestVerifiedSaleAt =
+    verifiedSales.length > 0
+      ? verifiedSales
+          .map(
+            (
+              sale,
+            ) =>
+              sale.sold_at,
+          )
+          .filter(
+            (
+              value,
+            ) =>
+              Boolean(
+                value,
+              ),
+          )
+          .sort(
+            (
+              first,
+              second,
+            ) =>
+              new Date(
+                second,
+              ).getTime() -
+              new Date(
+                first,
+              ).getTime(),
+          )[0] ??
+        null
+      : null;
+
+
   const latestPriceDate =
     priceHistory.length > 0
       ? priceHistory[
@@ -1239,6 +1319,38 @@ async function validateProduct(
 
       activeMedianPrice:
         ebayMedianListingPrice,
+    });
+
+
+  const sourceRecency =
+    calculateSourceRecency({
+      referenceObservedAt:
+        latestPriceDate,
+
+      soldObservedAt:
+        latestVerifiedSaleAt,
+
+      activeObservedAt:
+        latestEbayMetric
+          ?.metric_date ??
+        null,
+    });
+
+
+  const sourceEvidenceQuality =
+    calculateSourceEvidenceQuality({
+      verifiedSalesCount:
+        verifiedSalePrices.length,
+
+      activeListingsCount:
+        activeListings,
+
+      historyPoints:
+        priceHistory.length,
+
+      crossSourceComparisons:
+        crossSourceAgreement
+          .comparisonsAvailable,
     });
 
 
@@ -1510,6 +1622,53 @@ async function validateProduct(
       );
     }
   }
+
+
+  if (
+    sourceRecency.score !==
+    null
+  ) {
+    checkScore(
+      findings,
+      "Source Recency bounds",
+      sourceRecency.score,
+    );
+  }
+
+
+  if (
+    sourceRecency
+      .signalsWithTimestamps ===
+      0
+  ) {
+    if (
+      sourceRecency.score ===
+        null &&
+      sourceRecency.label ===
+        "Unavailable"
+    ) {
+      addFinding(
+        findings,
+        "PASS",
+        "Source Recency availability handling",
+        "No source timestamps correctly produces unavailable recency.",
+      );
+    } else {
+      addFinding(
+        findings,
+        "FAIL",
+        "Source Recency availability handling",
+        "No source timestamps should produce unavailable recency.",
+      );
+    }
+  }
+
+
+  checkScore(
+    findings,
+    "Source Evidence Quality bounds",
+    sourceEvidenceQuality.score,
+  );
 
 
   checkScore(
@@ -1895,6 +2054,35 @@ async function validateProduct(
 
 
   if (
+    sourceRecency
+      .staleSignals.length >
+    0
+  ) {
+    addFinding(
+      findings,
+      "WARN",
+      "Stale market-source evidence",
+      `${sourceRecency.staleSignals.join(", ")} source evidence is stale or very stale.`,
+    );
+  }
+
+
+  if (
+    sourceEvidenceQuality.label ===
+      "Insufficient" ||
+    sourceEvidenceQuality.score <
+      40
+  ) {
+    addFinding(
+      findings,
+      "WARN",
+      "Thin underlying market evidence",
+      `Source Evidence Quality is ${sourceEvidenceQuality.score}/100 (${sourceEvidenceQuality.label}).`,
+    );
+  }
+
+
+  if (
     trendAnalysis.strength >=
       65 &&
     riskAnalysis.riskScore >=
@@ -2053,6 +2241,46 @@ async function validateProduct(
       realizedSalesReason:
         crossSourceAgreement
           .realizedSalesReason,
+
+      sourceRecencyScore:
+        sourceRecency.score,
+
+      sourceRecencyLabel:
+        sourceRecency.label,
+
+      evidenceQualityScore:
+        sourceEvidenceQuality.score,
+
+      evidenceQualityLabel:
+        sourceEvidenceQuality.label,
+
+      salesDepthScore:
+        sourceEvidenceQuality
+          .salesDepthScore,
+
+      listingDepthScore:
+        sourceEvidenceQuality
+          .listingDepthScore,
+
+      historyDepthScore:
+        sourceEvidenceQuality
+          .historyDepthScore,
+
+      crossSourceDepthScore:
+        sourceEvidenceQuality
+          .crossSourceDepthScore,
+
+      referenceAgeDays:
+        sourceRecency
+          .reference.ageDays,
+
+      soldAgeDays:
+        sourceRecency
+          .sold.ageDays,
+
+      activeAgeDays:
+        sourceRecency
+          .active.ageDays,
 
       soldMedianPrice:
         crossSourceAgreement
@@ -2219,9 +2447,32 @@ async function main(): Promise<void> {
       console.log(
         `Cross-Source: ${snapshot.crossSourceScore === null ? "N/A" : `${snapshot.crossSourceScore}/100`} | ${snapshot.crossSourceAgreement} | ${snapshot.crossSourceSignals} signal(s)`,
       );
+
+
       console.log(
         `Realized Sales: ${snapshot.realizedSalesDiagnosis}`,
       );
+
+
+      console.log(
+        `Source Recency: ${snapshot.sourceRecencyScore === null ? "N/A" : `${snapshot.sourceRecencyScore}/100`} | ${snapshot.sourceRecencyLabel}`,
+      );
+
+
+      console.log(
+        `  Reference: ${snapshot.referenceAgeDays === null ? "N/A" : `${snapshot.referenceAgeDays}d`} | Sold: ${snapshot.soldAgeDays === null ? "N/A" : `${snapshot.soldAgeDays}d`} | Active: ${snapshot.activeAgeDays === null ? "N/A" : `${snapshot.activeAgeDays}d`}`,
+      );
+
+
+      console.log(
+        `Evidence Quality: ${snapshot.evidenceQualityScore}/100 | ${snapshot.evidenceQualityLabel}`,
+      );
+
+
+      console.log(
+        `  Sales: ${snapshot.salesDepthScore} | Listings: ${snapshot.listingDepthScore} | History: ${snapshot.historyDepthScore} | Cross-Source: ${snapshot.crossSourceDepthScore}`,
+      );
+
 
       console.log(
         `Confidence: ${snapshot.confidence} (${snapshot.confidenceScore})`,
@@ -2264,6 +2515,7 @@ async function main(): Promise<void> {
           continue;
         }
 
+
         console.log(
           `  ${finding.severity} ${finding.check}: ${finding.message}`,
         );
@@ -2283,6 +2535,7 @@ async function main(): Promise<void> {
     ) {
       executionFailures +=
         1;
+
 
       console.log(
         "  FAIL Analytics execution:",
@@ -2396,6 +2649,8 @@ async function main(): Promise<void> {
           .crossSourceAgreement ===
         "Unavailable",
     );
+
+
   const confirmsBoth =
     results.filter(
       (
@@ -2460,6 +2715,62 @@ async function main(): Promise<void> {
           .realizedSalesDiagnosis ===
         "Unavailable",
     );
+
+
+  const excellentEvidence =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .evidenceQualityLabel ===
+        "Excellent",
+    );
+
+
+  const strongEvidence =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .evidenceQualityLabel ===
+        "Strong",
+    );
+
+
+  const moderateEvidence =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .evidenceQualityLabel ===
+        "Moderate",
+    );
+
+
+  const thinEvidence =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .evidenceQualityLabel ===
+        "Thin",
+    );
+
+
+  const insufficientEvidence =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .evidenceQualityLabel ===
+        "Insufficient",
+    );
+
 
   const reviewProducts =
     results.filter(
@@ -2538,35 +2849,79 @@ async function main(): Promise<void> {
     `Unavailable: ${unavailableAgreement.length}`,
   );
 
+
   console.log("");
+
 
   console.log(
     "Realized-Sales Confirmation:",
   );
 
+
   console.log(
     `Confirms Both: ${confirmsBoth.length}`,
   );
+
 
   console.log(
     `Confirms Reference: ${confirmsReference.length}`,
   );
 
+
   console.log(
     `Confirms Active Market: ${confirmsActiveMarket.length}`,
   );
+
 
   console.log(
     `Between Markets: ${betweenMarkets.length}`,
   );
 
+
   console.log(
     `Independent Divergence: ${independentDivergence.length}`,
   );
 
+
   console.log(
     `Unavailable: ${realizedSalesUnavailable.length}`,
   );
+
+
+  console.log("");
+
+
+  console.log(
+    "Source Evidence Quality:",
+  );
+
+
+  console.log(
+    `Excellent: ${excellentEvidence.length}`,
+  );
+
+
+  console.log(
+    `Strong: ${strongEvidence.length}`,
+  );
+
+
+  console.log(
+    `Moderate: ${moderateEvidence.length}`,
+  );
+
+
+  console.log(
+    `Thin: ${thinEvidence.length}`,
+  );
+
+
+  console.log(
+    `Insufficient: ${insufficientEvidence.length}`,
+  );
+
+
+  console.log("");
 
 
   console.log(
@@ -2588,6 +2943,7 @@ async function main(): Promise<void> {
     reviewProducts.length > 0
   ) {
     console.log("");
+
 
     console.log(
       "Products requiring review:",
@@ -2636,6 +2992,7 @@ async function main(): Promise<void> {
       "Catalog Validation: FAIL",
     );
 
+
     process.exitCode =
       1;
 
@@ -2668,6 +3025,7 @@ main().catch(
       "Analytics catalog validation failed:",
       error,
     );
+
 
     process.exit(
       1,
