@@ -38,6 +38,10 @@ import {
 } from "@/lib/analytics/sourceEvidenceQuality";
 
 import {
+  calculateMarketAnomalyDetection,
+} from "@/lib/analytics/marketAnomalyDetection";
+
+import {
   calculateTrendAnalysis,
 } from "@/lib/analytics/trendAnalysis";
 
@@ -195,6 +199,30 @@ type ProductValidationResult = {
 
     crossSourceDepthScore:
       number;
+
+    anomalyScore:
+      number;
+
+    anomalyLevel:
+      string;
+
+    anomalyFlags:
+      string[];
+
+    saleOutlierCount:
+      number;
+
+    listingOutlierCount:
+      number;
+
+    saleDispersionPercent:
+      number | null;
+
+    listingSpreadPercent:
+      number | null;
+
+    lowestListingDiscountPercent:
+      number | null;
 
     referenceAgeDays:
       number | null;
@@ -985,6 +1013,106 @@ async function getCurrentListings(
 }
 
 
+async function getCurrentListingsForAnalytics(
+  productId: number,
+): Promise<
+  ListingRow[]
+> {
+  const {
+    data: latestData,
+    error: latestError,
+  } = await supabase
+    .from(
+      "market_listings",
+    )
+    .select(
+      "last_seen",
+    )
+    .eq(
+      "product_id",
+      productId,
+    )
+    .eq(
+      "marketplace",
+      "ebay",
+    )
+    .order(
+      "last_seen",
+      {
+        ascending: false,
+      },
+    )
+    .limit(
+      1,
+    );
+
+
+  if (latestError) {
+    throw new Error(
+      `Unable to identify latest analytics listing snapshot: ${latestError.message}`,
+    );
+  }
+
+
+  const latestSeen =
+    latestData?.[0]
+      ?.last_seen ??
+    null;
+
+
+  if (
+    latestSeen === null
+  ) {
+    return [];
+  }
+
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      "market_listings",
+    )
+    .select(`
+      listing_price,
+      shipping_price,
+      total_price,
+      last_seen
+    `)
+    .eq(
+      "product_id",
+      productId,
+    )
+    .eq(
+      "marketplace",
+      "ebay",
+    )
+    .eq(
+      "last_seen",
+      latestSeen,
+    )
+    .order(
+      "total_price",
+      {
+        ascending: true,
+      },
+    );
+
+
+  if (error) {
+    throw new Error(
+      `Unable to load analytics listing snapshot: ${error.message}`,
+    );
+  }
+
+
+  return (
+    data ?? []
+  ) as ListingRow[];
+}
+
+
 async function validateProduct(
   product: {
     id: number;
@@ -1004,6 +1132,7 @@ async function validateProduct(
     rawHistory,
     verifiedSales,
     listings,
+    analyticsListings,
     latestEbayMetric,
   ] =
     await Promise.all([
@@ -1020,6 +1149,10 @@ async function validateProduct(
       ),
 
       getCurrentListings(
+        product.id,
+      ),
+
+      getCurrentListingsForAnalytics(
         product.id,
       ),
 
@@ -1112,7 +1245,7 @@ async function validateProduct(
             ),
           ),
         )
-      : listings.length;
+      : analyticsListings.length;
 
 
   const listingPrices =
@@ -1146,14 +1279,62 @@ async function validateProduct(
           }
 
 
-          return null;
+          return Number(
+            listing.listing_price,
+          );
         },
       )
       .filter(
         (
           value,
         ): value is number =>
-          value !== null &&
+          Number.isFinite(
+            value,
+          ) &&
+          value > 0,
+      );
+
+
+  const analyticsListingPrices =
+    analyticsListings
+      .map(
+        (
+          listing,
+        ) => {
+          if (
+            listing.total_price !==
+            null
+          ) {
+            return Number(
+              listing.total_price,
+            );
+          }
+
+
+          if (
+            listing.shipping_price !==
+            null
+          ) {
+            return (
+              Number(
+                listing.listing_price,
+              ) +
+              Number(
+                listing.shipping_price,
+              )
+            );
+          }
+
+
+          return Number(
+            listing.listing_price,
+          );
+        },
+      )
+      .filter(
+        (
+          value,
+        ): value is number =>
           Number.isFinite(
             value,
           ) &&
@@ -1290,7 +1471,7 @@ async function validateProduct(
       latestEbayMetric
         ?.metric_date,
 
-      ...listings.map(
+      ...analyticsListings.map(
         (
           listing,
         ) =>
@@ -1351,6 +1532,16 @@ async function validateProduct(
       crossSourceComparisons:
         crossSourceAgreement
           .comparisonsAvailable,
+    });
+
+
+  const marketAnomalyDetection =
+    calculateMarketAnomalyDetection({
+      salePrices:
+        verifiedSalePrices,
+
+      listingPrices:
+        analyticsListingPrices,
     });
 
 
@@ -1668,6 +1859,14 @@ async function validateProduct(
     findings,
     "Source Evidence Quality bounds",
     sourceEvidenceQuality.score,
+  );
+
+
+  checkScore(
+    findings,
+    "Market Anomaly bounds",
+    marketAnomalyDetection
+      .anomalyScore,
   );
 
 
@@ -2032,9 +2231,6 @@ async function validateProduct(
   |--------------------------------------------------------------------------
   | CROSS-ENGINE CONTRADICTION WARNINGS
   |--------------------------------------------------------------------------
-  |
-  | These are REVIEW signals rather than hard failures.
-  |--------------------------------------------------------------------------
   */
 
 
@@ -2078,6 +2274,21 @@ async function validateProduct(
       "WARN",
       "Thin underlying market evidence",
       `Source Evidence Quality is ${sourceEvidenceQuality.score}/100 (${sourceEvidenceQuality.label}).`,
+    );
+  }
+
+
+  if (
+    marketAnomalyDetection.level ===
+      "Moderate" ||
+    marketAnomalyDetection.level ===
+      "High"
+  ) {
+    addFinding(
+      findings,
+      "WARN",
+      "Material market anomaly",
+      `Anomaly score is ${marketAnomalyDetection.anomalyScore}/100 (${marketAnomalyDetection.level}) with flags: ${marketAnomalyDetection.flags.join(", ") || "none"}.`,
     );
   }
 
@@ -2269,6 +2480,38 @@ async function validateProduct(
       crossSourceDepthScore:
         sourceEvidenceQuality
           .crossSourceDepthScore,
+
+      anomalyScore:
+        marketAnomalyDetection
+          .anomalyScore,
+
+      anomalyLevel:
+        marketAnomalyDetection
+          .level,
+
+      anomalyFlags:
+        marketAnomalyDetection
+          .flags,
+
+      saleOutlierCount:
+        marketAnomalyDetection
+          .saleOutlierCount,
+
+      listingOutlierCount:
+        marketAnomalyDetection
+          .listingOutlierCount,
+
+      saleDispersionPercent:
+        marketAnomalyDetection
+          .saleDispersionPercent,
+
+      listingSpreadPercent:
+        marketAnomalyDetection
+          .listingSpreadPercent,
+
+      lowestListingDiscountPercent:
+        marketAnomalyDetection
+          .lowestListingDiscountPercent,
 
       referenceAgeDays:
         sourceRecency
@@ -2472,6 +2715,26 @@ async function main(): Promise<void> {
       console.log(
         `  Sales: ${snapshot.salesDepthScore} | Listings: ${snapshot.listingDepthScore} | History: ${snapshot.historyDepthScore} | Cross-Source: ${snapshot.crossSourceDepthScore}`,
       );
+
+
+      console.log(
+        `Anomaly: ${snapshot.anomalyScore}/100 | ${snapshot.anomalyLevel}`,
+      );
+
+
+      console.log(
+        `  Sale Outliers: ${snapshot.saleOutlierCount} | Listing Outliers: ${snapshot.listingOutlierCount} | Sale Dispersion: ${snapshot.saleDispersionPercent === null ? "N/A" : `${snapshot.saleDispersionPercent}%`} | Listing Spread: ${snapshot.listingSpreadPercent === null ? "N/A" : `${snapshot.listingSpreadPercent}%`} | Lowest Discount: ${snapshot.lowestListingDiscountPercent === null ? "N/A" : `${snapshot.lowestListingDiscountPercent}%`}`,
+      );
+
+
+      if (
+        snapshot.anomalyFlags.length >
+        0
+      ) {
+        console.log(
+          `  Anomaly Flags: ${snapshot.anomalyFlags.join(", ")}`,
+        );
+      }
 
 
       console.log(
@@ -2772,6 +3035,50 @@ async function main(): Promise<void> {
     );
 
 
+  const noAnomaly =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .anomalyLevel ===
+        "None",
+    );
+
+
+  const lowAnomaly =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .anomalyLevel ===
+        "Low",
+    );
+
+
+  const moderateAnomaly =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .anomalyLevel ===
+        "Moderate",
+    );
+
+
+  const highAnomaly =
+    results.filter(
+      (
+        result,
+      ) =>
+        result.snapshot
+          .anomalyLevel ===
+        "High",
+    );
+
+
   const reviewProducts =
     results.filter(
       (
@@ -2918,6 +3225,34 @@ async function main(): Promise<void> {
 
   console.log(
     `Insufficient: ${insufficientEvidence.length}`,
+  );
+
+
+  console.log("");
+
+
+  console.log(
+    "Market Anomaly Detection:",
+  );
+
+
+  console.log(
+    `None: ${noAnomaly.length}`,
+  );
+
+
+  console.log(
+    `Low: ${lowAnomaly.length}`,
+  );
+
+
+  console.log(
+    `Moderate: ${moderateAnomaly.length}`,
+  );
+
+
+  console.log(
+    `High: ${highAnomaly.length}`,
   );
 
 
