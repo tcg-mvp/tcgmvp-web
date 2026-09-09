@@ -61,7 +61,7 @@ export default function MarketConfidence({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-400">
-            Evidence Quality
+            Analytical Confidence
           </p>
 
           <h2 className="mt-2 text-2xl font-semibold text-white">

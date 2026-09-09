@@ -64,6 +64,18 @@ import {
   calculateCrossSourceAgreement,
 } from "@/lib/analytics/crossSourceAgreement";
 
+import {
+  calculateSourceRecency,
+} from "@/lib/analytics/sourceRecency";
+
+import {
+  calculateSourceEvidenceQuality,
+} from "@/lib/analytics/sourceEvidenceQuality";
+
+import {
+  calculateMarketAnomalyDetection,
+} from "@/lib/analytics/marketAnomalyDetection";
+
 import ProductAnalyticsTabs from "@/components/product/ProductAnalyticsTabs";
 import ProductTabs from "@/components/product/ProductTabs";
 import MarketIntelligenceSummary from "@/components/ui/MarketIntelligenceSummary";
@@ -72,7 +84,7 @@ import ResearchSummary from "@/components/product/layout/ResearchSummary";
 import ReportSection from "@/components/product/layout/ReportSection";
 import AnalyticsGrid from "@/components/product/layout/AnalyticsGrid";
 import EvidenceSection from "@/components/product/layout/EvidenceSection";
-
+import MarketEvidenceQuality from "@/components/product/MarketEvidenceQuality";
 import {
   supabase,
 } from "@/lib/supabase";
@@ -126,6 +138,7 @@ function formatCurrency(
     return "N/A";
   }
 
+
   return value.toLocaleString(
     "en-US",
     {
@@ -143,6 +156,7 @@ function formatPercent(
   if (value === null) {
     return "N/A";
   }
+
 
   return `${value >= 0 ? "+" : ""}${value.toFixed(
     2,
@@ -163,22 +177,28 @@ function calculateDataAgeDays(
 ): number | undefined {
   const validTimestamps =
     timestamps
-      .map((value) => {
-        if (!value) {
-          return null;
-        }
+      .map(
+        (
+          value,
+        ) => {
+          if (!value) {
+            return null;
+          }
 
-        const timestamp =
-          new Date(
-            value,
-          ).getTime();
 
-        return Number.isFinite(
-          timestamp,
-        )
-          ? timestamp
-          : null;
-      })
+          const timestamp =
+            new Date(
+              value,
+            ).getTime();
+
+
+          return Number.isFinite(
+            timestamp,
+          )
+            ? timestamp
+            : null;
+        },
+      )
       .filter(
         (
           timestamp,
@@ -242,7 +262,9 @@ export default async function ProductDetailPage({
     data: product,
     error,
   } = await supabase
-    .from("products")
+    .from(
+      "products",
+    )
     .select(`
       id,
       name,
@@ -333,7 +355,9 @@ export default async function ProductDetailPage({
     );
 
 
-  if (salesError) {
+  if (
+    salesError
+  ) {
     console.error(
       "Unable to load market sales:",
       salesError.message,
@@ -432,13 +456,17 @@ export default async function ProductDetailPage({
   const verifiedSalePrices =
     verifiedMarketSales
       .map(
-        (sale) =>
+        (
+          sale,
+        ) =>
           Number(
             sale.sale_price,
           ),
       )
       .filter(
-        (price) =>
+        (
+          price,
+        ) =>
           Number.isFinite(
             price,
           ) &&
@@ -446,19 +474,19 @@ export default async function ProductDetailPage({
       );
 
 
+  const latestVerifiedSaleAt =
+    verifiedMarketSales.length >
+    0
+      ? verifiedMarketSales[0]
+          ?.sold_at ??
+        null
+      : null;
+
+
   /*
   |--------------------------------------------------------------------------
-  | Active eBay evidence UI
+  | Latest active eBay snapshot
   |--------------------------------------------------------------------------
-  |
-  | Evidence shown on the product page must come
-  | from the same latest successful collection
-  | snapshot used by listing_statistics.py.
-  |
-  | Older rows remain stored as historical/raw
-  | evidence but are not presented as current
-  | active listings.
-  |
   */
 
   const {
@@ -505,6 +533,12 @@ export default async function ProductDetailPage({
       ?.last_seen ??
     null;
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Evidence UI — top 10 current listings
+  |--------------------------------------------------------------------------
+  */
 
   let marketListings:
     MarketListing[] = [];
@@ -575,10 +609,90 @@ export default async function ProductDetailPage({
   }
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | Analytics — full current eBay snapshot
+  |--------------------------------------------------------------------------
+  |
+  | User-facing evidence remains capped at 10 rows.
+  |
+  | Statistical analytics use the full latest snapshot so anomaly detection
+  | is not distorted by the UI display limit.
+  |--------------------------------------------------------------------------
+  */
+
+  let analyticsListings:
+    MarketListing[] = [];
+
+
+  if (
+    latestListingSeen !== null
+  ) {
+    const {
+      data: analyticsListingsData,
+      error: analyticsListingsError,
+    } = await supabase
+      .from(
+        "market_listings",
+      )
+      .select(`
+        id,
+        marketplace,
+        title,
+        listing_price,
+        shipping_price,
+        total_price,
+        listing_type,
+        seller_name,
+        seller_feedback,
+        listing_url,
+        listed_at,
+        last_seen
+      `)
+      .eq(
+        "product_id",
+        product.id,
+      )
+      .eq(
+        "marketplace",
+        "ebay",
+      )
+      .eq(
+        "last_seen",
+        latestListingSeen,
+      )
+      .order(
+        "total_price",
+        {
+          ascending: true,
+        },
+      );
+
+
+    if (
+      analyticsListingsError
+    ) {
+      console.error(
+        "Unable to load full eBay analytics listing snapshot:",
+        analyticsListingsError.message,
+      );
+    }
+
+
+    analyticsListings =
+      (
+        analyticsListingsData ??
+        []
+      ) as MarketListing[];
+  }
+
+
   const listingPrices =
     marketListings
       .map(
-        (listing) => {
+        (
+          listing,
+        ) => {
           if (
             listing.total_price !==
             null
@@ -604,14 +718,62 @@ export default async function ProductDetailPage({
           }
 
 
-          return null;
+          return Number(
+            listing.listing_price,
+          );
         },
       )
       .filter(
         (
           price,
         ): price is number =>
-          price !== null &&
+          Number.isFinite(
+            price,
+          ) &&
+          price > 0,
+      );
+
+
+  const analyticsListingPrices =
+    analyticsListings
+      .map(
+        (
+          listing,
+        ) => {
+          if (
+            listing.total_price !==
+            null
+          ) {
+            return Number(
+              listing.total_price,
+            );
+          }
+
+
+          if (
+            listing.shipping_price !==
+            null
+          ) {
+            return (
+              Number(
+                listing.listing_price,
+              ) +
+              Number(
+                listing.shipping_price,
+              )
+            );
+          }
+
+
+          return Number(
+            listing.listing_price,
+          );
+        },
+      )
+      .filter(
+        (
+          price,
+        ): price is number =>
           Number.isFinite(
             price,
           ) &&
@@ -669,14 +831,18 @@ export default async function ProductDetailPage({
     )
       ? product.daily_market_metrics
           .filter(
-            (item) =>
+            (
+              item,
+            ) =>
               item.marketplace_id ===
                 2 &&
               item.market_price !==
                 null,
           )
           .map(
-            (item) => ({
+            (
+              item,
+            ) => ({
               price:
                 Number(
                   item.market_price,
@@ -687,7 +853,9 @@ export default async function ProductDetailPage({
             }),
           )
           .filter(
-            (item) =>
+            (
+              item,
+            ) =>
               Number.isFinite(
                 item.price,
               ) &&
@@ -716,100 +884,96 @@ export default async function ProductDetailPage({
 
   const marketSummary =
     Array.isArray(
-      product.product_market_summary,
+      product
+        .product_market_summary,
     )
       ? product
           .product_market_summary[0]
       : product
           .product_market_summary;
 
-/*
-|--------------------------------------------------------------------------
-| Latest eBay market-price evidence
-|--------------------------------------------------------------------------
-|
-| marketplace_id 1 = eBay
-|
-| Median listing price represents the center
-| of the active asking market and must remain
-| separate from lowest_listing_price, which
-| represents actionable entry price.
-|--------------------------------------------------------------------------
-*/
 
-const {
-  data: ebayMetricsData,
-  error: ebayMetricsError,
-} = await supabase
-  .from(
-    "daily_market_metrics",
-  )
-  .select(`
-    metric_date,
-    median_listing_price
-  `)
-  .eq(
-    "product_id",
-    product.id,
-  )
-  .eq(
-    "marketplace_id",
-    1,
-  )
-  .not(
-    "median_listing_price",
-    "is",
-    null,
-  )
-  .order(
-    "metric_date",
-    {
-      ascending: false,
-    },
-  )
-  .limit(
-    1,
-  );
+  /*
+  |--------------------------------------------------------------------------
+  | Latest eBay market-price evidence
+  |--------------------------------------------------------------------------
+  */
+
+  const {
+    data: ebayMetricsData,
+    error: ebayMetricsError,
+  } = await supabase
+    .from(
+      "daily_market_metrics",
+    )
+    .select(`
+      metric_date,
+      median_listing_price
+    `)
+    .eq(
+      "product_id",
+      product.id,
+    )
+    .eq(
+      "marketplace_id",
+      1,
+    )
+    .not(
+      "median_listing_price",
+      "is",
+      null,
+    )
+    .order(
+      "metric_date",
+      {
+        ascending: false,
+      },
+    )
+    .limit(
+      1,
+    );
 
 
-if (
-  ebayMetricsError
-) {
-  console.error(
-    "Unable to load latest eBay market metrics:",
-    ebayMetricsError.message,
-  );
-}
+  if (
+    ebayMetricsError
+  ) {
+    console.error(
+      "Unable to load latest eBay market metrics:",
+      ebayMetricsError.message,
+    );
+  }
 
 
-const latestEbayMetrics =
-  ebayMetricsData?.[0] ??
-  null;
+  const latestEbayMetrics =
+    ebayMetricsData?.[0] ??
+    null;
 
 
-const parsedEbayMedianListing =
-  latestEbayMetrics
-    ?.median_listing_price !==
+  const parsedEbayMedianListing =
+    latestEbayMetrics
+      ?.median_listing_price !==
+        null &&
+    latestEbayMetrics
+      ?.median_listing_price !==
+        undefined
+      ? Number(
+          latestEbayMetrics
+            .median_listing_price,
+        )
+      : null;
+
+
+  const ebayMedianListingPrice =
+    parsedEbayMedianListing !==
       null &&
-  latestEbayMetrics
-    ?.median_listing_price !==
-      undefined
-    ? Number(
-        latestEbayMetrics
-          .median_listing_price,
-      )
-    : null;
+    Number.isFinite(
+      parsedEbayMedianListing,
+    ) &&
+    parsedEbayMedianListing > 0
+      ? parsedEbayMedianListing
+      : null;
 
 
-const ebayMedianListingPrice =
-  parsedEbayMedianListing !==
-    null &&
-  Number.isFinite(
-    parsedEbayMedianListing,
-  ) &&
-  parsedEbayMedianListing > 0
-    ? parsedEbayMedianListing
-    : null;
   /*
   |--------------------------------------------------------------------------
   | Canonical reference market price
@@ -863,7 +1027,7 @@ const ebayMedianListingPrice =
           marketSummary
             .active_listings,
         )
-      : marketListings.length;
+      : analyticsListings.length;
 
 
   /*
@@ -905,7 +1069,7 @@ const ebayMedianListingPrice =
 
   /*
   |--------------------------------------------------------------------------
-  | Shared data freshness
+  | Shared freshness
   |--------------------------------------------------------------------------
   */
 
@@ -925,8 +1089,13 @@ const ebayMedianListingPrice =
 
       latestPriceHistoryDate,
 
-      ...marketListings.map(
-        (listing) =>
+      latestEbayMetrics
+        ?.metric_date,
+
+      ...analyticsListings.map(
+        (
+          listing,
+        ) =>
           listing.last_seen,
       ),
     ]);
@@ -946,30 +1115,86 @@ const ebayMedianListingPrice =
       referencePrice:
         marketPrice,
     });
-/*
-|--------------------------------------------------------------------------
-| CROSS-SOURCE AGREEMENT
-|--------------------------------------------------------------------------
-|
-| Independent market signals:
-|
-| 1. TCGPlayer / TCGCSV reference price
-| 2. Median verified eBay completed-sale price
-| 3. Median active eBay listing price
-|
-*/
 
-const crossSourceAgreement =
-  calculateCrossSourceAgreement({
-    referencePrice:
-      marketPrice,
 
-    soldMedianPrice:
-      fairValue.medianSale,
+  /*
+  |--------------------------------------------------------------------------
+  | CROSS-SOURCE AGREEMENT
+  |--------------------------------------------------------------------------
+  */
 
-    activeMedianPrice:
-      ebayMedianListingPrice,
-  });
+  const crossSourceAgreement =
+    calculateCrossSourceAgreement({
+      referencePrice:
+        marketPrice,
+
+      soldMedianPrice:
+        fairValue.medianSale,
+
+      activeMedianPrice:
+        ebayMedianListingPrice,
+    });
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | SOURCE-SPECIFIC RECENCY
+  |--------------------------------------------------------------------------
+  */
+
+  const sourceRecency =
+    calculateSourceRecency({
+      referenceObservedAt:
+        latestPriceHistoryDate,
+
+      soldObservedAt:
+        latestVerifiedSaleAt,
+
+      activeObservedAt:
+        latestEbayMetrics
+          ?.metric_date ??
+        null,
+    });
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | SOURCE EVIDENCE QUALITY
+  |--------------------------------------------------------------------------
+  */
+
+  const sourceEvidenceQuality =
+    calculateSourceEvidenceQuality({
+      verifiedSalesCount:
+        verifiedSalePrices.length,
+
+      activeListingsCount:
+        activeListings,
+
+      historyPoints:
+        priceHistory.length,
+
+      crossSourceComparisons:
+        crossSourceAgreement
+          .comparisonsAvailable,
+    });
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | MARKET ANOMALY DETECTION
+  |--------------------------------------------------------------------------
+  */
+
+  const marketAnomalyDetection =
+    calculateMarketAnomalyDetection({
+      salePrices:
+        verifiedSalePrices,
+
+      listingPrices:
+        analyticsListingPrices,
+    });
+
 
   /*
   |--------------------------------------------------------------------------
@@ -994,10 +1219,6 @@ const crossSourceAgreement =
   |--------------------------------------------------------------------------
   | DEAL SCORE
   |--------------------------------------------------------------------------
-  |
-  | Valuation-only:
-  | actionable entry price vs Fair Value.
-  |
   */
 
   const dealScore =
@@ -1053,6 +1274,12 @@ const crossSourceAgreement =
   |--------------------------------------------------------------------------
   | SHARED MARKET CONFIDENCE
   |--------------------------------------------------------------------------
+  |
+  | Evidence Quality and anomaly detection intentionally remain separate
+  | diagnostic layers. Feeding them directly into Confidence here would
+  | double-count sales/listing/history evidence already modeled by
+  | calculateConfidence().
+  |--------------------------------------------------------------------------
   */
 
   const sharedConfidence =
@@ -1074,6 +1301,7 @@ const crossSourceAgreement =
         null,
 
       dataAgeDays,
+
       crossSourceAgreementScore:
         crossSourceAgreement
           .score,
@@ -1188,16 +1416,6 @@ const crossSourceAgreement =
   |--------------------------------------------------------------------------
   */
 
-  /*
-   * calculateInvestmentOutlook already returns an
-   * unrated / unknown result when transaction-supported
-   * Fair Value is unavailable.
-   *
-   * marketHealth.score is also unavailable in that
-   * same zero-sale state, so the numeric fallback below
-   * is only a type-safe placeholder for the calculator
-   * input and is not presented as observed Market Health.
-   */
   const investmentOutlook =
     calculateInvestmentOutlook({
       referencePrice:
@@ -1265,6 +1483,7 @@ const crossSourceAgreement =
       "==================================================",
     );
 
+
     console.log({
       product: {
         id:
@@ -1273,6 +1492,7 @@ const crossSourceAgreement =
         name:
           product.name,
       },
+
 
       pricing: {
         referenceMarketPrice:
@@ -1305,6 +1525,7 @@ const crossSourceAgreement =
             .downsideRiskPercent,
       },
 
+
       evidence: {
         verifiedSalesCount:
           verifiedSalePrices.length,
@@ -1317,6 +1538,9 @@ const crossSourceAgreement =
         displayedListingCount:
           marketListings.length,
 
+        analyticsListingCount:
+          analyticsListingPrices.length,
+
         deliveredListingPrices:
           listingPrices,
 
@@ -1325,6 +1549,144 @@ const crossSourceAgreement =
 
         dataAgeDays,
       },
+
+
+      crossSourceAgreement: {
+        score:
+          crossSourceAgreement.score,
+
+        agreement:
+          crossSourceAgreement
+            .agreement,
+
+        realizedSalesDiagnosis:
+          crossSourceAgreement
+            .realizedSalesDiagnosis,
+
+        realizedSalesReason:
+          crossSourceAgreement
+            .realizedSalesReason,
+
+        referencePrice:
+          crossSourceAgreement
+            .referencePrice,
+
+        soldMedianPrice:
+          crossSourceAgreement
+            .soldMedianPrice,
+
+        activeMedianPrice:
+          crossSourceAgreement
+            .activeMedianPrice,
+
+        signalsAvailable:
+          crossSourceAgreement
+            .signalsAvailable,
+
+        comparisonsAvailable:
+          crossSourceAgreement
+            .comparisonsAvailable,
+      },
+
+
+      sourceRecency: {
+        score:
+          sourceRecency.score,
+
+        label:
+          sourceRecency.label,
+
+        signalsWithTimestamps:
+          sourceRecency
+            .signalsWithTimestamps,
+
+        staleSignals:
+          sourceRecency
+            .staleSignals,
+
+        reference:
+          sourceRecency.reference,
+
+        sold:
+          sourceRecency.sold,
+
+        active:
+          sourceRecency.active,
+
+        reasons:
+          sourceRecency.reasons,
+      },
+
+
+      evidenceQuality: {
+        score:
+          sourceEvidenceQuality
+            .score,
+
+        label:
+          sourceEvidenceQuality
+            .label,
+
+        salesDepthScore:
+          sourceEvidenceQuality
+            .salesDepthScore,
+
+        listingDepthScore:
+          sourceEvidenceQuality
+            .listingDepthScore,
+
+        historyDepthScore:
+          sourceEvidenceQuality
+            .historyDepthScore,
+
+        crossSourceDepthScore:
+          sourceEvidenceQuality
+            .crossSourceDepthScore,
+
+        reasons:
+          sourceEvidenceQuality
+            .reasons,
+      },
+
+
+      anomalyDetection: {
+        anomalyScore:
+          marketAnomalyDetection
+            .anomalyScore,
+
+        level:
+          marketAnomalyDetection
+            .level,
+
+        flags:
+          marketAnomalyDetection
+            .flags,
+
+        saleOutlierCount:
+          marketAnomalyDetection
+            .saleOutlierCount,
+
+        listingOutlierCount:
+          marketAnomalyDetection
+            .listingOutlierCount,
+
+        saleDispersionPercent:
+          marketAnomalyDetection
+            .saleDispersionPercent,
+
+        listingSpreadPercent:
+          marketAnomalyDetection
+            .listingSpreadPercent,
+
+        lowestListingDiscountPercent:
+          marketAnomalyDetection
+            .lowestListingDiscountPercent,
+
+        reasons:
+          marketAnomalyDetection
+            .reasons,
+      },
+
 
       fairValue: {
         fairValue:
@@ -1348,46 +1710,8 @@ const crossSourceAgreement =
         methodology:
           fairValue.methodology,
       },
-      crossSourceAgreement: {
-        score:
-          crossSourceAgreement.score,
 
-        agreement:
-          crossSourceAgreement
-            .agreement,
 
-        referencePrice:
-          crossSourceAgreement
-            .referencePrice,
-
-        soldMedianPrice:
-          crossSourceAgreement
-            .soldMedianPrice,
-
-        activeMedianPrice:
-          crossSourceAgreement
-            .activeMedianPrice,
-
-        referenceVsSoldPercent:
-          crossSourceAgreement
-            .referenceVsSoldPercent,
-
-        referenceVsActivePercent:
-          crossSourceAgreement
-            .referenceVsActivePercent,
-
-        soldVsActivePercent:
-          crossSourceAgreement
-            .soldVsActivePercent,
-
-        signalsAvailable:
-          crossSourceAgreement
-            .signalsAvailable,
-
-        comparisonsAvailable:
-          crossSourceAgreement
-            .comparisonsAvailable,
-      },
       marketHealth: {
         score:
           marketHealth.score,
@@ -1412,6 +1736,7 @@ const crossSourceAgreement =
             .priceVariationPercent,
       },
 
+
       dealScore:
         dealScore
           ? {
@@ -1430,6 +1755,7 @@ const crossSourceAgreement =
                   .priceScore,
             }
           : null,
+
 
       investmentGrade:
         investmentGrade
@@ -1453,6 +1779,7 @@ const crossSourceAgreement =
             }
           : null,
 
+
       confidence: {
         score:
           sharedConfidence.score,
@@ -1465,6 +1792,7 @@ const crossSourceAgreement =
           sharedConfidence
             .reasons,
       },
+
 
       trend: {
         trend:
@@ -1485,6 +1813,7 @@ const crossSourceAgreement =
         reasons:
           trendAnalysis.reasons,
       },
+
 
       risk: {
         riskScore:
@@ -1511,6 +1840,7 @@ const crossSourceAgreement =
         reasons:
           riskAnalysis.reasons,
       },
+
 
       priceTarget: {
         referencePrice:
@@ -1548,6 +1878,7 @@ const crossSourceAgreement =
           priceTarget.confidence,
       },
 
+
       marketRating: {
         ratingScore:
           marketRating.ratingScore,
@@ -1577,6 +1908,7 @@ const crossSourceAgreement =
         confidence:
           marketRating.confidence,
       },
+
 
       investmentOutlook: {
         overallOutlook:
@@ -1627,6 +1959,7 @@ const crossSourceAgreement =
           investmentOutlook.summary,
       },
     });
+
 
     console.log(
       "==================================================\n",
@@ -1822,9 +2155,11 @@ const crossSourceAgreement =
               heroUpside ===
               null
                 ? "default"
-                : heroUpside > 0
+                : heroUpside >
+                    0
                   ? "positive"
-                  : heroUpside < 0
+                  : heroUpside <
+                      0
                     ? "negative"
                     : "default",
           },
@@ -1950,6 +2285,39 @@ const crossSourceAgreement =
             }
           />
         </AnalyticsGrid>
+
+
+        <div className="product-evidence-quality-wrapper">
+          <MarketEvidenceQuality
+            crossSourceAgreement={
+              crossSourceAgreement
+            }
+
+            sourceRecency={
+              sourceRecency
+            }
+
+            evidenceQuality={
+              sourceEvidenceQuality
+            }
+
+            anomalyDetection={
+              marketAnomalyDetection
+            }
+
+            verifiedSalesCount={
+              verifiedSalePrices.length
+            }
+
+            activeListingsCount={
+              activeListings
+            }
+
+            historyPoints={
+              priceHistory.length
+            }
+          />
+        </div>
       </ReportSection>
 
 
