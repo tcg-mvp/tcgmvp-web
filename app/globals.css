@@ -8779,3 +8779,414 @@ a {
   display: block;
   line-height: 1.25;
 }
+/* =========================================================
+   Private Beta — Landing Page Mobile Polish
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   Navigation
+   --------------------------------------------------------- */
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-menu-button {
+  display: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.72);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.mobile-menu-button span {
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--text);
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.mobile-menu-button.is-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.mobile-menu-button.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-button.is-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-nav-panel {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .desktop-beta-button {
+    display: none;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .mobile-nav-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: block;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    border-bottom: 1px solid transparent;
+    background: rgba(2, 6, 23, 0.97);
+    backdrop-filter: blur(22px);
+    transition:
+      max-height 240ms ease,
+      opacity 180ms ease,
+      visibility 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .mobile-nav-panel.is-open {
+    max-height: 460px;
+    opacity: 1;
+    visibility: visible;
+    border-bottom-color: var(--border);
+  }
+
+  .mobile-nav-panel-inner {
+    display: grid;
+    gap: 4px;
+    padding-top: 12px;
+    padding-bottom: 20px;
+  }
+
+  .mobile-nav-panel-inner > a:not(.mobile-nav-beta) {
+    min-height: 48px;
+    padding: 0 4px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .mobile-nav-panel-inner > a:not(.mobile-nav-beta):active {
+    color: var(--brand-gold-light);
+  }
+
+  .mobile-nav-beta {
+    width: 100%;
+    margin-top: 12px;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Hero
+   --------------------------------------------------------- */
+
+@media (max-width: 620px) {
+  .home-page .hero {
+    gap: 42px;
+    padding-top: 38px;
+    padding-bottom: 48px;
+  }
+
+  .home-page .hero-copy {
+    width: 100%;
+  }
+
+  .home-page .eyebrow {
+    max-width: 100%;
+    padding: 8px 11px;
+    font-size: 0.64rem;
+    line-height: 1.35;
+  }
+
+  .home-page .landing-hero-title {
+    max-width: 360px;
+    margin-top: 20px;
+    gap: 2px;
+  }
+
+  .home-page .hero h1 {
+    font-size: clamp(2.7rem, 12.4vw, 3.45rem);
+    line-height: 0.94;
+    letter-spacing: -0.058em;
+  }
+
+  .home-page .landing-hero-title > span {
+    display: block;
+  }
+
+  .home-page .hero-lead {
+    margin-top: 22px;
+    max-width: 350px;
+    font-size: 0.96rem;
+    line-height: 1.65;
+  }
+
+  .home-page .hero-actions {
+    margin-top: 26px;
+    gap: 10px;
+  }
+
+  .home-page .hero-actions .button {
+    min-height: 48px;
+  }
+
+  .home-page .hero-proof {
+    margin-top: 24px;
+    gap: 14px;
+  }
+
+  .home-page .hero-proof div {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .home-page .hero-proof div:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Research Report Preview
+   --------------------------------------------------------- */
+
+@media (max-width: 620px) {
+  .home-page .hero-visual {
+    margin-top: 0;
+  }
+
+  .home-page .landing-report-preview {
+    border-radius: 20px;
+  }
+
+  .home-page .landing-report-preview-topbar {
+    min-height: auto;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .home-page .landing-report-preview-topbar strong {
+    font-size: 0.92rem;
+  }
+
+  .home-page .landing-report-status {
+    width: fit-content;
+  }
+
+  .home-page .landing-report-preview-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .landing-report-preview-rating {
+    min-height: 128px;
+    padding: 18px;
+  }
+
+  .home-page .landing-report-preview-rating strong {
+    margin-top: 8px;
+  }
+
+  .home-page .landing-report-preview-thesis {
+    padding: 18px;
+  }
+
+  .home-page .landing-report-preview-thesis h2 {
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  .home-page .landing-report-preview-thesis p {
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+
+  /*
+    Important:
+    Override the existing mobile 1-column metric rule.
+    Three metrics become a compact 2-column arrangement.
+  */
+  .home-page .landing-report-preview-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .home-page .landing-report-preview-metrics > div {
+    min-width: 0;
+    padding: 13px;
+  }
+
+  .home-page .landing-report-preview-metrics > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .home-page .landing-report-preview-outlook {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 14px 14px;
+  }
+
+  .home-page .landing-report-preview-outlook > div {
+    min-width: 0;
+    padding: 13px;
+  }
+
+  .home-page .landing-report-preview-footer {
+    gap: 6px;
+    padding: 14px 16px;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Mobile section typography
+   --------------------------------------------------------- */
+
+@media (max-width: 620px) {
+  .home-page .section-heading {
+    gap: 18px;
+  }
+
+  .home-page .section-heading h2,
+  .home-page .insight-copy h2,
+  .home-page .faq-intro h2,
+  .home-page .cta-inner h2 {
+    font-size: clamp(2rem, 9vw, 2.65rem);
+    line-height: 1;
+  }
+
+  .home-page .section-heading p,
+  .home-page .insight-copy p,
+  .home-page .faq-intro p,
+  .home-page .cta-inner p {
+    font-size: 0.94rem;
+    line-height: 1.65;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Feature cards
+   --------------------------------------------------------- */
+
+@media (max-width: 620px) {
+  .home-page .feature-card {
+    min-height: auto;
+    padding: 22px;
+  }
+
+  .home-page .feature-card h3 {
+    margin-top: 20px;
+  }
+
+  .home-page .feature-metric {
+    margin-top: 26px;
+    padding-top: 22px;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Featured Product Cards
+   --------------------------------------------------------- */
+
+@media (max-width: 620px) {
+  .home-page .product-showcase {
+    gap: 16px;
+  }
+
+  .home-page .product-card {
+    border-radius: 20px;
+  }
+
+  .home-page .product-image-area {
+    min-height: 230px;
+    padding: 20px;
+  }
+
+  .home-page .product-image {
+    max-width: 260px;
+    height: 225px;
+  }
+
+  .home-page .product-card-body {
+    padding: 22px;
+  }
+
+  .home-page .product-card-body h3 {
+    font-size: 1.2rem;
+    line-height: 1.25;
+  }
+
+  .home-page .product-stat-row {
+    gap: 12px;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Process + insight section
+   --------------------------------------------------------- */
+
+@media (max-width: 620px) {
+  .home-page .process-timeline-card {
+    padding: 22px;
+  }
+
+  .home-page .insight-panel {
+    gap: 34px;
+    padding: 28px 22px;
+  }
+
+  .home-page .signal-card {
+    padding: 18px;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Extra-small devices
+   --------------------------------------------------------- */
+
+@media (max-width: 380px) {
+  .container {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .home-page .hero h1 {
+    font-size: 2.55rem;
+  }
+
+  .home-page .landing-report-preview-metrics,
+  .home-page .landing-report-preview-outlook {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .landing-report-preview-metrics > div:first-child {
+    grid-column: auto;
+  }
+}

@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-
+import SiteHeader from "@/components/layout/SiteHeader";
 
 const features = [
   {
@@ -248,37 +248,7 @@ export default function Home() {
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
-      <header className="nav-wrap">
-        <nav className="nav container">
-          <a className="brand" href="#top" aria-label="TCGMVP home">
-            <Image
-              src="/tcgmvp-mark.png"
-              alt=""
-              width={48}
-              height={48}
-              className="brand-logo"
-              priority
-            />
-            <span>TCGMVP</span>
-          </a>
-
-          <div className="nav-links">
-          <Link href="/products">Market</Link>
-          <a href="#platform">Platform</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="#about">About</a>
-          <a href="#faq">FAQ</a>
-        </div>
-
-          <a
-            className="button button-small button-primary"
-            href="mailto:tcgmvpplaceholder@gmail.com?subject=TCGMVP Beta Interest"
-          >
-            Join beta
-            <span>↗</span>
-          </a>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <section id="top" className="hero container">
         <div className="hero-copy reveal" data-reveal>

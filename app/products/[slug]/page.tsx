@@ -1,5 +1,3 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
@@ -92,7 +90,7 @@ import {
 import {
   calculateMarketData,
 } from "@/lib/analytics/marketData";
-
+import SiteHeader from "@/components/layout/SiteHeader";
 
 type ProductPageProps = {
   params: Promise<{
@@ -2019,56 +2017,7 @@ export default async function ProductDetailPage({
       <div className="ambient ambient-two" />
 
 
-      <header className="nav-wrap">
-        <nav className="nav container">
-          <Link
-            className="brand"
-            href="/"
-          >
-            <Image
-              src="/tcgmvp-mark.png"
-              alt="TCGMVP"
-              width={48}
-              height={48}
-              className="brand-logo"
-              priority
-            />
-
-            <span>
-              TCGMVP
-            </span>
-          </Link>
-
-
-          <div className="nav-links">
-            <Link href="/">
-              Home
-            </Link>
-
-            <Link href="/products">
-              Market
-            </Link>
-
-            <span>
-              Portfolio
-            </span>
-
-            <span>
-              Watchlist
-            </span>
-          </div>
-
-
-          <Link
-            className="button button-small button-primary"
-            href="/products"
-          >
-            Back to market
-            <span>↗</span>
-          </Link>
-        </nav>
-      </header>
-
+      <SiteHeader detailPage />
 
       <ProductHero
         imageUrl={

@@ -1,11 +1,10 @@
-import Link from "next/link";
-import Image from "next/image";
+
 import ProductsScreener, {
   type ScreenerProduct,
 } from "@/components/product/market/ProductsScreener";
 import ProductsDashboard from "@/components/product/market/ProductsDashboard";
 import { supabase } from "@/lib/supabase";
-
+import SiteHeader from "@/components/layout/SiteHeader";
 export default async function ProductsPage() {
   const { data: products, error } = await supabase
     .from("products")
@@ -74,33 +73,7 @@ export default async function ProductsPage() {
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
 
-        <header className="nav-wrap">
-          <nav className="nav container">
-            <Link className="brand" href="/">
-              <Image
-                src="/tcgmvp-mark.png"
-                alt="TCGMVP"
-                width={48}
-                height={48}
-                className="brand-logo"
-                priority
-              />
-              <span>TCGMVP</span>
-            </Link>
-
-            <div className="nav-links">
-              <Link href="/">Home</Link>
-              <Link href="/products">Market</Link>
-              <span>Portfolio</span>
-              <span>Watchlist</span>
-            </div>
-
-            <Link className="button button-small button-primary" href="/">
-              Back home
-              <span>↗</span>
-            </Link>
-          </nav>
-        </header>
+        <SiteHeader productsPage />
 
         <section className="products-hero container">
           <div className="products-hero-copy">
@@ -217,33 +190,7 @@ export default async function ProductsPage() {
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
-      <header className="nav-wrap">
-        <nav className="nav container">
-      <Link href="/" className="brand">
-        <Image
-          src="/tcgmvp-mark.png"
-          alt="TCGMVP"
-          width={48}
-          height={48}
-          className="brand-logo"
-          priority
-        />
-        <span>TCGMVP</span>
-      </Link>
-
-          <div className="nav-links">
-            <Link href="/">Home</Link>
-            <Link href="/products">Market</Link>
-            <span>Portfolio</span>
-            <span>Watchlist</span>
-          </div>
-
-          <Link className="button button-small button-primary" href="/">
-            Back home
-            <span>↗</span>
-          </Link>
-        </nav>
-      </header>
+      <SiteHeader productsPage />
 
       <section className="products-hero container">
         <div className="products-hero-copy">
