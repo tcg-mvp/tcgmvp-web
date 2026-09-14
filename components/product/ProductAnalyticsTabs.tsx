@@ -57,6 +57,17 @@ function formatSignedPercent(
 }
 
 
+function formatScore(
+  value: number | null,
+) {
+  if (value === null) {
+    return "N/A";
+  }
+
+  return `${value} / 100`;
+}
+
+
 function getPricePositionLabel(
   discountPercent: number,
 ) {
@@ -218,9 +229,9 @@ export default function ProductAnalyticsTabs({
                     </span>
 
                     <strong>
-                      {
-                        marketHealth.liquidityScore
-                      }
+                      {formatScore(
+                        marketHealth.liquidityScore,
+                      )}
                     </strong>
                   </div>
 
@@ -231,9 +242,9 @@ export default function ProductAnalyticsTabs({
                     </span>
 
                     <strong>
-                      {
-                        marketHealth.supplyBalanceScore
-                      }
+                      {formatScore(
+                        marketHealth.supplyBalanceScore,
+                      )}
                     </strong>
                   </div>
 
@@ -244,9 +255,9 @@ export default function ProductAnalyticsTabs({
                     </span>
 
                     <strong>
-                      {
-                        marketHealth.priceStabilityScore
-                      }
+                      {formatScore(
+                        marketHealth.priceStabilityScore,
+                      )}
                     </strong>
                   </div>
 
@@ -427,9 +438,9 @@ export default function ProductAnalyticsTabs({
                     </span>
 
                     <strong>
-                      {
-                        dealScore.priceScore
-                      }
+                      {formatScore(
+                        dealScore.priceScore,
+                      )}
                     </strong>
                   </div>
 
@@ -493,17 +504,19 @@ export default function ProductAnalyticsTabs({
                       Investment Grade
                     </span>
 
-                    <h3>
+                    <h3 className="analytics-investment-grade-title">
                       {
                         investmentGrade.grade
-                      }{" "}
-                      ·{" "}
-                      {
-                        investmentGrade.label
                       }
                     </h3>
 
-                    <p>
+                    <span className="analytics-investment-grade-label">
+                      {
+                        investmentGrade.label
+                      }
+                    </span>
+
+                    <p className="analytics-investment-grade-description">
                       Combines underlying market quality
                       with current valuation opportunity
                       while keeping risk analysis separate.
@@ -535,9 +548,9 @@ export default function ProductAnalyticsTabs({
                     </span>
 
                     <strong>
-                      {
-                        investmentGrade.score
-                      }
+                      {formatScore(
+                        investmentGrade.score,
+                      )}
                     </strong>
                   </div>
 
@@ -548,9 +561,9 @@ export default function ProductAnalyticsTabs({
                     </span>
 
                     <strong>
-                      {
-                        investmentGrade.marketQualityScore
-                      }
+                      {formatScore(
+                        investmentGrade.marketQualityScore,
+                      )}
                     </strong>
                   </div>
 
@@ -561,9 +574,9 @@ export default function ProductAnalyticsTabs({
                     </span>
 
                     <strong>
-                      {
-                        investmentGrade.opportunityScore
-                      }
+                      {formatScore(
+                        investmentGrade.opportunityScore,
+                      )}
                     </strong>
                   </div>
                 </div>

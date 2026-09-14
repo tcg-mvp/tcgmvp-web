@@ -8744,3 +8744,38 @@ a {
 .product-evidence-quality-wrapper {
   margin-top: 28px;
 }
+/* =========================================================
+   Supporting Analysis — Score Clarity
+   ========================================================= */
+
+.analytics-investment-grade-title {
+  margin-bottom: 10px !important;
+  font-size: clamp(2.6rem, 5vw, 4rem) !important;
+  line-height: 0.95 !important;
+  letter-spacing: -0.055em !important;
+}
+
+.analytics-investment-grade-label {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 6px 10px;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 999px;
+  color: #7dd3fc;
+  background: rgba(125, 211, 252, 0.07);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.analytics-investment-grade-description {
+  margin-top: 0 !important;
+}
+
+.analytics-metric-grid strong {
+  display: block;
+  line-height: 1.25;
+}
