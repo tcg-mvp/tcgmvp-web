@@ -94,7 +94,16 @@ export default function RecentSales({
           </div>
 
           {sales.length > 0 ? (
-            <div className="recent-sales-table-wrapper">
+            <>
+              <div
+                className="market-table-scroll-hint"
+                aria-hidden="true"
+              >
+                Swipe to view all sale details
+                <span>→</span>
+              </div>
+
+              <div className="recent-sales-table-wrapper">
               <table className="recent-sales-table">
                 <thead>
                   <tr>
@@ -223,6 +232,7 @@ export default function RecentSales({
                 </tbody>
               </table>
             </div>
+            </>
           ) : (
             <div className="recent-sales-empty">
               <strong>

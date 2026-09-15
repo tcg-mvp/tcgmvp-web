@@ -9190,3 +9190,982 @@ a {
     grid-column: auto;
   }
 }
+
+/* =========================================================
+   Private Beta — Products Page Mobile Polish
+   ========================================================= */
+
+@media (max-width: 620px) {
+  /* Hide ticker on mobile */
+  .products-page .market-ticker {
+    display: none;
+  }
+
+  /* Hero spacing */
+  .products-page .products-hero {
+    padding-top: 42px;
+    padding-bottom: 34px;
+    gap: 24px;
+  }
+
+  .products-page .products-hero-copy h1,
+  .products-page .products-hero-title {
+    font-size: clamp(2.5rem, 11vw, 3.35rem);
+    line-height: 0.96;
+  }
+
+  .products-page .products-hero-copy p {
+    margin-top: 18px;
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  /* Dashboard */
+  .products-page .products-dashboard-section {
+    padding-bottom: 34px;
+  }
+
+  .products-page .products-dashboard {
+    padding: 20px;
+  }
+
+  .products-page .products-dashboard-grid {
+    gap: 10px;
+  }
+
+  .products-page .products-dashboard-card {
+    padding: 16px;
+  }
+
+  /* Screener */
+  .products-page .products-screener {
+    margin-top: 0;
+    padding: 20px;
+  }
+
+  .products-page .products-screener-heading {
+    margin-bottom: 20px;
+  }
+
+  .products-page .products-screener-heading h2 {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .products-page .products-screener-heading > p {
+    margin-top: 10px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .products-page .products-screener-controls {
+    gap: 14px;
+  }
+
+  .products-page .products-screener-search-input {
+    min-height: 52px;
+    font-size: 0.95rem;
+  }
+
+  .products-page .products-screener-controls select {
+    min-height: 50px;
+    padding-left: 14px;
+    padding-right: 36px;
+    font-size: 0.92rem;
+  }
+
+  .products-page .products-screener-status {
+    margin-top: 4px;
+    padding-top: 14px;
+  }
+
+  /* Product results */
+  .products-page .market-product-grid,
+  .products-page .product-showcase {
+    gap: 18px;
+  }
+
+  .products-page .market-product-card {
+    border-radius: 20px;
+  }
+
+  .products-page .market-product-card-content {
+    padding: 20px;
+  }
+
+  .products-page .market-product-card-heading h3 {
+    font-size: 1.28rem;
+    line-height: 1.25;
+  }
+
+  .products-page .market-product-card-metrics {
+    gap: 10px;
+  }
+
+  .products-page .market-product-card-footer {
+    padding-top: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .products-page .products-screener {
+    padding: 16px;
+  }
+
+  .products-page .products-dashboard {
+    padding: 16px;
+  }
+
+  .products-page .products-hero-copy h1,
+  .products-page .products-hero-title {
+    font-size: 2.45rem;
+  }
+}
+/* =========================================================
+   Products Screener — Progressive Loading
+   ========================================================= */
+
+.products-load-more {
+  display: flex;
+  margin-top: 30px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.products-load-more .button {
+  min-width: 220px;
+}
+
+.products-load-more span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 620px) {
+  .products-load-more {
+    margin-top: 24px;
+  }
+
+  .products-load-more .button {
+    width: 100%;
+    min-height: 50px;
+  }
+}
+/* =========================================================
+   Private Beta — Mobile Market Evidence
+   ========================================================= */
+
+/* Desktop chart height */
+.price-chart-container {
+  width: 100%;
+  min-width: 0;
+  height: 360px;
+}
+
+
+/* Scroll hint is mobile-only */
+.market-table-scroll-hint {
+  display: none;
+}
+
+
+@media (max-width: 700px) {
+  /* -------------------------------------------------------
+     Entire Market Evidence shell
+     ------------------------------------------------------- */
+
+  .product-tabs-section {
+    padding-top: 0;
+    padding-bottom: 64px;
+  }
+
+  .product-tabs-shell {
+    border-radius: 20px;
+  }
+
+
+  /* -------------------------------------------------------
+     Tab navigation
+     ------------------------------------------------------- */
+
+  .product-tabs-navigation {
+    width: 100%;
+    gap: 6px;
+    padding: 10px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .product-tabs-navigation::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-tab-button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0 14px;
+    white-space: nowrap;
+  }
+
+
+  /* -------------------------------------------------------
+     Panel
+     ------------------------------------------------------- */
+
+  .product-tab-content {
+    min-height: 0;
+  }
+
+  .product-tab-heading {
+    padding: 24px 18px 0;
+  }
+
+  .product-tab-heading h2 {
+    margin-bottom: 22px;
+    font-size: 1.65rem;
+  }
+
+
+  /* -------------------------------------------------------
+     Market performance chart
+     ------------------------------------------------------- */
+
+  .product-tab-panel .price-chart-wrapper {
+    padding: 0 12px 22px;
+  }
+
+  .price-chart-header {
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .price-chart-summary > strong {
+    font-size: 1.8rem;
+  }
+
+  .price-chart-summary > small {
+    line-height: 1.45;
+  }
+
+  .price-chart-ranges {
+    width: 100%;
+    padding: 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .price-chart-ranges::-webkit-scrollbar {
+    display: none;
+  }
+
+  .price-chart-range {
+    flex: 1 0 54px;
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .price-chart-container {
+    height: 290px;
+    min-width: 0;
+    overflow: visible;
+  }
+
+
+  /* -------------------------------------------------------
+     Sales / Listings headings
+     ------------------------------------------------------- */
+
+  .product-tab-panel .recent-sales-section,
+  .product-tab-panel .current-listings-section {
+    width: 100%;
+  }
+
+  .product-tab-panel .recent-sales-section > .container,
+  .product-tab-panel .current-listings-section > .container {
+    width: 100%;
+    margin: 0;
+  }
+
+  .recent-sales-heading,
+  .current-listings-heading {
+    gap: 16px;
+    padding: 22px 18px 18px;
+  }
+
+  .recent-sales-heading h2,
+  .current-listings-heading h2 {
+    font-size: 1.55rem;
+  }
+
+  .recent-sales-heading p,
+  .current-listings-heading p {
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .recent-sales-count,
+  .current-listings-count {
+    width: fit-content;
+    min-width: 0;
+  }
+
+
+  /* -------------------------------------------------------
+     Scroll affordance
+     ------------------------------------------------------- */
+
+  .market-table-scroll-hint {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 18px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+    background: rgba(2, 6, 23, 0.34);
+    font-size: 0.75rem;
+    font-weight: 650;
+  }
+
+  .market-table-scroll-hint span {
+    color: var(--brand-gold-light);
+    font-size: 1rem;
+  }
+
+
+  /* -------------------------------------------------------
+     Horizontally scrollable evidence tables
+     ------------------------------------------------------- */
+
+  .recent-sales-table-wrapper,
+  .current-listings-table-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .recent-sales-table {
+    width: 720px;
+    min-width: 720px;
+  }
+
+  .current-listings-table {
+    width: 820px;
+    min-width: 820px;
+  }
+
+  .recent-sales-table th,
+  .recent-sales-table td,
+  .current-listings-table th,
+  .current-listings-table td {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    white-space: nowrap;
+  }
+
+  .recent-sales-table th:first-child,
+  .recent-sales-table td:first-child,
+  .current-listings-table th:first-child,
+  .current-listings-table td:first-child {
+    padding-left: 18px;
+  }
+
+  .recent-sales-table th:last-child,
+  .recent-sales-table td:last-child,
+  .current-listings-table th:last-child,
+  .current-listings-table td:last-child {
+    padding-right: 18px;
+  }
+
+  /*
+    Slight shadow at the right edge communicates
+    that additional table content exists off-screen.
+  */
+  .recent-sales-panel,
+  .current-listings-panel {
+    position: relative;
+  }
+
+  .recent-sales-panel::after,
+  .current-listings-panel::after {
+    content: "";
+    position: absolute;
+    z-index: 4;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 18px;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(2, 6, 23, 0.62)
+      );
+  }
+}
+
+
+@media (max-width: 390px) {
+  .price-chart-container {
+    height: 270px;
+  }
+
+  .product-tab-panel .price-chart-wrapper {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+}
+/* =========================================================
+   Private Beta — Product Detail Mobile Compression
+   ========================================================= */
+
+@media (max-width: 700px) {
+  /* -------------------------------------------------------
+     Overall section rhythm
+     ------------------------------------------------------- */
+
+  .product-research-report {
+    --product-section-gap: 42px;
+  }
+
+  .product-report-section,
+  .product-report-section-compact,
+  .product-intelligence-section-v2,
+  .product-statistics-section-v2,
+  .product-direction-section {
+    padding-top: 42px;
+    padding-bottom: 42px;
+  }
+
+  .product-section-heading {
+    margin-bottom: 22px;
+  }
+
+  .product-section-heading h2 {
+    font-size: 1.95rem;
+  }
+
+  .product-section-heading p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+
+  /* -------------------------------------------------------
+     Product hero
+     ------------------------------------------------------- */
+
+  .product-research-report .product-detail-hero-v2 {
+    padding-top: 22px;
+    padding-bottom: 34px;
+  }
+
+  .product-research-report .product-detail-hero-grid-v2 {
+    gap: 24px;
+  }
+
+  .product-research-report .product-detail-image-area-v2 {
+    min-height: 210px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .product-research-report .product-detail-image-v2 {
+    max-height: 205px;
+    height: 205px;
+  }
+
+  .product-detail-information-v2 h1 {
+    margin-top: 18px;
+    margin-bottom: 8px;
+    font-size: clamp(2.35rem, 10vw, 3rem);
+    line-height: 1;
+  }
+
+  .product-detail-meta {
+    margin-top: 14px;
+  }
+
+  .product-research-report .product-hero-price-row {
+    margin-top: 18px;
+    gap: 8px;
+  }
+
+  .product-research-report .product-hero-price-row > div {
+    padding: 14px 15px;
+  }
+
+  .product-hero-price-row strong {
+    margin-top: 6px;
+    font-size: 1.65rem;
+  }
+
+  .product-hero-price-row span,
+  .product-hero-metric span {
+    font-size: 0.63rem;
+    letter-spacing: 0.09em;
+  }
+
+  .product-hero-intelligence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .product-research-report .product-hero-metric {
+    min-height: 92px;
+    padding: 13px;
+  }
+
+  .product-hero-metric strong {
+    margin-top: 8px;
+    font-size: 1rem;
+  }
+
+  .product-hero-metric small {
+    margin-top: 5px;
+    font-size: 0.68rem;
+  }
+
+
+  /* -------------------------------------------------------
+     Top Market Intelligence summary
+     ------------------------------------------------------- */
+
+  .product-intelligence-summary-section {
+    padding-bottom: 12px;
+  }
+
+  .market-intelligence-summary {
+    gap: 18px;
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .market-intelligence-summary-copy h2 {
+    margin: 8px 0 10px;
+    font-size: 1.45rem;
+  }
+
+  .market-intelligence-summary-copy p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .market-intelligence-summary-verdicts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .market-intelligence-summary-score {
+    padding: 14px;
+  }
+
+  .market-intelligence-summary-score strong {
+    margin-top: 7px;
+    font-size: 1.6rem;
+  }
+
+  .market-intelligence-summary-score .market-intelligence-summary-word {
+    font-size: 0.88rem;
+  }
+
+  .market-intelligence-summary-score small {
+    margin-top: 5px;
+    font-size: 0.68rem;
+  }
+
+  .market-intelligence-summary-signals {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .market-intelligence-summary-signals > div {
+    padding: 12px 0;
+  }
+
+  .market-intelligence-summary-signals strong {
+    margin-top: 6px;
+    font-size: 0.85rem;
+  }
+
+  .market-intelligence-summary-signals small {
+    margin-top: 4px;
+    font-size: 0.7rem;
+  }
+
+
+  /* -------------------------------------------------------
+     Market Rating
+     ------------------------------------------------------- */
+
+  .market-rating-card {
+    margin-top: 24px;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .market-rating-header {
+    gap: 18px;
+    padding-bottom: 18px;
+  }
+
+  .market-rating-heading h2 {
+    margin: 7px 0 9px;
+    font-size: 1.75rem;
+  }
+
+  .market-rating-heading p {
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
+  .market-rating-confidence {
+    min-height: 88px;
+    padding: 14px;
+  }
+
+  .market-rating-confidence strong {
+    margin: 5px 0 3px;
+    font-size: 1.8rem;
+  }
+
+  .market-rating-hero {
+    gap: 18px;
+    padding: 22px 0;
+  }
+
+  .market-rating-score-card {
+    min-height: 170px;
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .market-rating-score-value span {
+    font-size: 4.3rem;
+  }
+
+  .market-rating-score-label {
+    margin-top: 8px;
+    font-size: 1.3rem;
+  }
+
+  .market-rating-stars {
+    margin-top: 8px;
+  }
+
+  .market-rating-summary-label {
+    margin-bottom: 8px;
+    font-size: 0.68rem;
+  }
+
+  .market-rating-summary h3 {
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+    line-height: 1.25;
+  }
+
+  .market-rating-summary p {
+    font-size: 0.86rem;
+    line-height: 1.6;
+  }
+
+  .market-rating-breakdown {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .market-rating-metric {
+    padding: 14px;
+  }
+
+  .market-rating-metric strong {
+    margin: 9px 0 9px;
+    font-size: 1.45rem;
+  }
+
+  .market-rating-insights {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .market-rating-insight-column {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .market-rating-insight-heading {
+    margin-bottom: 12px;
+  }
+
+  .market-rating-insight-column ul {
+    gap: 10px;
+  }
+
+  .market-rating-insight-column li p {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+
+  /* -------------------------------------------------------
+     Forward Investment Analysis
+     ------------------------------------------------------- */
+
+  .product-investment-outlook-wrapper {
+    margin-top: 22px;
+  }
+
+  .investment-outlook-card {
+    border-radius: 20px;
+  }
+
+  .investment-outlook-header {
+    gap: 16px;
+    padding: 22px 18px;
+  }
+
+  .investment-outlook-header h3 {
+    margin-bottom: 8px;
+    font-size: 1.5rem;
+  }
+
+  .investment-outlook-header p {
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
+  .investment-outlook-verdict {
+    min-width: 0;
+    width: fit-content;
+    padding: 12px 14px;
+  }
+
+  .investment-outlook-summary {
+    padding: 20px 18px;
+  }
+
+  .investment-outlook-summary p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .investment-outlook-confidence {
+    margin-top: 14px;
+    padding: 8px 11px;
+  }
+
+  .investment-outlook-primary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 18px 18px 10px;
+  }
+
+  .investment-outlook-primary-card {
+    min-height: 110px;
+    padding: 16px;
+  }
+
+  .investment-outlook-primary-card > span {
+    margin-bottom: 8px;
+    font-size: 0.7rem;
+  }
+
+  .investment-outlook-primary-card strong {
+    font-size: 1.55rem;
+  }
+
+  .investment-outlook-primary-card small {
+    margin-top: 7px;
+    font-size: 0.68rem;
+  }
+
+  .investment-outlook-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 18px 18px;
+  }
+
+  .investment-outlook-metrics > div {
+    padding: 14px;
+  }
+
+  .investment-outlook-metrics span {
+    margin-bottom: 7px;
+    font-size: 0.7rem;
+  }
+
+  .investment-outlook-metrics strong {
+    font-size: 1.05rem;
+  }
+
+  .investment-outlook-metrics small {
+    margin-top: 5px;
+    font-size: 0.66rem;
+  }
+
+  .investment-outlook-score-bars {
+    gap: 14px;
+    padding: 20px 18px;
+  }
+
+  .investment-outlook-evidence {
+    gap: 10px;
+    padding: 20px 18px;
+  }
+
+  .investment-outlook-evidence-column {
+    padding: 16px;
+  }
+
+  .investment-outlook-list-title {
+    margin-bottom: 12px;
+  }
+
+  .investment-outlook-evidence-column ul {
+    gap: 9px;
+  }
+
+  .investment-outlook-evidence-column li,
+  .investment-outlook-evidence-column p {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+
+  /* -------------------------------------------------------
+     Price Target
+     ------------------------------------------------------- */
+
+  .product-price-target-wrapper {
+    margin-top: 22px;
+  }
+
+  .price-target-card {
+    border-radius: 20px;
+  }
+
+  .price-target-header {
+    gap: 16px;
+    padding: 22px 18px;
+  }
+
+  .price-target-header h3 {
+    margin-bottom: 8px;
+    font-size: 1.5rem;
+  }
+
+  .price-target-header p {
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
+  .price-target-verdict {
+    min-width: 0;
+    width: fit-content;
+    padding: 12px 14px;
+  }
+
+  .price-target-hero {
+    gap: 8px;
+    padding: 18px;
+  }
+
+  .price-target-main-value,
+  .price-target-upside {
+    min-height: 120px;
+    padding: 16px;
+  }
+
+  .price-target-main-value > strong {
+    font-size: 2.6rem;
+  }
+
+  .price-target-upside strong {
+    font-size: 2rem;
+  }
+
+  .price-target-main-value small,
+  .price-target-upside small {
+    margin-top: 8px;
+    font-size: 0.68rem;
+  }
+
+  .price-target-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 18px 20px;
+  }
+
+  .price-target-metrics > div {
+    padding: 14px;
+  }
+
+  .price-target-metrics span {
+    margin-bottom: 6px;
+    font-size: 0.7rem;
+  }
+
+  .price-target-metrics strong {
+    font-size: 1.05rem;
+  }
+
+  .price-target-evidence {
+    gap: 10px;
+    padding: 20px 18px;
+  }
+
+  .price-target-evidence-column {
+    padding: 16px;
+  }
+
+  .price-target-list-title {
+    margin-bottom: 12px;
+  }
+
+  .price-target-evidence-column li,
+  .price-target-evidence-column p {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+
+  /* -------------------------------------------------------
+     General card-radius cleanup
+     ------------------------------------------------------- */
+
+  .trend-analysis,
+  .risk-analysis,
+  .market-statistics,
+  .product-analytics-tabs {
+    border-radius: 20px;
+  }
+}
+
+
+@media (max-width: 390px) {
+  .product-detail-information-v2 h1 {
+    font-size: 2.25rem;
+  }
+
+  .product-hero-intelligence-grid,
+  .market-rating-breakdown,
+  .investment-outlook-primary-grid,
+  .investment-outlook-metrics,
+  .price-target-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

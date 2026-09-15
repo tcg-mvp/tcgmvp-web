@@ -87,7 +87,16 @@ export default function CurrentListings({
           </div>
 
           {listings.length > 0 ? (
-            <div className="current-listings-table-wrapper">
+            <>
+              <div
+                className="market-table-scroll-hint"
+                aria-hidden="true"
+              >
+                Swipe to view all listing details
+                <span>→</span>
+              </div>
+
+              <div className="current-listings-table-wrapper">
               <table className="current-listings-table">
                 <thead>
                   <tr>
@@ -202,6 +211,7 @@ export default function CurrentListings({
                 </tbody>
               </table>
             </div>
+              </>
           ) : (
             <div className="current-listings-empty">
               <strong>

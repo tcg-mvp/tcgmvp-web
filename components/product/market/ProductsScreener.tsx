@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ProductCard from "@/components/product/ProductCard";
 
 export type ScreenerProduct = {
@@ -26,6 +26,8 @@ type SortOption =
   | "change-desc"
   | "change-asc";
 
+const PRODUCTS_PER_PAGE = 12;
+
 function createOptions(
   products: ScreenerProduct[],
   field: "series" | "language" | "productType"
@@ -49,6 +51,8 @@ export default function ProductsScreener({
     useState("all");
   const [sortOption, setSortOption] =
     useState<SortOption>("name-asc");
+  const [visibleCount, setVisibleCount] =
+    useState(PRODUCTS_PER_PAGE);
 
   const seriesOptions = useMemo(
     () => createOptions(products, "series"),
@@ -65,10 +69,10 @@ export default function ProductsScreener({
     [products]
   );
 
-  const visibleProducts = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
 
-    const filteredProducts = products.filter((product) => {
+    const matchingProducts = products.filter((product) => {
       const matchesSearch =
         normalizedSearch.length === 0 ||
         product.name.toLowerCase().includes(normalizedSearch) ||
@@ -98,7 +102,7 @@ export default function ProductsScreener({
       );
     });
 
-    return [...filteredProducts].sort((a, b) => {
+    return [...matchingProducts].sort((a, b) => {
       switch (sortOption) {
         case "price-desc":
           return (
@@ -138,6 +142,24 @@ export default function ProductsScreener({
     sortOption,
   ]);
 
+  useEffect(() => {
+    setVisibleCount(PRODUCTS_PER_PAGE);
+  }, [
+    searchQuery,
+    selectedSeries,
+    selectedLanguage,
+    selectedProductType,
+    sortOption,
+  ]);
+
+  const visibleProducts = filteredProducts.slice(
+    0,
+    visibleCount
+  );
+
+  const hasMoreProducts =
+    visibleCount < filteredProducts.length;
+
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
     selectedSeries !== "all" ||
@@ -151,6 +173,16 @@ export default function ProductsScreener({
     setSelectedLanguage("all");
     setSelectedProductType("all");
     setSortOption("name-asc");
+    setVisibleCount(PRODUCTS_PER_PAGE);
+  }
+
+  function loadMoreProducts() {
+    setVisibleCount((currentCount) =>
+      Math.min(
+        currentCount + PRODUCTS_PER_PAGE,
+        filteredProducts.length
+      )
+    );
   }
 
   return (
@@ -287,9 +319,11 @@ export default function ProductsScreener({
           <div className="products-screener-status">
             <p aria-live="polite">
               Showing{" "}
-              <strong>{visibleProducts.length}</strong>{" "}
+              <strong>{filteredProducts.length}</strong>{" "}
               of <strong>{products.length}</strong>{" "}
-              {products.length === 1 ? "product" : "products"}
+              {products.length === 1
+                ? "product"
+                : "products"}
             </p>
 
             <button
@@ -302,22 +336,41 @@ export default function ProductsScreener({
           </div>
         </div>
 
-        {visibleProducts.length > 0 ? (
-          <div className="product-showcase">
-            {visibleProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                name={product.name}
-                slug={product.slug}
-                image_url={product.imageUrl}
-                productType={product.productType}
-                language={product.language}
-                series={product.series}
-                marketPrice={product.marketPrice}
-                change30d={product.change30d}
-              />
-            ))}
-          </div>
+        {filteredProducts.length > 0 ? (
+          <>
+            <div className="product-showcase">
+              {visibleProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  name={product.name}
+                  slug={product.slug}
+                  image_url={product.imageUrl}
+                  productType={product.productType}
+                  language={product.language}
+                  series={product.series}
+                  marketPrice={product.marketPrice}
+                  change30d={product.change30d}
+                />
+              ))}
+            </div>
+
+            {hasMoreProducts && (
+              <div className="products-load-more">
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  onClick={loadMoreProducts}
+                >
+                  Load more products
+                </button>
+
+                <span>
+                  Showing {visibleProducts.length} of{" "}
+                  {filteredProducts.length} matching products
+                </span>
+              </div>
+            )}
+          </>
         ) : (
           <div className="products-screener-empty">
             <span>No matching products</span>

@@ -39,7 +39,19 @@ function formatCurrency(value: number) {
   });
 }
 
-export default function PriceChart({ data }: PriceChartProps) {
+function formatAxisCurrency(value: number) {
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(
+      value >= 10000 ? 0 : 1
+    )}k`;
+  }
+
+  return `$${Math.round(value)}`;
+}
+
+export default function PriceChart({
+  data,
+}: PriceChartProps) {
   const [selectedRange, setSelectedRange] =
     useState<RangeOption>("1Y");
 
@@ -79,12 +91,15 @@ export default function PriceChart({ data }: PriceChartProps) {
       case "1M":
         cutoffDate.setMonth(cutoffDate.getMonth() - 1);
         break;
+
       case "3M":
         cutoffDate.setMonth(cutoffDate.getMonth() - 3);
         break;
+
       case "6M":
         cutoffDate.setMonth(cutoffDate.getMonth() - 6);
         break;
+
       case "1Y":
         cutoffDate.setFullYear(
           cutoffDate.getFullYear() - 1
@@ -107,10 +122,6 @@ export default function PriceChart({ data }: PriceChartProps) {
         return {
           price: item.price,
           timestamp: date.getTime(),
-          shortDate: date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
           fullDate: date.toLocaleDateString("en-US", {
             month: "long",
             day: "numeric",
@@ -144,41 +155,40 @@ export default function PriceChart({ data }: PriceChartProps) {
     };
   }, [filteredData]);
 
-  const yAxisDomain = useMemo<[number, number] | undefined>(
-    () => {
-      if (filteredData.length === 0) {
-        return undefined;
-      }
+  const yAxisDomain = useMemo<
+    [number, number] | undefined
+  >(() => {
+    if (filteredData.length === 0) {
+      return undefined;
+    }
 
-      const prices = filteredData.map(
-        (item) => item.price
+    const prices = filteredData.map(
+      (item) => item.price
+    );
+
+    const minimumPrice = Math.min(...prices);
+    const maximumPrice = Math.max(...prices);
+
+    if (minimumPrice === maximumPrice) {
+      const padding = Math.max(
+        minimumPrice * 0.05,
+        10
       );
-
-      const minimumPrice = Math.min(...prices);
-      const maximumPrice = Math.max(...prices);
-
-      if (minimumPrice === maximumPrice) {
-        const padding = Math.max(
-          minimumPrice * 0.05,
-          10
-        );
-
-        return [
-          Math.max(0, minimumPrice - padding),
-          maximumPrice + padding,
-        ];
-      }
-
-      const padding =
-        (maximumPrice - minimumPrice) * 0.12;
 
       return [
         Math.max(0, minimumPrice - padding),
         maximumPrice + padding,
       ];
-    },
-    [filteredData]
-  );
+    }
+
+    const padding =
+      (maximumPrice - minimumPrice) * 0.12;
+
+    return [
+      Math.max(0, minimumPrice - padding),
+      maximumPrice + padding,
+    ];
+  }, [filteredData]);
 
   if (chartData.length === 0) {
     return (
@@ -268,14 +278,17 @@ export default function PriceChart({ data }: PriceChartProps) {
       )}
 
       <div className="price-chart-container">
-        <ResponsiveContainer width="100%" height={360}>
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+        >
           <LineChart
             data={chartData}
             margin={{
-              top: 20,
-              right: 24,
-              left: 20,
-              bottom: 20,
+              top: 16,
+              right: 8,
+              left: 0,
+              bottom: 8,
             }}
           >
             <CartesianGrid
@@ -283,48 +296,43 @@ export default function PriceChart({ data }: PriceChartProps) {
               vertical={false}
             />
 
-      <XAxis
-        dataKey="timestamp"
-        type="number"
-        scale="time"
-        domain={["dataMin", "dataMax"]}
-        tickFormatter={(value) =>
-          new Date(
-            Number(value)
-          ).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })
-        }
-        tick={{
-          fill: "#64748b",
-          fontSize: 12,
-        }}
-        axisLine={false}
-        tickLine={false}
-        minTickGap={32}
-        padding={{
-          left: 18,
-          right: 18,
-        }}
-      />
+            <XAxis
+              dataKey="timestamp"
+              type="number"
+              scale="time"
+              domain={["dataMin", "dataMax"]}
+              tickFormatter={(value) =>
+                new Date(
+                  Number(value)
+                ).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              }
+              tick={{
+                fill: "#64748b",
+                fontSize: 11,
+              }}
+              axisLine={false}
+              tickLine={false}
+              minTickGap={28}
+              padding={{
+                left: 8,
+                right: 8,
+              }}
+            />
 
             <YAxis
               domain={yAxisDomain}
               tick={{
                 fill: "#64748b",
-                fontSize: 12,
+                fontSize: 11,
               }}
               axisLine={false}
               tickLine={false}
-              width={90}
+              width={62}
               tickFormatter={(value) =>
-                `$${Number(value).toLocaleString(
-                  "en-US",
-                  {
-                    maximumFractionDigits: 0,
-                  }
-                )}`
+                formatAxisCurrency(Number(value))
               }
             />
 
