@@ -91,6 +91,7 @@ import {
   calculateMarketData,
 } from "@/lib/analytics/marketData";
 import SiteHeader from "@/components/layout/SiteHeader";
+import WatchlistButton from "@/components/watchlist/WatchlistButton";
 
 type ProductPageProps = {
   params: Promise<{
@@ -2144,7 +2145,16 @@ export default async function ProductDetailPage({
           },
         ]}
       />
+        <div className="container product-watchlist-action">
+      <WatchlistButton
+        slug={product.slug}
+        productName={product.name}
+      />
 
+      <span>
+        Save this product to your beta watchlist.
+      </span>
+    </div>
 
       <ResearchSummary
         summary={

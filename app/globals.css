@@ -10169,3 +10169,293 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+/* =========================================================
+   Private Beta — Watchlist
+   ========================================================= */
+
+/* Product cards now contain their own interactive save control */
+.market-product-card {
+  position: relative;
+}
+
+.market-product-card-link {
+  display: block;
+  width: 100%;
+  color: inherit;
+}
+
+.market-product-card-watchlist {
+  position: absolute;
+  z-index: 8;
+  top: 16px;
+  right: 16px;
+}
+
+.watchlist-button-compact {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  color: #cbd5e1;
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.watchlist-button-compact span {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.watchlist-button-compact:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-gold-border);
+  color: var(--brand-gold-light);
+}
+
+.watchlist-button-compact.is-saved {
+  border-color: var(--brand-gold-border);
+  color: var(--brand-gold-light);
+  background: rgba(214, 173, 82, 0.12);
+}
+
+
+/* Full product-page control */
+.product-watchlist-action {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 0;
+  padding-bottom: 28px;
+}
+
+.product-watchlist-action > span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.watchlist-button {
+  min-height: 46px;
+  padding: 0 17px;
+  border: 1px solid var(--brand-gold-border);
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--brand-gold-light);
+  background: rgba(214, 173, 82, 0.07);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 750;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.watchlist-button:hover {
+  transform: translateY(-2px);
+  background: rgba(214, 173, 82, 0.12);
+}
+
+.watchlist-button.is-saved {
+  color: #111827;
+  background: linear-gradient(
+    135deg,
+    var(--brand-gold-light),
+    var(--brand-gold)
+  );
+  box-shadow: 0 12px 30px rgba(214, 173, 82, 0.16);
+}
+
+.watchlist-button-icon {
+  font-size: 1.05rem;
+}
+
+
+/* Page */
+.watchlist-page {
+  padding-bottom: 100px;
+}
+
+.watchlist-hero {
+  position: relative;
+  z-index: 2;
+  padding-top: 86px;
+  padding-bottom: 48px;
+}
+
+.watchlist-hero h1 {
+  margin: 12px 0 0;
+  max-width: 760px;
+  color: var(--text);
+  font-size: clamp(3rem, 6vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.watchlist-hero > p {
+  max-width: 640px;
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.watchlist-beta-note {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 9px;
+  margin-top: 24px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: rgba(15, 23, 42, 0.58);
+  font-size: 0.78rem;
+}
+
+.watchlist-beta-note span {
+  color: var(--brand-gold-light);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.watchlist-content {
+  position: relative;
+  z-index: 2;
+}
+
+.watchlist-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 30px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.56);
+}
+
+.watchlist-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.watchlist-summary span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.watchlist-summary strong {
+  font-size: 2rem;
+}
+
+.watchlist-summary p {
+  max-width: 540px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.watchlist-state {
+  padding: 64px 30px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      var(--brand-gold-soft),
+      transparent 30rem
+    ),
+    rgba(15, 23, 42, 0.62);
+  text-align: center;
+}
+
+.watchlist-state h2 {
+  margin: 10px 0 0;
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+}
+
+.watchlist-state p {
+  max-width: 520px;
+  margin: 16px auto 26px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+
+/* Mobile */
+@media (max-width: 620px) {
+  .market-product-card-watchlist {
+    top: 12px;
+    right: 12px;
+  }
+
+  .watchlist-button-compact {
+    width: 40px;
+    height: 40px;
+  }
+
+  .product-watchlist-action {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 22px;
+  }
+
+  .product-watchlist-action .watchlist-button {
+    width: 100%;
+  }
+
+  .product-watchlist-action > span {
+    text-align: center;
+  }
+
+  .watchlist-hero {
+    padding-top: 44px;
+    padding-bottom: 34px;
+  }
+
+  .watchlist-hero h1 {
+    font-size: 2.7rem;
+  }
+
+  .watchlist-beta-note {
+    width: 100%;
+    align-items: flex-start;
+    border-radius: 14px;
+    line-height: 1.45;
+  }
+
+  .watchlist-summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding: 18px;
+  }
+
+  .watchlist-state {
+    padding: 44px 20px;
+  }
+}

@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+
+import WatchlistButton from "@/components/watchlist/WatchlistButton";
 
 type ProductCardProps = {
   name: string;
@@ -56,73 +60,86 @@ export default function ProductCard({
     .trim();
 
   return (
-    <Link
-      href={`/products/${slug}`}
-      className="market-product-card"
-      aria-label={`View market research for ${name}`}
-    >
-      <div className="market-product-card-art">
-        <div className="market-product-card-badge">
-          <span className="market-product-card-badge-dot" />
-          Live market
-        </div>
-
-        {image_url ? (
-          <Image
-            src={image_url}
-            alt={`${name} product image`}
-            width={420}
-            height={420}
-            className="market-product-card-image"
-          />
-        ) : (
-          <div className="market-product-card-placeholder">
-            <span>TCGMVP</span>
-            <strong>{productName}</strong>
-            <small>{productType}</small>
-          </div>
-        )}
+    <article className="market-product-card">
+      <div className="market-product-card-watchlist">
+        <WatchlistButton
+          slug={slug}
+          productName={name}
+          compact
+        />
       </div>
 
-      <div className="market-product-card-content">
-        <div className="market-product-card-heading">
-          <div>
-            <span className="market-product-card-meta">
-              {productType} · {language}
-            </span>
+      <Link
+        href={`/products/${slug}`}
+        className="market-product-card-link"
+        aria-label={`View market research for ${name}`}
+      >
+        <div className="market-product-card-art">
+          <div className="market-product-card-badge">
+            <span className="market-product-card-badge-dot" />
+            Live market
+          </div>
 
-            <h3>
-              <span>{productName}</span>
+          {image_url ? (
+            <Image
+              src={image_url}
+              alt={`${name} product image`}
+              width={420}
+              height={420}
+              className="market-product-card-image"
+            />
+          ) : (
+            <div className="market-product-card-placeholder">
+              <span>TCGMVP</span>
+              <strong>{productName}</strong>
               <small>{productType}</small>
-            </h3>
-
-            <p>{series}</p>
-          </div>
-
-          <span className="market-product-card-arrow" aria-hidden="true">
-            ↗
-          </span>
+            </div>
+          )}
         </div>
 
-        <div className="market-product-card-metrics">
-          <div>
-            <span>Current price</span>
-            <strong>{formatCurrency(marketPrice)}</strong>
+        <div className="market-product-card-content">
+          <div className="market-product-card-heading">
+            <div>
+              <span className="market-product-card-meta">
+                {productType} · {language}
+              </span>
+
+              <h3>
+                <span>{productName}</span>
+                <small>{productType}</small>
+              </h3>
+
+              <p>{series}</p>
+            </div>
+
+            <span
+              className="market-product-card-arrow"
+              aria-hidden="true"
+            >
+              ↗
+            </span>
           </div>
 
-          <div>
-            <span>30-day movement</span>
-            <strong className={changeTone}>
-              {formatPercent(change30d)}
-            </strong>
+          <div className="market-product-card-metrics">
+            <div>
+              <span>Current price</span>
+              <strong>{formatCurrency(marketPrice)}</strong>
+            </div>
+
+            <div>
+              <span>30-day movement</span>
+              <strong className={changeTone}>
+                {formatPercent(change30d)}
+              </strong>
+            </div>
+          </div>
+
+          <div className="market-product-card-footer">
+            <span>View market report</span>
+            <span aria-hidden="true">→</span>
           </div>
         </div>
-
-        <div className="market-product-card-footer">
-          <span>View market report</span>
-          <span aria-hidden="true">→</span>
-        </div>
-      </div>
-    </Link>
+      </Link>
+    </article>
   );
 }

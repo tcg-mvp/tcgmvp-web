@@ -8,14 +8,17 @@ import { useState } from "react";
 type SiteHeaderProps = {
   productsPage?: boolean;
   detailPage?: boolean;
+  watchlistPage?: boolean;
 };
 
 export default function SiteHeader({
   productsPage = false,
   detailPage = false,
+  watchlistPage = false,
 }: SiteHeaderProps) {
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false);
 
   function closeMobileMenu() {
     setMobileMenuOpen(false);
@@ -23,6 +26,10 @@ export default function SiteHeader({
 
   const isHome = pathname === "/";
   const isMarket = pathname.startsWith("/products");
+  const isWatchlist = pathname === "/watchlist";
+
+  const backToMarket =
+    detailPage || watchlistPage;
 
   return (
     <header className="nav-wrap">
@@ -48,16 +55,29 @@ export default function SiteHeader({
         <div className="nav-links">
           <Link
             href="/"
-            aria-current={isHome ? "page" : undefined}
+            aria-current={
+              isHome ? "page" : undefined
+            }
           >
             Home
           </Link>
 
           <Link
             href="/products"
-            aria-current={isMarket ? "page" : undefined}
+            aria-current={
+              isMarket ? "page" : undefined
+            }
           >
             Market
+          </Link>
+
+          <Link
+            href="/watchlist"
+            aria-current={
+              isWatchlist ? "page" : undefined
+            }
+          >
+            Watchlist
           </Link>
 
           <Link href="/#platform">
@@ -74,7 +94,7 @@ export default function SiteHeader({
         </div>
 
         <div className="nav-actions">
-          {detailPage ? (
+          {backToMarket ? (
             <Link
               className="button button-small button-primary desktop-beta-button"
               href="/products"
@@ -113,7 +133,9 @@ export default function SiteHeader({
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
             onClick={() =>
-              setMobileMenuOpen((current) => !current)
+              setMobileMenuOpen(
+                (current) => !current
+              )
             }
           >
             <span />
@@ -145,6 +167,13 @@ export default function SiteHeader({
           </Link>
 
           <Link
+            href="/watchlist"
+            onClick={closeMobileMenu}
+          >
+            Watchlist
+          </Link>
+
+          <Link
             href="/#platform"
             onClick={closeMobileMenu}
           >
@@ -172,7 +201,7 @@ export default function SiteHeader({
             FAQ
           </Link>
 
-          {detailPage ? (
+          {backToMarket ? (
             <Link
               className="button button-primary mobile-nav-beta"
               href="/products"
