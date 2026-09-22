@@ -206,10 +206,12 @@ def publish_product(
     if not validation[
         "market_data_ready"
     ]:
-        raise RuntimeError(
-            "Cannot publish because "
-            "Market Data Ready is NO."
+        print(
+            "WARNING: Market Data Ready is NO. "
+            "Publishing with limited market analytics."
         )
+
+        print("")
 
     if product.get(
         "active"

@@ -1,0 +1,221 @@
+{
+  "products": [
+    {
+      "set_name": "XY Base Set",
+      "set_slug": "xy-base-set",
+      "set_code": "XY",
+      "series_id": 6,
+      "release_date": "2014-02-05",
+      "overview": "Released in February 2014, XY Base Set launched the XY era of the Pokémon TCG. The set introduced Fairy-type Pokémon to the English game and featured cards such as Venusaur-EX, Blastoise-EX, Emolga-EX, and Yveltal-EX.",
+      "product_name": "XY Booster Box",
+      "product_slug": "xy-base-booster-box-english",
+      "image_filename": "xy-base-booster-box.png",
+      "tcgplayer_id": "91601",
+      "tcgcsv_group_id": "1387",
+      "ebay_query": "Pokemon XY Base Set Booster Box",
+      "keywords": [
+        "xy",
+        "base set",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Flashfire",
+      "set_slug": "flashfire",
+      "set_code": "FLF",
+      "series_id": 6,
+      "release_date": "2014-05-07",
+      "overview": "Released in May 2014, Flashfire is the second main XY-era Pokémon TCG expansion. The set is best known for its Charizard focus, including Mega Charizard-EX and Charizard-EX, alongside other Fire-type support and popular ultra rare cards.",
+      "product_name": "Flashfire Booster Box",
+      "product_slug": "flashfire-booster-box-english",
+      "image_filename": "flashfire-booster-box.png",
+      "tcgplayer_id": "91594",
+      "tcgcsv_group_id": "1464",
+      "ebay_query": "Pokemon Flashfire Booster Box",
+      "keywords": [
+        "flashfire",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Furious Fists",
+      "set_slug": "furious-fists",
+      "set_code": "FFI",
+      "series_id": 6,
+      "release_date": "2014-08-13",
+      "overview": "Released in August 2014, Furious Fists is the third main XY-era Pokémon TCG expansion. The set heavily emphasized Fighting-type Pokémon and featured cards such as Lucario-EX, Mega Lucario-EX, Seismitoad-EX, and Heracross-EX.",
+      "product_name": "Furious Fists Booster Box",
+      "product_slug": "furious-fists-booster-box-english",
+      "image_filename": "furious-fists-booster-box.png",
+      "tcgplayer_id": "92168",
+      "tcgcsv_group_id": "1481",
+      "ebay_query": "Pokemon Furious Fists Booster Box",
+      "keywords": [
+        "furious fists",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Phantom Forces",
+      "set_slug": "phantom-forces",
+      "set_code": "PHF",
+      "series_id": 6,
+      "release_date": "2014-11-05",
+      "overview": "Released in November 2014, Phantom Forces is the fourth main XY-era Pokémon TCG expansion. The set is known for its dark theme and standout cards such as Gengar-EX, Mega Gengar-EX, Dialga-EX, and the Silver Bangle-era style of competitive support cards.",
+      "product_name": "Phantom Forces Booster Box",
+      "product_slug": "phantom-forces-booster-box-english",
+      "image_filename": "phantom-forces-booster-box.png",
+      "tcgplayer_id": "94623",
+      "tcgcsv_group_id": "1494",
+      "ebay_query": "Pokemon Phantom Forces Booster Box",
+      "keywords": [
+        "phantom forces",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Primal Clash",
+      "set_slug": "primal-clash",
+      "set_code": "PRC",
+      "series_id": 6,
+      "release_date": "2015-02-04",
+      "overview": "Released in February 2015, Primal Clash is the fifth main XY-era Pokémon TCG expansion. Inspired by Pokémon Omega Ruby and Alpha Sapphire, the set introduced Primal Reversion cards such as Primal Kyogre-EX and Primal Groudon-EX.",
+      "product_name": "Primal Clash Booster Box",
+      "product_slug": "primal-clash-booster-box-english",
+      "image_filename": "primal-clash-booster-box.png",
+      "tcgplayer_id": "97750",
+      "tcgcsv_group_id": "1509",
+      "ebay_query": "Pokemon Primal Clash Booster Box",
+      "keywords": [
+        "primal clash",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Roaring Skies",
+      "set_slug": "roaring-skies",
+      "set_code": "ROS",
+      "series_id": 6,
+      "release_date": "2015-05-06",
+      "overview": "Released in May 2015, Roaring Skies is the sixth main XY-era Pokémon TCG expansion. The set became especially popular for Rayquaza-EX, Mega Rayquaza-EX, Shaymin-EX, and its lasting relevance in both collecting and competitive play.",
+      "product_name": "Roaring Skies Booster Box",
+      "product_slug": "roaring-skies-booster-box-english",
+      "image_filename": "roaring-skies-booster-box.png",
+      "tcgplayer_id": "98026",
+      "tcgcsv_group_id": "1534",
+      "ebay_query": "Pokemon Roaring Skies Booster Box",
+      "keywords": [
+        "roaring skies",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Ancient Origins",
+      "set_slug": "ancient-origins",
+      "set_code": "AOR",
+      "series_id": 6,
+      "release_date": "2015-08-12",
+      "overview": "Released in August 2015, Ancient Origins is the seventh main XY-era Pokémon TCG expansion. The set featured Hoopa-EX, Mega Tyranitar-EX, and other cards inspired by Pokémon Omega Ruby and Alpha Sapphire lore and Legendary Pokémon themes.",
+      "product_name": "Ancient Origins Booster Box",
+      "product_slug": "ancient-origins-booster-box-english",
+      "image_filename": "ancient-origins-booster-box.png",
+      "tcgplayer_id": "100489",
+      "tcgcsv_group_id": "1576",
+      "ebay_query": "Pokemon Ancient Origins Booster Box",
+      "keywords": [
+        "ancient origins",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "BREAKthrough",
+      "set_slug": "breakthrough",
+      "set_code": "BKT",
+      "series_id": 6,
+      "release_date": "2015-11-04",
+      "overview": "Released in November 2015, BREAKthrough is the eighth main XY-era Pokémon TCG expansion. The set introduced the BREAK mechanic and is known for cards such as Mewtwo-EX, Mega Mewtwo-EX, and a variety of early BREAK evolution cards.",
+      "product_name": "BREAKthrough Booster Box",
+      "product_slug": "breakthrough-booster-box-english",
+      "image_filename": "breakthrough-booster-box.png",
+      "tcgplayer_id": "107101",
+      "tcgcsv_group_id": "1661",
+      "ebay_query": "Pokemon BREAKthrough Booster Box",
+      "keywords": [
+        "breakthrough",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "BREAKpoint",
+      "set_slug": "breakpoint",
+      "set_code": "BKP",
+      "series_id": 6,
+      "release_date": "2016-02-03",
+      "overview": "Released in February 2016, BREAKpoint is the ninth main XY-era Pokémon TCG expansion. The set continued the BREAK mechanic and featured cards such as Gyarados-EX, Darkrai-EX, Greninja BREAK, and additional competitive support pieces.",
+      "product_name": "BREAKpoint Booster Box",
+      "product_slug": "breakpoint-booster-box-english",
+      "image_filename": "breakpoint-booster-box.png",
+      "tcgplayer_id": "111278",
+      "tcgcsv_group_id": "1701",
+      "ebay_query": "Pokemon BREAKpoint Booster Box",
+      "keywords": [
+        "breakpoint",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Fates Collide",
+      "set_slug": "fates-collide",
+      "set_code": "FCO",
+      "series_id": 6,
+      "release_date": "2016-05-02",
+      "overview": "Released in May 2016, Fates Collide is the tenth main XY-era Pokémon TCG expansion. The set featured Zygarde-EX, Alakazam-EX, Umbreon-EX, and Lugia BREAK, combining Generation VI themes with fan-favorite Pokémon.",
+      "product_name": "Fates Collide Booster Box",
+      "product_slug": "fates-collide-booster-box-english",
+      "image_filename": "fates-collide-booster-box.png",
+      "tcgplayer_id": "117478",
+      "tcgcsv_group_id": "1780",
+      "ebay_query": "Pokemon Fates Collide Booster Box",
+      "keywords": [
+        "fates collide",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Steam Siege",
+      "set_slug": "steam-siege",
+      "set_code": "STS",
+      "series_id": 6,
+      "release_date": "2016-08-03",
+      "overview": "Released in August 2016, Steam Siege is the eleventh main XY-era Pokémon TCG expansion. The set featured Volcanion-EX, Magearna-EX, dual-type Pokémon, and a mix of Kalos and Steam-era themed cards.",
+      "product_name": "Steam Siege Booster Box",
+      "product_slug": "steam-siege-booster-box-english",
+      "image_filename": "steam-siege-booster-box.png",
+      "tcgplayer_id": "120076",
+      "tcgcsv_group_id": "1815",
+      "ebay_query": "Pokemon Steam Siege Booster Box",
+      "keywords": [
+        "steam siege",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Evolutions",
+      "set_slug": "evolutions",
+      "set_code": "EVO",
+      "series_id": 6,
+      "release_date": "2016-11-02",
+      "overview": "Released in November 2016, Evolutions is the twelfth and final main XY-era Pokémon TCG expansion. The set celebrated the franchise's history with a modern reimagining of the original Base Set and became especially popular for its Charizard line and nostalgic appeal.",
+      "product_name": "Evolutions Booster Box",
+      "product_slug": "evolutions-booster-box-english",
+      "image_filename": "evolutions-booster-box.png",
+      "tcgplayer_id": "123446",
+      "tcgcsv_group_id": "1842",
+      "ebay_query": "Pokemon XY Evolutions Booster Box",
+      "keywords": [
+        "evolutions",
+        "booster box"
+      ]
+    }
+  ]
+}

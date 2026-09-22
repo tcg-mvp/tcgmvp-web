@@ -946,7 +946,7 @@ def validate_product(
 
     page_ready = (
         configuration_ready
-        and market_data_ready
+        and pipeline_ready
         and product.get("active") is True
         and len(page_warnings) == 0
     )
