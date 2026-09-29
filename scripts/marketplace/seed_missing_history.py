@@ -512,7 +512,11 @@ def seed_missing_history(
             f"{product['name']}: "
             f"{saved_by_product[product_id]}"
         )
-
+    if failed_days > 0:
+        raise RuntimeError(
+            "Historical seeding completed with "
+            f"{failed_days} failed archive day(s)."
+        )
     return {
         "products_checked":
             len(products),
