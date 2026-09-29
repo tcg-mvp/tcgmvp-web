@@ -146,6 +146,7 @@ def seed_missing_history(
     required_start_date: date = (
         REQUIRED_HISTORY_START_DATE
     ),
+    required_end_date: date | None = None,
 ) -> dict:
     """
     Fill missing TCGCSV historical market-price
@@ -170,10 +171,13 @@ def seed_missing_history(
         get_historical_import_products()
     )
 
-    end_date = (
-        datetime.now(UTC).date()
-        - timedelta(days=1)
-    )
+    if required_end_date is None:
+        end_date = (
+            datetime.now(UTC).date()
+            - timedelta(days=1)
+        )
+    else:
+        end_date = required_end_date
 
     if end_date < required_start_date:
         raise ValueError(
@@ -275,14 +279,41 @@ def seed_missing_history(
             )
         )
 
-        missing_product_ids = [
-            product_id
-            for product_id in product_ids
+        missing_product_ids = []
+
+        for product_id in product_ids:
             if (
                 product_id
-                not in existing_product_ids
+                in existing_product_ids
+            ):
+                continue
+
+            product = products_by_id[
+                product_id
+            ]
+
+            historical_start_date = (
+                product.get(
+                    "historical_start_date"
+                )
             )
-        ]
+
+            if historical_start_date:
+                product_start_date = (
+                    date.fromisoformat(
+                        historical_start_date
+                    )
+                )
+
+                if (
+                    current_date
+                    < product_start_date
+                ):
+                    continue
+
+            missing_product_ids.append(
+                product_id
+            )
 
         if not missing_product_ids:
             complete_days_skipped += 1

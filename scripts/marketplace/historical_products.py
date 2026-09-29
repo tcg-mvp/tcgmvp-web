@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from scripts.marketplace.supabase_client import (
     get_supabase_client,
 )
@@ -10,7 +9,11 @@ def get_historical_import_products() -> list[dict]:
 
     products_response = (
         supabase.table("products")
-        .select("id,name")
+        .select(
+            "id,"
+            "name,"
+            "historical_start_date"
+        )
         .eq("active_for_import", True)
         .order("id")
         .execute()
@@ -49,10 +52,22 @@ def get_historical_import_products() -> list[dict]:
 
         historical_products.append(
             {
-                "tcgmvp_product_id": product_id,
-                "name": product["name"],
-                "tcgplayer_id": str(tcgplayer_id),
-                "group_id": str(tcgcsv_group_id),
+                "tcgmvp_product_id":
+                    product_id,
+
+                "name":
+                    product["name"],
+
+                "tcgplayer_id":
+                    str(tcgplayer_id),
+
+                "group_id":
+                    str(tcgcsv_group_id),
+
+                "historical_start_date":
+                    product.get(
+                        "historical_start_date"
+                    ),
             }
         )
 

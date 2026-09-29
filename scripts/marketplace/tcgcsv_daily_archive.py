@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import json
+import tarfile
 import tempfile
 from datetime import date
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-import py7zr
 
-
-TCGCSV_ARCHIVE_BASE_URL = (
-    "https://tcgcsv.com/archive/tcgplayer"
+POKEFOLIO_ARCHIVE_BASE_URL = (
+    "https://raw.githubusercontent.com/"
+    "landonrroy/pokefolio-data/main/data"
 )
 
 TCGPLAYER_CATEGORY_ID = "3"
@@ -47,55 +47,35 @@ def _get_required_archive_targets(
             ...
         }
     """
-    date_string = (
-        archive_date.isoformat()
-    )
+    date_string = archive_date.isoformat()
 
     normalized_name_map = {
-        _normalize_archive_path(
-            name
-        ): name
+        _normalize_archive_path(name): name
         for name in archive_names
     }
 
     required_group_ids = {
-        str(
-            product[
-                "group_id"
-            ]
-        )
+        str(product["group_id"])
         for product in products
     }
 
-    targets_by_group: dict[
-        str,
-        str,
-    ] = {}
+    targets_by_group: dict[str, str] = {}
 
-    for group_id in sorted(
-        required_group_ids
-    ):
+    for group_id in sorted(required_group_ids):
         expected_path = (
             f"{date_string}/"
             f"{TCGPLAYER_CATEGORY_ID}/"
             f"{group_id}/prices"
         )
 
-        exact_match = (
-            normalized_name_map.get(
-                expected_path
-            )
+        exact_match = normalized_name_map.get(
+            expected_path
         )
 
         if exact_match is not None:
-            targets_by_group[
-                group_id
-            ] = exact_match
-
+            targets_by_group[group_id] = exact_match
             continue
 
-        # Defensive fallback in case the archive
-        # contains an unexpected leading directory.
         expected_suffix = (
             f"/{date_string}/"
             f"{TCGPLAYER_CATEGORY_ID}/"
@@ -105,24 +85,18 @@ def _get_required_archive_targets(
         suffix_match = next(
             (
                 original_name
-                for normalized_name,
-                original_name
+                for normalized_name, original_name
                 in normalized_name_map.items()
                 if (
                     f"/{normalized_name}"
-                    .endswith(
-                        expected_suffix
-                    )
+                    .endswith(expected_suffix)
                 )
             ),
             None,
         )
 
         if suffix_match is not None:
-            targets_by_group[
-                group_id
-            ] = suffix_match
-
+            targets_by_group[group_id] = suffix_match
             continue
 
         print(
@@ -139,42 +113,36 @@ def fetch_daily_product_prices(
     products: list[dict],
 ) -> list[dict]:
     """
-    Download one historical TCGCSV price archive and
-    return observations for the requested products.
+    Download one historical Pokémon price archive from
+    the PokeFolio TCGCSV mirror and return observations
+    for the requested products.
+
+    The mirror preserves the original TCGCSV directory
+    layout and raw price JSON.
 
     Optimization:
     - Download the daily archive once.
     - Inspect the archive index.
-    - Extract only the required TCGCSV group price
-      files instead of extracting the entire archive.
-
-    This avoids expanding thousands of irrelevant
-    files for every historical date.
+    - Extract only the required TCGCSV group files.
     """
     if not products:
         return []
 
-    date_string = (
-        archive_date.isoformat()
-    )
+    date_string = archive_date.isoformat()
+    year_string = str(archive_date.year)
 
     archive_url = (
-        f"{TCGCSV_ARCHIVE_BASE_URL}/"
-        f"prices-{date_string}.ppmd.7z"
+        f"{POKEFOLIO_ARCHIVE_BASE_URL}/"
+        f"{year_string}/"
+        f"prices-{date_string}.tar.gz"
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(
-            temp_dir
-        )
+        temp_path = Path(temp_dir)
 
         archive_path = (
             temp_path
-            / (
-                f"prices-"
-                f"{date_string}"
-                f".ppmd.7z"
-            )
+            / f"prices-{date_string}.tar.gz"
         )
 
         extract_path = (
@@ -188,17 +156,15 @@ def fetch_daily_product_prices(
         )
 
         print(
-            "Downloading archive: "
+            "Downloading PokeFolio archive: "
             f"{archive_url}"
         )
 
         request = Request(
             archive_url,
             headers={
-                "User-Agent":
-                    "TCGMVP/0.1",
-                "Accept":
-                    "*/*",
+                "User-Agent": "TCGMVP/0.1",
+                "Accept": "*/*",
             },
             method="GET",
         )
@@ -211,25 +177,21 @@ def fetch_daily_product_prices(
                 response.read()
             )
 
-        with py7zr.SevenZipFile(
+        with tarfile.open(
             archive_path,
-            mode="r",
+            mode="r:gz",
         ) as archive:
-            archive_names = (
-                archive.getnames()
-            )
+            archive_names = [
+                member.name
+                for member in archive.getmembers()
+                if member.isfile()
+            ]
 
             targets_by_group = (
                 _get_required_archive_targets(
-                    archive_names=(
-                        archive_names
-                    ),
-                    archive_date=(
-                        archive_date
-                    ),
-                    products=(
-                        products
-                    ),
+                    archive_names=archive_names,
+                    archive_date=archive_date,
+                    products=products,
                 )
             )
 
@@ -244,49 +206,72 @@ def fetch_daily_product_prices(
                     "No requested price files "
                     "were found in the archive."
                 )
-
                 return []
 
             print(
-                "Extracting targeted price "
-                f"files: "
+                "Extracting targeted price files: "
                 f"{len(extraction_targets)}"
             )
 
-            archive.extract(
-                path=extract_path,
-                targets=(
-                    extraction_targets
-                ),
-            )
+            members_by_name = {
+                member.name: member
+                for member in archive.getmembers()
+            }
 
-        observations: list[
-            dict
-        ] = []
+            for target in extraction_targets:
+                member = members_by_name.get(target)
+
+                if member is None:
+                    print(
+                        "Archive member unavailable: "
+                        f"{target}"
+                    )
+                    continue
+
+                source = archive.extractfile(member)
+
+                if source is None:
+                    print(
+                        "Unable to read archive member: "
+                        f"{target}"
+                    )
+                    continue
+
+                output_path = (
+                    extract_path
+                    / Path(
+                        _normalize_archive_path(
+                            target
+                        )
+                    )
+                )
+
+                output_path.parent.mkdir(
+                    parents=True,
+                    exist_ok=True,
+                )
+
+                output_path.write_bytes(
+                    source.read()
+                )
+
+        observations: list[dict] = []
 
         for product in products:
             tcgmvp_product_id = int(
-                product[
-                    "tcgmvp_product_id"
-                ]
+                product["tcgmvp_product_id"]
             )
 
             tcgplayer_id = str(
-                product[
-                    "tcgplayer_id"
-                ]
+                product["tcgplayer_id"]
             )
 
             group_id = str(
-                product[
-                    "group_id"
-                ]
+                product["group_id"]
             )
 
             archive_target = (
-                targets_by_group.get(
-                    group_id
-                )
+                targets_by_group.get(group_id)
             )
 
             if archive_target is None:
@@ -294,7 +279,6 @@ def fetch_daily_product_prices(
                     "Price target unavailable "
                     f"for group {group_id}"
                 )
-
                 continue
 
             price_file = (
@@ -313,7 +297,6 @@ def fetch_daily_product_prices(
                     f"{group_id}: "
                     f"{price_file}"
                 )
-
                 continue
 
             payload = json.loads(
@@ -322,26 +305,14 @@ def fetch_daily_product_prices(
                 )
             )
 
-            if isinstance(
-                payload,
-                list,
-            ):
+            if isinstance(payload, list):
                 records = payload
 
-            elif isinstance(
-                payload,
-                dict,
-            ):
+            elif isinstance(payload, dict):
                 records = (
-                    payload.get(
-                        "results"
-                    )
-                    or payload.get(
-                        "data"
-                    )
-                    or payload.get(
-                        "prices"
-                    )
+                    payload.get("results")
+                    or payload.get("data")
+                    or payload.get("prices")
                     or []
                 )
 
@@ -353,10 +324,7 @@ def fetch_daily_product_prices(
                     record
                     for record in records
                     if (
-                        isinstance(
-                            record,
-                            dict,
-                        )
+                        isinstance(record, dict)
                         and str(
                             record.get(
                                 "productId"
@@ -374,7 +342,6 @@ def fetch_daily_product_prices(
                     "for TCGPlayer product "
                     f"{tcgplayer_id}"
                 )
-
                 continue
 
             observations.append(
