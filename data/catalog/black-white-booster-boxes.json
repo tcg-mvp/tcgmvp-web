@@ -1,0 +1,203 @@
+{
+  "products": [
+    {
+      "set_name": "Black and White",
+      "set_slug": "black-and-white",
+      "set_code": "BLW",
+      "series_id": 7,
+      "release_date": "2011-04-25",
+      "overview": "Released in April 2011, Black and White launched the Black & White era of the Pokemon TCG. The set introduced Generation V Pokemon to the English TCG and featured Reshiram and Zekrom as major centerpiece cards.",
+      "product_name": "Black and White Booster Box",
+      "product_slug": "black-and-white-booster-box-english",
+      "image_filename": "black-and-white-booster-box.png",
+      "tcgplayer_id": "98552",
+      "tcgcsv_group_id": "1400",
+      "ebay_query": "Pokemon Black and White Booster Box",
+      "keywords": [
+        "black and white",
+        "base set",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Emerging Powers",
+      "set_slug": "emerging-powers",
+      "set_code": "EPO",
+      "series_id": 7,
+      "release_date": "2011-08-31",
+      "overview": "Released in August 2011, Emerging Powers is the second main Black & White-era Pokemon TCG expansion. The set expanded the Generation V roster with Pokemon such as Tornadus, Thundurus, and the Swords of Justice.",
+      "product_name": "Emerging Powers Booster Box",
+      "product_slug": "emerging-powers-booster-box-english",
+      "image_filename": "emerging-powers-booster-box.png",
+      "tcgplayer_id": "98548",
+      "tcgcsv_group_id": "1424",
+      "ebay_query": "Pokemon Emerging Powers Booster Box",
+      "keywords": [
+        "emerging powers",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Noble Victories",
+      "set_slug": "noble-victories",
+      "set_code": "NVI",
+      "series_id": 7,
+      "release_date": "2011-11-16",
+      "overview": "Released in November 2011, Noble Victories is the third main Black & White-era Pokemon TCG expansion. The set is known for introducing the first English full-art N card and features Victini, the Swords of Justice, and other Generation V Pokemon.",
+      "product_name": "Noble Victories Booster Box",
+      "product_slug": "noble-victories-booster-box-english",
+      "image_filename": "noble-victories-booster-box.png",
+      "tcgplayer_id": "98571",
+      "tcgcsv_group_id": "1385",
+      "ebay_query": "Pokemon Noble Victories Booster Box",
+      "keywords": [
+        "noble victories",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Next Destinies",
+      "set_slug": "next-destinies",
+      "set_code": "NXD",
+      "series_id": 7,
+      "release_date": "2012-02-08",
+      "overview": "Released in February 2012, Next Destinies is the fourth main Black & White-era Pokemon TCG expansion. The set introduced Pokemon-EX to the Black & White era and features Mewtwo-EX, Reshiram-EX, Zekrom-EX, and other powerful cards.",
+      "product_name": "Next Destinies Booster Box",
+      "product_slug": "next-destinies-booster-box-english",
+      "image_filename": "next-destinies-booster-box.png",
+      "tcgplayer_id": "98539",
+      "tcgcsv_group_id": "1412",
+      "ebay_query": "Pokemon Next Destinies Booster Box",
+      "keywords": [
+        "next destinies",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Dark Explorers",
+      "set_slug": "dark-explorers",
+      "set_code": "DEX",
+      "series_id": 7,
+      "release_date": "2012-05-09",
+      "overview": "Released in May 2012, Dark Explorers is the fifth main Black & White-era Pokemon TCG expansion. The set is known for Darkrai-EX and its emphasis on Darkness-type Pokemon, alongside popular cards such as Groudon-EX and Tornadus-EX.",
+      "product_name": "Dark Explorers Booster Box",
+      "product_slug": "dark-explorers-booster-box-english",
+      "image_filename": "dark-explorers-booster-box.png",
+      "tcgplayer_id": "98520",
+      "tcgcsv_group_id": "1386",
+      "ebay_query": "Pokemon Dark Explorers Booster Box",
+      "keywords": [
+        "dark explorers",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Dragons Exalted",
+      "set_slug": "dragons-exalted",
+      "set_code": "DRX",
+      "series_id": 7,
+      "release_date": "2012-08-15",
+      "overview": "Released in August 2012, Dragons Exalted is the sixth main Black & White-era Pokemon TCG expansion. The set introduced Dragon-type Pokemon to the English TCG and features Rayquaza-EX, Giratina-EX, and other prominent Dragon Pokemon.",
+      "product_name": "Dragons Exalted Booster Box",
+      "product_slug": "dragons-exalted-booster-box-english",
+      "image_filename": "dragons-exalted-booster-box.png",
+      "tcgplayer_id": "98540",
+      "tcgcsv_group_id": "1394",
+      "ebay_query": "Pokemon Dragons Exalted Booster Box",
+      "keywords": [
+        "dragons exalted",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Boundaries Crossed",
+      "set_slug": "boundaries-crossed",
+      "set_code": "BCR",
+      "series_id": 7,
+      "release_date": "2012-11-07",
+      "overview": "Released in November 2012, Boundaries Crossed is the seventh main Black & White-era Pokemon TCG expansion. The set features Keldeo-EX, Landorus-EX, Celebi-EX, and a broad selection of Generation V and returning Pokemon.",
+      "product_name": "Boundaries Crossed Booster Box",
+      "product_slug": "boundaries-crossed-booster-box-english",
+      "image_filename": "boundaries-crossed-booster-box.png",
+      "tcgplayer_id": "98555",
+      "tcgcsv_group_id": "1408",
+      "ebay_query": "Pokemon Boundaries Crossed Booster Box",
+      "keywords": [
+        "boundaries crossed",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Plasma Storm",
+      "set_slug": "plasma-storm",
+      "set_code": "PLS",
+      "series_id": 7,
+      "release_date": "2013-02-06",
+      "overview": "Released in February 2013, Plasma Storm began the Team Plasma-focused portion of the Black & White era. The set is especially notable for its Charizard secret rare and features Team Plasma Pokemon alongside Lugia-EX and other Pokemon-EX.",
+      "product_name": "Plasma Storm Booster Box",
+      "product_slug": "plasma-storm-booster-box-english",
+      "image_filename": "plasma-storm-booster-box.png",
+      "tcgplayer_id": "98527",
+      "tcgcsv_group_id": "1413",
+      "ebay_query": "Pokemon Plasma Storm Booster Box",
+      "keywords": [
+        "plasma storm",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Plasma Freeze",
+      "set_slug": "plasma-freeze",
+      "set_code": "PLF",
+      "series_id": 7,
+      "release_date": "2013-05-08",
+      "overview": "Released in May 2013, Plasma Freeze continued the Team Plasma theme of the Black & White era. The set features Deoxys-EX, Thundurus-EX, and other Team Plasma cards, along with sought-after secret rare Pokemon.",
+      "product_name": "Plasma Freeze Booster Box",
+      "product_slug": "plasma-freeze-booster-box-english",
+      "image_filename": "plasma-freeze-booster-box.png",
+      "tcgplayer_id": "98516",
+      "tcgcsv_group_id": "1382",
+      "ebay_query": "Pokemon Plasma Freeze Booster Box",
+      "keywords": [
+        "plasma freeze",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Plasma Blast",
+      "set_slug": "plasma-blast",
+      "set_code": "PLB",
+      "series_id": 7,
+      "release_date": "2013-08-14",
+      "overview": "Released in August 2013, Plasma Blast is the third major Team Plasma-themed expansion of the Black & White era. The set features Genesect-EX, Palkia-EX, Dialga-EX, and additional Team Plasma Pokemon and Trainer cards.",
+      "product_name": "Plasma Blast Booster Box",
+      "product_slug": "plasma-blast-booster-box-english",
+      "image_filename": "plasma-blast-booster-box.png",
+      "tcgplayer_id": "98572",
+      "tcgcsv_group_id": "1370",
+      "ebay_query": "Pokemon Plasma Blast Booster Box",
+      "keywords": [
+        "plasma blast",
+        "booster box"
+      ]
+    },
+    {
+      "set_name": "Legendary Treasures",
+      "set_slug": "legendary-treasures",
+      "set_code": "LTR",
+      "series_id": 7,
+      "release_date": "2013-11-06",
+      "overview": "Released in November 2013, Legendary Treasures is the final main expansion of the Black & White era. The set brought together numerous Legendary and Mythical Pokemon and included the Radiant Collection subset alongside the main set.",
+      "product_name": "Legendary Treasures Booster Box",
+      "product_slug": "legendary-treasures-booster-box-english",
+      "image_filename": "legendary-treasures-booster-box.png",
+      "tcgplayer_id": "98580",
+      "tcgcsv_group_id": "1409",
+      "ebay_query": "Pokemon Legendary Treasures Booster Box",
+      "keywords": [
+        "legendary treasures",
+        "booster box"
+      ]
+    }
+  ]
+}
