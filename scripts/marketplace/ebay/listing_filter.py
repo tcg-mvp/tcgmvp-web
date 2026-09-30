@@ -23,6 +23,13 @@ EXCLUDED_TITLE_PHRASES = (
     "half booster",
     "18 pack",
     "18 packs",
+    
+    # Non-product merchandise / misleading descriptions.
+    "poster",
+    "retail poster",
+    "prerelease poster",
+    "not booster box",
+    "not card booster box",
 
     # Non-standard / wrong sealed-product formats.
     "mini pack",
