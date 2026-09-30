@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
-
+from urllib.error import HTTPError
 from scripts.marketplace.historical_products import (
     get_historical_import_products,
 )
@@ -249,6 +249,7 @@ def seed_missing_history(
     days_checked = 0
     complete_days_skipped = 0
     archive_days_downloaded = 0
+    unavailable_archive_days = 0
     failed_days = 0
     metrics_saved = 0
     missing_observations = 0
@@ -458,6 +459,35 @@ def seed_missing_history(
                         f"{product_id}"
                     )
 
+        except HTTPError as exc:
+            if exc.code == 404:
+                unavailable_archive_days += 1
+
+                print(
+                    "Archive unavailable for "
+                    f"{current_date}. "
+                    "Skipping for now."
+                )
+            else:
+                failed_days += 1
+
+                print(
+                    "FAILED archive date "
+                    f"{current_date}: "
+                    f"{exc}"
+                )
+
+                failed_date_details.append(
+                    {
+                        "metric_date":
+                            date_string,
+                        "error":
+                            str(exc),
+                        "missing_product_ids":
+                            missing_product_ids,
+                    }
+                )
+
         except Exception as exc:
             failed_days += 1
 
@@ -511,6 +541,11 @@ def seed_missing_history(
     )
 
     print(
+        "Unavailable archive days: "
+        f"{unavailable_archive_days}"
+    )
+
+    print(
         "Failed archive days: "
         f"{failed_days}"
     )
@@ -560,6 +595,9 @@ def seed_missing_history(
 
         "archive_days_downloaded":
             archive_days_downloaded,
+
+        "unavailable_archive_days":
+            unavailable_archive_days,
 
         "failed_days":
             failed_days,
