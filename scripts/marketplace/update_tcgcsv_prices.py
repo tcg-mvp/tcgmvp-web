@@ -10,6 +10,7 @@ from scripts.marketplace.product_market_summary import (
     update_product_market_summary,
 )
 from scripts.marketplace.providers.tcgcsv import (
+    TCGCSVMarketPriceUnavailableError,
     TCGCSVProvider,
 )
 
@@ -25,6 +26,7 @@ def update_tcgcsv_prices() -> dict:
     )
 
     successes = 0
+    no_data = 0
     failures = 0
 
     results: list[dict] = []
@@ -122,7 +124,22 @@ def update_tcgcsv_prices() -> dict:
                     ),
                 }
             )
+        except TCGCSVMarketPriceUnavailableError as exc:
+            no_data += 1
 
+            print(
+                f"  NO DATA: {exc}"
+            )
+            print("")
+
+            results.append(
+                {
+                    "product_id": product_id,
+                    "name": product_name,
+                    "status": "no_data",
+                    "reason": str(exc),
+                }
+            )
         except Exception as exc:
             failures += 1
 
@@ -143,6 +160,7 @@ def update_tcgcsv_prices() -> dict:
     return {
         "products_attempted": len(products),
         "products_successful": successes,
+        "products_no_data": no_data,
         "products_failed": failures,
         "results": results,
     }
@@ -170,7 +188,10 @@ def main() -> None:
         "Products successful: "
         f"{summary['products_successful']}"
     )
-
+    print(
+        "Products with no data: "
+        f"{summary['products_no_data']}"
+    )
     print(
         "Products failed: "
         f"{summary['products_failed']}"

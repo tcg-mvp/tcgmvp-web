@@ -11,7 +11,12 @@ TCGPLAYER_MARKETPLACE_ID = 2
 
 EBAY_LISTING_MAX_AGE_DAYS = 2
 
-
+class MarketSummaryUnavailableError(Exception):
+    """
+    A product does not yet have sufficient canonical
+    TCGplayer market-price data to calculate a market
+    summary.
+    """
 def _percent_change(
     current_price: Decimal | None,
     previous_price: Decimal | None,
@@ -170,7 +175,7 @@ def calculate_product_market_summary(
     rows = response.data or []
 
     if not rows:
-        raise LookupError(
+        raise MarketSummaryUnavailableError(
             f"No daily market metrics found for product_id={product_id}."
         )
 
@@ -181,7 +186,7 @@ def calculate_product_market_summary(
     ]
 
     if not priced_rows:
-        raise LookupError(
+        raise MarketSummaryUnavailableError(
             f"No market prices found for product_id={product_id}."
         )
 

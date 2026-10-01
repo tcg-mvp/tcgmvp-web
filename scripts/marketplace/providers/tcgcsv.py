@@ -9,7 +9,12 @@ from urllib.request import Request, urlopen
 from scripts.marketplace.models.market_price import MarketPriceObservation
 from scripts.marketplace.providers.base import MarketPriceProvider
 
-
+class TCGCSVMarketPriceUnavailableError(Exception):
+    """
+    TCGCSV responded successfully, but no usable
+    canonical marketPrice exists for the requested
+    product.
+    """
 class TCGCSVProvider(MarketPriceProvider):
     BASE_URL = "https://tcgcsv.com/tcgplayer"
 
@@ -70,7 +75,7 @@ class TCGCSVProvider(MarketPriceProvider):
                 break
 
         if matching_record is None:
-            raise LookupError(
+            raise TCGCSVMarketPriceUnavailableError(
                 "TCGCSV returned no matching price record "
                 f"for product ID {provider_product_id} "
                 f"in group {group_id}."
@@ -79,7 +84,7 @@ class TCGCSVProvider(MarketPriceProvider):
         market_price = matching_record.get("marketPrice")
 
         if market_price is None:
-            raise ValueError(
+            raise TCGCSVMarketPriceUnavailableError(
                 "TCGCSV returned the product without a marketPrice."
             )
 

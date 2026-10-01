@@ -13,6 +13,7 @@ from scripts.marketplace.historical_products import (
     get_historical_import_products,
 )
 from scripts.marketplace.market_summary_calculator import (
+    MarketSummaryUnavailableError,
     update_calculated_market_summary,
 )
 from scripts.marketplace.pipeline_logging import (
@@ -305,6 +306,10 @@ def run_tcgcsv_update() -> dict[str, Any]:
     )
 
     print(
+        "Products with no data: "
+        f"{summary.get('products_no_data', 0)}"
+    )
+    print(
         "Products failed: "
         f"{summary['products_failed']}"
     )
@@ -575,6 +580,7 @@ def run_market_summary_updates() -> dict[str, Any]:
     )
 
     successes = 0
+    no_data = 0
     failures = 0
 
     results: list[
@@ -682,7 +688,22 @@ def run_market_summary_updates() -> dict[str, Any]:
                     ),
                 }
             )
+        except MarketSummaryUnavailableError as exc:
+            no_data += 1
 
+            print(
+                f"  NO DATA: {exc}"
+            )
+            print("")
+
+            results.append(
+                {
+                    "product_id": product_id,
+                    "name": product_name,
+                    "status": "no_data",
+                    "reason": str(exc),
+                }
+            )
         except Exception as exc:
             failures += 1
 
@@ -713,7 +734,10 @@ def run_market_summary_updates() -> dict[str, Any]:
         "Successful: "
         f"{successes}"
     )
-
+    print(
+        "No data: "
+        f"{no_data}"
+    )
     print(
         "Failed: "
         f"{failures}"
@@ -739,6 +763,9 @@ def run_market_summary_updates() -> dict[str, Any]:
             ),
             "products_failed": (
                 failures
+            ),
+            "products_no_data": (
+                no_data
             ),
             "results": results,
         },
